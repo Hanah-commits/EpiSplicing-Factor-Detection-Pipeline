@@ -1,15 +1,19 @@
 import pandas as pd
 from pandas import Series
+import sys
 
 
 # STEP 1: Extract required columns and split individual dpsi values, their probabilities and junction coords
 
 # Keep relevant columns
-voila = pd.read_csv('../Input_Files/MAJIQ/output/majiq_output', delimiter='\t', skiprows=10)
+file = sys.argv[1]+'MAJIQ/majiq_output'
+voila = pd.read_csv(file, delimiter='\t', skiprows=10)
 col_list = ['gene_id', 'lsv_id', 'seqid', 'mean_dpsi_per_lsv_junction', 'probability_changing', 'junctions_coords', 'num_exons', 'strand'] #, 'exons_coords']
 voila = voila[col_list]
 
 # FILTER 1: remove LSVs with 2 exons
+voila["num_exons"] = voila["num_exons"].replace('na' ,'0')
+voila["num_exons"] = pd.to_numeric(voila["num_exons"])
 voila = voila[voila['num_exons'] > 2]
 
 # split column values to multiple lines

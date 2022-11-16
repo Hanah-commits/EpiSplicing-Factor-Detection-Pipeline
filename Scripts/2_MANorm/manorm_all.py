@@ -1,14 +1,26 @@
 import os
+import json
+import sys
+from pathlib import Path
 
+if __name__ == "__main__":
 
-data_dir = '/home/hanah/data/bam_dir/histone_data'
-op_dir = '/home/hanah/data/bam_dir/histone_data/manorm'
+    with open('paths.json') as f:
+            d = json.load(f)
 
+    manorm_files = d['ChIPSeq files']
+    hms = d["Histone modifications"]
+    tissue1 = d["tissue1"]
+    tissue2 = d["tissue2"]
 
-hms = ['H3K27ac', 'H3K27me3', 'H3K4me3', 'H3K9me3']
+    currdir = os.getcwd()
+    opdir = sys.argv[1] + 'MANorm/'
+    Path(opdir).mkdir(parents=True, exist_ok=True)
 
-os.chdir(data_dir)
+    os.chdir(manorm_files)
+   
+    for hm in hms:
 
-for hm in hms:
+        os.system('manorm --p1 ' + hm + '_'+tissue1+'_peak.bed --p2 ' + hm + '_'+tissue2+'_peak.bed --r1 ' + hm + '_'+tissue1+'_alignment.bed --r2 ' + hm + '_'+tissue2+'_alignment.bed -o ' + opdir)
 
-    os.system('manorm --p1 ' + hm + '_H1_peak.bed --p2 ' + hm + '_ectodermalcell_peak.bed --r1 ' + hm + '_H1_alignment.bed --r2 ' + hm + '_ectodermalcell_alignment.bed -o ' + op_dir)
+    os.chdir(currdir)

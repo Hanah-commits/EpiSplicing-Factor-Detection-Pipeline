@@ -1,55 +1,152 @@
-import shutil
 import os
-from glob import glob
-import natsort
-import pathlib
+import shutil
+import sys
+from HelperFunctions.check_args import check_args
 
-#TODO: MAJIQ, MANorm, Feature Counts, prepare flank files, delete existing result folders RBPMap (all in single script)
+# Check input arguments from paths.json
+output_dir = check_args()
 
+#check command line arguments
+weights = False
+if len(sys.argv) > 1 and sys.argv[1] == "-w":
+    weights = True
+
+# STEP 0: Preprocessing
+
+# Differential Expression Analysis
+if weights:
+    try:
+        exec(open("PreProcessing/featureCounts.py").read())
+        os.system("Rscript PreProcessing/Limma.R")
+    except Exception as ex:
+        print(ex)
+        sys.exit(1)
+
+# Prepare flank reference : 50, 100, 200 bp
+try:
+    os.system("python PreProcessing/prepare_FlanksRef.py")
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 1: Execute MAJIQ - Differential Exon Usage
+try:
+    os.system("python 1_MAJIQ/runMAJIQ.py " + output_dir)
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 2: Execute MANorm -  Differential Histone Modifications
+try:
+    os.system("python 2_MANorm/manorm_all.py " + output_dir)
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 3: Process MAJIQ output
-exec(open("1_MAJIQ/post-MAJIQ.py").read())
+try:
+    os.system("python 1_MAJIQ/post-MAJIQ.py " + output_dir)
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 4: BEDTools - Annotate exon flanks with MAJIQ junctions
-#TODO
+try:
+    exec(open("1_MAJIQ/annotate-MAJIQ.py").read())
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 5: Process BEDTools output
-exec(open("1_MAJIQ/post-bedtools.py").read())
+try:
+    exec(open("1_MAJIQ/post-bedtools.py").read())
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 6: BEDTools - Annotate exon flanks with MANorm peaks
-#TODO
+try:
+    os.system('python 2_MANorm/annotate-MANorm.py ' + output_dir)
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 7: Process peak-annotated flanks
-exec(open("2_MANorm/post-manorm.py").read())
+try:
+    os.system("python 2_MANorm/post-manorm.py " + output_dir)
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 8: DEU - DHM Correlation
-exec(open("3_Episplicing/correlation.py").read())
+try:
+    exec(open("3_Episplicing/correlation.py").read())
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 9: Prepare RBPmap input
-exec(open("4_RBPMap/pre-rbp.py").read())
+try:
+    exec(open("4_RBPMap/pre-rbp.py").read())
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 10: Execute RBPmap
-# TODO
+try:
+    exec(open("4_RBPMap/run_rbpmap.py").read())
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 11: Process RBPMap output
-# exec(open("4_RBPMap/post-rbp.py").read())
-# exec(open("5_Classification & Enrchment/rbp_pvals.py").read())
+try:
+    exec(open("4_RBPMap/post-rbp.py").read())
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
+
+try:    
+    exec(open("5_Classification/rbp_pvals.py").read())
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 12: Add logFC weights to binding scores from RBPMap
-exec(open("4_RBPMap/rbp-weights.py").read())
+if weights:
+    try:
+        exec(open("4_RBPMap/rbp-weights.py").read())
+    except Exception as ex:
+        print(ex)
+        sys.exit(1)
 
 # STEP 13: Prep Feature Matrix
-exec(open("5_Classification & Enrichment/features.py").read())
-exec(open("5_Classification & Enrichment/classifier_features.py").read())
-exec(open("5_Classification & Enrichment/rbp_pvals.py").read())
+try:
+    os.system("python 5_Classification/features.py " + output_dir + " " + str(weights))
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
+
+try: 
+    os.system("python 5_Classification/classifier_features.py " + output_dir + " " + str(weights))
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 14: Binary Classification
-exec(open("5_Classification & Enrichment/classifier.py").read())
+try:
+    os.system("python 5_Classification/classifier.py " + output_dir)
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
 # STEP 15: Enrichment
-exec(open("5_Classification & Enrichment/enrichment.py").read())
+try:
+    os.system("python 6_Enrichment/enrichment.py " + output_dir)
+except Exception as ex:
+    print(ex)
+    sys.exit(1)
 
+# STEP 15: Move files generated from current pipeline run to
+shutil.move('0_Files/', output_dir)
+shutil.move('../RBPmap/', output_dir)
