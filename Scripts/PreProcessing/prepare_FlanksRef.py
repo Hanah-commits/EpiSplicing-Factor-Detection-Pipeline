@@ -9,11 +9,12 @@ ref = d['Reference genome']
 fasta = d['Reference fasta']
 
 # exon coordinates
-os.system('Rscript PreProcessing/get_exons.R')
+#os.system('Rscript PreProcessing/get_exons.R')
 
 # genome file
-os.system("samtools faidx " + fasta)
+#os.system("samtools faidx " + fasta)
 ref_genome= fasta+".fai"
+os.system("cp filtered_exons.bed 0_Files/exon_coords.bed")
 
 # flanks
 flanks = ["50", "100", "200"]

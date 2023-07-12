@@ -38,7 +38,7 @@ def p_adjust_bh(p):
 # Keep relevant columns
 file = sys.argv[1]+'MAJIQ/majiq_output'
 voila = pd.read_csv(file, delimiter='\t', skiprows=10)
-col_list = ['gene_id', 'lsv_id', 'seqid', 'mean_dpsi_per_lsv_junction', 'probability_changing', 'junctions_coords', 'num_exons', 'strand'] #, 'exons_coords']
+col_list = ['gene_id', 'lsv_id', 'seqid', 'mean_dpsi_per_lsv_junction', 'probability_non_changing', 'junctions_coords', 'num_exons', 'strand'] #, 'exons_coords']
 voila = voila[col_list]
 
 # FILTER 1: remove LSVs with 2 exons
@@ -55,22 +55,21 @@ dpsi = voila['mean_dpsi_per_lsv_junction'].str.split(';').apply(Series, 1).stack
 dpsi.index = dpsi.index.droplevel(-1)
 s2 = voila.mean_dpsi_per_lsv_junction.str.split(';', expand=True).stack().str.strip().reset_index(level=1, drop=True)
 
-prob = voila['probability_changing'].str.split(';').apply(Series, 1).stack()
+prob = voila['probability_non_changing'].str.split(';').apply(Series, 1).stack()
 prob.index = prob.index.droplevel(-1)
-s3 = voila.probability_changing.str.split(';', expand=True).stack().str.strip().reset_index(level=1, drop=True)
+s3 = voila.probability_non_changing.str.split(';', expand=True).stack().str.strip().reset_index(level=1, drop=True)
 
-new_cols = pd.concat([coord, dpsi, prob], axis =1, keys=['junctions_coords', 'mean_dpsi_per_lsv_junction', 'probability_changing'])
-voila = voila.drop(['junctions_coords', 'mean_dpsi_per_lsv_junction', 'probability_changing'], axis=1).join(new_cols).reset_index(drop=True)
+new_cols = pd.concat([coord, dpsi, prob], axis =1, keys=['junctions_coords', 'mean_dpsi_per_lsv_junction', 'probability_non_changing'])
+voila = voila.drop(['junctions_coords', 'mean_dpsi_per_lsv_junction', 'probability_non_changing'], axis=1).join(new_cols).reset_index(drop=True)
 
 voila = voila[col_list]
 # skipping nan -> 99464127-nan
 voila = voila[~voila['junctions_coords'].str.contains("nan")]
 
 # FILTER 2: Drop rows with non-changing probability < 0.05
-voila['pval'] = 1- pd.to_numeric(voila['probability_changing'])
+voila['pval'] = 1- pd.to_numeric(voila['probability_non_changing'])
 voila = adjust_pvalue(voila, col='pval')
 voila = voila[pd.to_numeric(voila['adj_pval']) <= 0.05]
-
 
 # STEP 3: Get the source and target indices of splice junctions
 voila[['source', 'target']] = voila['junctions_coords'].str.split('-', 1, expand=True)

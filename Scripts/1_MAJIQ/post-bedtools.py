@@ -72,7 +72,7 @@ flank_jns_group.columns = ['flanks', 'mean_dpsi_per_lsv_junction']
 
 # FILTER 3: if flank has 1+ junctions, keep junction with highest dPSI value
 flank_jns_group['max_dPSI'] = flank_jns_group['mean_dpsi_per_lsv_junction'].str.split(',')\
-        .apply(lambda x: max(map(float, x)))  # string -> list of strings -> list of floats -> max float
+        .apply(lambda x: min(map(float, x)))  # string -> list of strings -> list of floats -> max float
 
 # # get the corresponding junction for each flank's max dPSI value
 flank_jns_group = pd.merge(flank_jns_group[['flanks', 'max_dPSI']], flank_jns, on=['flanks'], how='inner')
@@ -84,7 +84,7 @@ flank_jns_group.drop_duplicates(subset='flanks', keep='first', inplace=True)
 # # bookkeeping
 del(flank_jns_group['max_dPSI'])
 flank_jns_group = flank_jns_group[['gene_id', 'lsv_id', 'seqid', 'junction0', 'mean_dpsi_per_lsv_junction',
-        'probability_changing', 'flanks', 'start', 'stop', 'strand']]
+        'probability_non_changing', 'flanks', 'start', 'stop', 'strand']]
 
 # Get all filtered flanks
 flank_jns_group.drop_duplicates().to_csv('0_Files/all_flanks.csv', sep='\t', index=False)

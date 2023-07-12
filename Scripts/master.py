@@ -13,14 +13,6 @@ if len(sys.argv) > 1 and sys.argv[1] == "-w":
 # STEP 0: Preprocessing
 
 # Differential Expression Analysis
-if weights:
-    try:
-        exec(open("PreProcessing/featureCounts.py").read())
-        os.system("Rscript PreProcessing/Limma.R")
-    except Exception as ex:
-        print(ex)
-        move_dirs(output_dir)
-        sys.exit(1)
 
 # Prepare flank reference : 50, 100, 200 bp
 try:
@@ -31,20 +23,20 @@ except Exception as ex:
     sys.exit(1)
 
 # STEP 1: Execute MAJIQ - Differential Exon Usage
-try:
-    os.system("python 1_MAJIQ/runMAJIQ.py " + output_dir)
-except Exception as ex:
-    print(ex)
-    move_dirs(output_dir)
-    sys.exit(1)
+#try:
+#    os.system("python 1_MAJIQ/runMAJIQ.py " + output_dir)
+#except Exception as ex:
+#    print(ex)
+#    move_dirs(output_dir)
+#    sys.exit(1)
 
 # STEP 2: Execute MANorm -  Differential Histone Modifications
-try:
-    os.system("python 2_MANorm/manorm_all.py " + output_dir)
-except Exception as ex:
-    print(ex)
-    move_dirs(output_dir)
-    sys.exit(1)
+#try:
+#    os.system("python 2_MANorm/manorm_all.py " + output_dir)
+#except Exception as ex:
+#    print(ex)
+#    move_dirs(output_dir)
+#    sys.exit(1)
 
 # STEP 3: Process MAJIQ output
 try:
