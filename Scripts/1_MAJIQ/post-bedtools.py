@@ -37,14 +37,15 @@ for length in flank_lens:
 
         flanks = pd.read_csv('0_Files/majiq_flanks' + str(length) + '.bed', delimiter='\t', header=None)
 
-
         # drop flanks that have no junction
-        flanks = flanks[flanks[4] != -1]
+        ##chrY    13359417        13360117        Exon    .       -       chrY    13359767        13359768        flank   .       - 
+        ##chr10   100041843       100042543       Exon    .       -       .       -1      -1      .       -1      . 
+
+        flanks = flanks[flanks[8] != -1]
 
         # merge the flanks df with the jns df
-        flanks[6] = flanks[[1, 2]].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
-        flanks.drop([3, 5], axis=1, inplace=True)
-
+        flanks[12] = flanks[[1, 2]].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
+        flanks.drop([3, 4, 5, 6, 8, 9, 10, 11], axis=1, inplace=True)
         flanks.set_axis(['seqid', 'start', 'stop', 'junction0', 'flanks'], axis=1, inplace=True)
 
         junctions['index'] = junctions.index
@@ -72,7 +73,7 @@ flank_jns_group.columns = ['flanks', 'mean_dpsi_per_lsv_junction']
 
 # FILTER 3: if flank has 1+ junctions, keep junction with highest dPSI value
 flank_jns_group['max_dPSI'] = flank_jns_group['mean_dpsi_per_lsv_junction'].str.split(',')\
-        .apply(lambda x: max(map(float, x)))  # string -> list of strings -> list of floats -> max float
+        .apply(lambda x: min(map(float, x)))  # string -> list of strings -> list of floats -> max float
 
 # # get the corresponding junction for each flank's max dPSI value
 flank_jns_group = pd.merge(flank_jns_group[['flanks', 'max_dPSI']], flank_jns, on=['flanks'], how='inner')
@@ -84,7 +85,7 @@ flank_jns_group.drop_duplicates(subset='flanks', keep='first', inplace=True)
 # # bookkeeping
 del(flank_jns_group['max_dPSI'])
 flank_jns_group = flank_jns_group[['gene_id', 'lsv_id', 'seqid', 'junction0', 'mean_dpsi_per_lsv_junction',
-        'probability_changing', 'flanks', 'start', 'stop', 'strand']]
+        'probability_non_changing', 'flanks', 'start', 'stop', 'strand']]
 
 # Get all filtered flanks
 flank_jns_group.drop_duplicates().to_csv('0_Files/all_flanks.csv', sep='\t', index=False)
