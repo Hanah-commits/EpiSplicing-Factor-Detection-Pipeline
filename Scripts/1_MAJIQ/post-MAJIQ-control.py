@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from pandas import Series
 import sys
+import json
 
 
 def adjust_pvalue(df, col):
@@ -36,7 +37,10 @@ def p_adjust_bh(p):
 # STEP 1: Extract required columns and split individual dpsi values, their probabilities and junction coords
 
 # Keep relevant columns
-file = sys.argv[1]+'MAJIQ/deltapsi/*.deltapsi.tsv'
+with open('paths.json') as f:
+    d = json.load(f)
+name = d["tissue1"] + d["tissue2"]
+file = sys.argv[1]+'MAJIQ/deltapsi/' + name + '.deltapsi.tsv'
 voila = pd.read_csv(file, delimiter='\t')
 col_list = ['gene_id', 'lsv_id', 'mean_dpsi_per_lsv_junction', 'probability_changing', 'junctions_coords', 'num_exons'] #, 'exons_coords']
 voila = voila[col_list]
