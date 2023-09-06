@@ -39,7 +39,7 @@ def p_adjust_bh(p):
 # Keep relevant columns
 with open('paths.json') as f:
     d = json.load(f)
-name = d["tissue1"] + d["tissue2"]
+name = d["tissue1"] + "-" + d["tissue2"]
 file = sys.argv[1]+'MAJIQ/deltapsi/' + name + '.deltapsi.tsv'
 voila = pd.read_csv(file, delimiter='\t')
 col_list = ['gene_id', 'lsv_id', 'mean_dpsi_per_lsv_junction', 'probability_changing', 'junctions_coords', 'num_exons'] #, 'exons_coords']
