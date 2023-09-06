@@ -38,7 +38,7 @@ def p_adjust_bh(p):
 # Keep relevant columns
 file = sys.argv[1]+'MAJIQ/majiq_output'
 voila = pd.read_csv(file, delimiter='\t', skiprows=10)
-col_list = ['gene_id', 'lsv_id', 'seqid', 'mean_dpsi_per_lsv_junction', 'probability_non_changing', 'junctions_coords', 'num_exons', 'strand'] #, 'exons_coords']
+col_list = ['gene_id', 'lsv_id', 'seqid', 'mean_dpsi_per_lsv_junction', 'probability_changing', 'junctions_coords', 'num_exons', 'strand'] #, 'exons_coords']
 voila = voila[col_list]
 
 # FILTER 1: remove LSVs with 2 exons
@@ -47,22 +47,22 @@ voila["num_exons"] = pd.to_numeric(voila["num_exons"])
 voila = voila[voila['num_exons'] > 2]
 
 # split column values to multiple lines
-voila = voila.assign(junctions_coords=voila['junctions_coords'].str.split(';'), mean_dpsi_per_lsv_junction=voila['mean_dpsi_per_lsv_junction'].str.split(';'), probability_non_changing=voila['probability_non_changing'].str.split(';'))
+voila = voila.assign(junctions_coords=voila['junctions_coords'].str.split(';'), mean_dpsi_per_lsv_junction=voila['mean_dpsi_per_lsv_junction'].str.split(';'), probability_changing=voila['probability_changing'].str.split(';'))
 
 # explode the list in the columns to create individual rows
-voila = voila.explode(['junctions_coords', 'mean_dpsi_per_lsv_junction', 'probability_non_changing']).reset_index(drop=True)
+voila = voila.explode(['junctions_coords', 'mean_dpsi_per_lsv_junction', 'probability_changing']).reset_index(drop=True)
 
 voila = voila[col_list]
 # skipping nan -> 99464127-nan
 voila = voila[~voila['junctions_coords'].str.contains("nan")]
 
 # FILTER 2: Drop rows with non-changing probability < 0.05
-voila['pval'] = 1- pd.to_numeric(voila['probability_non_changing'])
+voila['pval'] = 1- pd.to_numeric(voila['probability_changing'])
 voila = adjust_pvalue(voila, col='pval')
 voila = voila[pd.to_numeric(voila['adj_pval']) <= 0.05]
 
 # STEP 3: Get the source and target indices of splice junctions
-voila[['source', 'target']] = voila['junctions_coords'].str.split('-', 1, expand=True)
+voila[['source', 'target']] = voila['junctions_coords'].str.split('-', n=1, expand=True)
 
 del(voila['junctions_coords'])
 voila_temp = voila.copy()
