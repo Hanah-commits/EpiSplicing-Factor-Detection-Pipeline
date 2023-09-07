@@ -43,8 +43,7 @@ def get_seqid_strand():
         non_dju.loc[non_dju['gene_id'] == gene, 'seqid'] = seqid
         non_dju.loc[non_dju['gene_id'] == gene, 'strand'] = strand
 
-
-    keep_cols = ['gene_id', 'junction0']
+    keep_cols = ['seqid', 'junction0', 'strand']
     majiq_bed = non_dju[keep_cols]
     majiq_bed = majiq_bed.drop_duplicates()
     # to fit bedtools input requirements
@@ -52,7 +51,7 @@ def get_seqid_strand():
     majiq_bed['feature'] = "flank"
     majiq_bed['score'] = "."
     # rearrange
-    majiq_bed = majiq_bed[["junction0", "junction1", "feature", "score"]]
+    majiq_bed = majiq_bed[['seqid', "junction0", "junction1", "feature", "score", "strand"]]
     majiq_bed.to_csv('0_Files/majiq_control.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
     non_dju.to_csv('0_Files/majiq_junctions_control.csv', index=False, sep='\t', header=True)
 
