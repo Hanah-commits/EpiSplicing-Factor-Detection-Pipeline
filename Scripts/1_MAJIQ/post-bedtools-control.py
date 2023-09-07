@@ -85,7 +85,7 @@ flank_jns_group.drop_duplicates(subset='flanks', keep='first', inplace=True)
 # # bookkeeping
 del(flank_jns_group['max_dPSI'])
 flank_jns_group = flank_jns_group[['gene_id', 'lsv_id', 'seqid', 'junction0', 'mean_dpsi_per_lsv_junction',
-        'probability_non_changing', 'flanks', 'start', 'stop', 'strand']]
+        'probability_changing', 'flanks', 'start', 'stop', 'strand']]
 
 # Get all filtered flanks
 flank_jns_group.drop_duplicates().to_csv('0_Files/all_flanks_control.csv', sep='\t', index=False)
