@@ -42,7 +42,7 @@ with open('paths.json') as f:
 name = d["tissue1"] + "-" + d["tissue2"]
 file = sys.argv[1]+'MAJIQ/deltapsi/' + name + '.deltapsi.tsv'
 voila = pd.read_csv(file, delimiter='\t')
-col_list = ['gene_id', 'lsv_id', 'mean_dpsi_per_lsv_junction', 'probability_changing', 'junctions_coords', 'num_exons'] #, 'exons_coords']
+col_list = ['gene_id', 'lsv_id', 'mean_dpsi_per_lsv_junction', 'probability_non_changing', 'junctions_coords', 'num_exons'] #, 'exons_coords']
 voila = voila[col_list]
 
 # FILTER 1: filter erroneous LSVs
@@ -51,19 +51,19 @@ voila["num_exons"] = pd.to_numeric(voila["num_exons"])
 voila = voila[voila['num_exons'] > 0]
 
 # split column values to multiple lines
-voila = voila.assign(junctions_coords=voila['junctions_coords'].str.split(';'), mean_dpsi_per_lsv_junction=voila['mean_dpsi_per_lsv_junction'].str.split(';'), probability_changing=voila['probability_changing'].str.split(';'))
+voila = voila.assign(junctions_coords=voila['junctions_coords'].str.split(';'), mean_dpsi_per_lsv_junction=voila['mean_dpsi_per_lsv_junction'].str.split(';'), probability_non_changing=voila['probability_non_changing'].str.split(';'))
 
 # explode the list in the columns to create individual rows
-voila = voila.explode(['junctions_coords', 'mean_dpsi_per_lsv_junction', 'probability_changing']).reset_index(drop=True)
+voila = voila.explode(['junctions_coords', 'mean_dpsi_per_lsv_junction', 'probability_non_changing']).reset_index(drop=True)
 
 voila = voila[col_list]
 # skipping nan -> 99464127-nan
 voila = voila[~voila['junctions_coords'].str.contains("nan")]
 
-# FILTER 2: Drop rows with changing probability < 0.05. (remove DJU events)
-voila['pval'] = 1- pd.to_numeric(voila['probability_changing'])
+# FILTER 2: Drop rows with non_changing probability <= 0.05. (keep non-DJU events)
+voila['pval'] = 1- pd.to_numeric(voila['probability_non_changing'])
 voila = adjust_pvalue(voila, col='pval')
-voila = voila[pd.to_numeric(voila['adj_pval']) > 0.05]
+voila = voila[pd.to_numeric(voila['adj_pval']) <= 0.05]
 
 # STEP 3: Get the source and target indices of splice junctions
 voila[['source', 'target']] = voila['junctions_coords'].str.split('-', n=1, expand=True)
