@@ -17,25 +17,25 @@ def bedtools_input(hm, all_flanks):
 def run_bedtools(hm):
 
     file = '0_Files/flanks_'+ hm + '.bed'
-    os.system('bedtools intersect -loj -s -a 0_Files/exon_coords.bed -b ' + file + '| sort | uniq > 0_Files/epiexons_' + hm + '.bed')
+    os.system('bedtools intersect -loj -s -a 0_Files/exon_coords.bed -b ' + file + '| sort | uniq > 0_Files/epiexons_flanks_' + hm + '.bed')
 
 
 def post_bedtools(hm):
 
-    exons = pd.read_csv('0_Files/epiexons_' + hm + '.bed', delimiter='\t', header=None)
-    # # drop feature, strand, score etc.
-    # exons.drop([3, 4, 5, 9, 10, 11], axis=1, inplace=True)
-    # # assign 0 to exons that have no flanks
-    # exons.replace([-1, '.'], [0, 0], inplace=True)
-    # exons = exons.set_axis(['seqid', 'exon_start', 'exon_stop', 'chr', 'flank_start', 'flank_stop'],
-    #                axis=1) #=True)
+    exons = pd.read_csv('0_Files/epiexons_flanks_' + hm + '.bed', delimiter='\t', header=None)
+    # drop feature, strand, score etc.
+    exons.drop([3, 4, 5, 9, 10, 11], axis=1, inplace=True)
+    # assign 0 to exons that have no flanks
+    exons.replace([-1, '.'], [0, 0], inplace=True)
+    exons = exons.set_axis(['seqid', 'exon_start', 'exon_stop', 'chr', 'flank_start', 'flank_stop'],
+                   axis=1) #=True)
     
-    # # keep exons that have flank annotation
-    # exons = exons[exons['flank_start'] !=0]
+    # keep exons that have flank annotation
+    exons = exons[exons['flank_start'] !=0]
 
-    # #keep seq id and co-ordinates of exons
-    # exons = exons[['seqid', 'exon_start', 'exon_stop']]
-    # exons.drop_duplicates(inplace=True)
+    #keep seq id and co-ordinates of exons
+    exons = exons[['seqid', 'exon_start', 'exon_stop']]
+    exons.drop_duplicates(inplace=True)
 
     exons.to_csv('0_Files/epiexons_' + hm + '.bed', sep='\t', header=False, index=None)
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     
     flanks = pd.read_csv('0_Files/all_flanks.csv', delimiter='\t')
 
-    for hm in hms[:1]:
-        # bedtools_input(hm, flanks)
-        # run_bedtools(hm)
+    for hm in hms:
+        bedtools_input(hm, flanks)
+        run_bedtools(hm)
         post_bedtools(hm)
