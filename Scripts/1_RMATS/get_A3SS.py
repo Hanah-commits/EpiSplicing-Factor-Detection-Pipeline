@@ -31,6 +31,11 @@ rmats = pd.concat([row1, row2], ignore_index=True)
 
 # same event mentioned more than once
 rmats = rmats.drop_duplicates()
+
+# get all dPSI scores of all A3SS events of each exon 
+rmats['dPSI'] = rmats.groupby('exonStart_0base')['IncLevelDifference'].transform(lambda x: ','.join(x.astype(str)))
+# TODO: why long and short versions of exon have different flanking exons?
+
 # same exon mentioned more than once
 rmats = rmats.drop_duplicates(subset=['exonStart_0base'])
 
