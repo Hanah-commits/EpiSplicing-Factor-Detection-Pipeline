@@ -68,5 +68,5 @@ for i in range(0,2):
     
 
     df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
-    #df_bed.to_csv(f'0_Files/A3SS_{type[i]}.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
+    df_bed.to_csv(f'0_Files/A3SS_{type[i]}.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
     df.to_csv(f'0_Files/A3SS_exons_{type[i]}.csv', index=False, sep='\t', header=True)
