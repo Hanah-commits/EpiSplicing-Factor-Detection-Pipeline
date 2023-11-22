@@ -8,15 +8,34 @@ from scipy.stats import gaussian_kde
 # STEP 1: Extract required columns and split individual dpsi values, their probabilities and junction coords
 
 # Keep relevant columns
-file = '/Users/hanah/EpiSplicing_RMATS/Output/neuro-H1/RMATS/SE.MATS.JCEC.txt'
+file = '/Users/hanah/EpiSplicing_RMATS/Output/neuro-H1/RMATS/SE.MATS.JC.txt'
 rmats = pd.read_csv(file, delimiter='\t')
 col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd']
 rmats = rmats[col_list]
 
+# use | dPSI | and only true values
+rmats['IncLevelDifference'] = rmats['IncLevelDifference'].abs()
+rmats = rmats[rmats['FDR'] <=0.05]
+
 # FILTER 1: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
 rmats_AS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() >= 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
+# rmats_CS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() < 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
 rmats_CS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() < 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
 
+# FILTER 2: If skipped exon is reported many times,  pick single dPSI score (can happen if down/upstream exons vary)
+
+## get the largest dPSI value for AS exons (most differentially used score)
+rmats_AS['dPSI'] = rmats_AS.groupby('exonStart_0base')['IncLevelDifference'].transform(lambda x: ','.join(x.astype(str)))
+rmats_AS['max_dPSI'] = rmats_AS['dPSI'].str.split(',')\
+                        .apply(lambda x: max(map(float, x
+                        )) if x[0] else None)  # string -> list of strings -> list of floats -> max float
+rmats_AS = rmats_AS[rmats_AS['IncLevelDifference'] == rmats_AS['max_dPSI']]
+
+## get the smallest dPSI value for CS exons (most constitutively used score)
+rmats_CS['dPSI'] = rmats_CS.groupby('exonStart_0base')['IncLevelDifference'].transform(lambda x: ','.join(x.astype(str)))
+rmats_CS['min_dPSI'] = rmats_CS['dPSI'].str.split(',')\
+                        .apply(lambda x: min(map(float, x)) if x[0] else None)  
+rmats_CS = rmats_CS[rmats_CS['IncLevelDifference'] == rmats_CS['min_dPSI']]
 
 # STEP 2: Prepare bedtools input
 
@@ -59,38 +78,65 @@ for i in range(0,2):
 
 
 
-def view_dpsi():
-    data1 = rmats_AS['IncLevelDifference'].abs().values.tolist()
-    data2 = rmats_CS['IncLevelDifference'].abs().values.tolist()
+def view_dpsi(type):
 
-    kde1 = gaussian_kde(data1)
-    kde2 = gaussian_kde(data2)
+    if type == "sub":
+        data1 = rmats_AS['IncLevelDifference'].abs().values.tolist()
+        data2 = rmats_CS['IncLevelDifference'].abs().values.tolist()
 
-    # Generate points on the x-axis for the KDE plots
-    x1 = np.linspace(min(data1), max(data1), 1000)
-    x2 = np.linspace(min(data2), max(data2), 1000)
+        kde1 = gaussian_kde(data1)
+        kde2 = gaussian_kde(data2)
 
-    # Calculate the KDE values for both data lists
-    kde_values1 = kde1(x1)
-    kde_values2 = kde2(x2)
+        # Generate points on the x-axis for the KDE plots
+        x1 = np.linspace(min(data1), max(data1), 1000)
+        x2 = np.linspace(min(data2), max(data2), 1000)
 
-    # Create two subplots side by side
-    fig, axs = plt.subplots(1, 2, figsize=(12, 5))
+        # Calculate the KDE values for both data lists
+        kde_values1 = kde1(x1)
+        kde_values2 = kde2(x2)
 
-    # Plot the KDE for data1 on the first subplot
-    axs[0].plot(x1, kde_values1)
-    axs[0].set_xlabel('| dPSI | values of DJU events (Alternative)')
-    axs[0].set_ylabel('Density')
+        # Create two subplots side by side
+        fig, axs = plt.subplots(1, 2, figsize=(12, 5))
 
-
-    # Plot the KDE for data2 on the second subplot
-    axs[1].plot(x2, kde_values2)
-    axs[1].set_xlabel('| dPSI | values of non-DJU events (constitutive)')
-    axs[1].set_ylabel('Density')
+        # Plot the KDE for data1 on the first subplot
+        axs[0].plot(x1, kde_values1)
+        axs[0].set_xlabel('| dPSI | values of DJU events (Alternative)')
+        axs[0].set_ylabel('Density')
 
 
-    # Adjust spacing between subplots
-    plt.tight_layout()
+        # Plot the KDE for data2 on the second subplot
+        axs[1].plot(x2, kde_values2)
+        axs[1].set_xlabel('| dPSI | values of non-DJU events (constitutive)')
+        axs[1].set_ylabel('Density')
 
-    # Show the plots
-    plt.show()
+
+        # Adjust spacing between subplots
+        plt.tight_layout()
+
+        # Show the plots
+        plt.show()
+
+    elif type == "main":
+        data = rmats['IncLevelDifference'].abs().values.tolist()
+        kde = gaussian_kde(data)
+       
+
+        # Generate points on the x-axis for the KDE plots
+        x1 = np.linspace(min(data), max(data), 1000)
+
+        # Calculate the KDE values for both data lists
+        kde_values1 = kde(x1)
+
+        # Create two subplots side by side
+        fig, axs = plt.subplots(1, figsize=(12, 5))
+
+        # Plot the KDE for data1 on the first subplot
+        axs.plot(x1, kde_values1)
+        axs.set_xlabel('| dPSI | values of SE events')
+        axs.set_ylabel('Density')
+
+        # Adjust spacing between subplots
+        plt.tight_layout()
+
+        # Show the plots
+        plt.show()
