@@ -8,7 +8,7 @@ from scipy.stats import gaussian_kde
 # STEP 1: Extract required columns and split individual dpsi values, their probabilities and junction coords
 
 # Keep relevant columns
-file = '/Users/hanah/EpiSplicing_RMATS/Output/neuro-H1/RMATS/MXE.MATS.JCEC.txt'
+file = '/Users/hanah/EpiSplicing_RMATS/Output/neuro-H1/RMATS/MXE.MATS.JC.txt'
 rmats = pd.read_csv(file, delimiter='\t')
 
 col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', '1stExonStart_0base', '1stExonEnd', '2ndExonStart_0base', '2ndExonEnd']
