@@ -24,15 +24,23 @@ rmats_CS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() < 0.2) & (pd.
 # FILTER 2: If skipped exon is reported many times,  pick single dPSI score (can happen if down/upstream exons vary)
 
 ## get the largest dPSI value for AS exons (most differentially used score)
-
-for df in [rmats_AS, rmats_CS]:
+rmats_AS['mad_dPSI'] = 0
+for i, df in enumerate([rmats_AS, rmats_CS]):
+    # Create 'dPSI' and 'max_dPSI' columns
     df['dPSI'] = df.groupby('exonStart_0base')['IncLevelDifference'].transform(lambda x: ','.join(x.astype(str)))
-    df['max_dPSI'] = df['dPSI'].str.split(',')\
-                            .apply(lambda x: max(map(float, x)) if x[0] else None)  # string -> list of strings -> list of floats -> max float
+    df['max_dPSI'] = df['dPSI'].str.split(',').apply(lambda x: max(map(float, x)) if x[0] else None)
+
+    # Keep only rows where 'IncLevelDifference' is equal to 'max_dPSI'
     df = df[df['IncLevelDifference'] == df['max_dPSI']]
 
-    # FILTER 3: Drop duplicate exon entries (occurs when exon has multiple, identical dPSI entries)
+    # FILTER 3: Drop duplicate exon entries
     df = df.drop_duplicates(subset=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], keep='first')
+
+    # Assign the modified DataFrame back to the original variable
+    if i == 0:
+        rmats_AS = df
+    else:
+        rmats_CS = df
 
 # FILTER 4: Get only the exons from rmats_CS that are unique to it (not in rmats_AS)
 merged_df = pd.merge(rmats_CS, rmats_AS[["geneSymbol", "strand", "exonStart_0base", "exonEnd"]], on=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], how='left', indicator=True)
