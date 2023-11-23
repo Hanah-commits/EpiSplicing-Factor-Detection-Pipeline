@@ -1,7 +1,7 @@
 import os
 
 exon_types = ['AS', 'CS']
-event_types = ['A3SS', 'A5SS', 'SE', 'MXE']
+event_types = ['SE', 'MXE']
 flanks = ['50','100','200']
 
 for exon_type in exon_types:
