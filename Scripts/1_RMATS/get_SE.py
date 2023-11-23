@@ -36,9 +36,13 @@ rmats_CS['min_dPSI'] = rmats_CS['dPSI'].str.split(',')\
                         .apply(lambda x: min(map(float, x)) if x[0] else None)  
 rmats_CS = rmats_CS[rmats_CS['IncLevelDifference'] == rmats_CS['min_dPSI']]
 
-# incase same dpsi score occurs many times
-rmats_AS = rmats_AS.drop_duplicates(subset=["geneSymbol", "strand", "exonStart_0base", "exonEnd"])
-rmats_CS = rmats_CS.drop_duplicates(subset=["geneSymbol", "strand", "exonStart_0base", "exonEnd"])
+# FILTER 3: Drop duplicate exon entries (occurs when exon has multiple, identical dPSI entries)
+rmats_AS = rmats_AS.drop_duplicates(subset=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], keep='first')
+rmats_CS = rmats_CS.drop_duplicates(subset=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], keep='first')
+
+# FILTER 4: Get only the exons from rmats_CS that are unique to it (not in rmats_AS)
+merged_df = pd.merge(rmats_CS, rmats_AS[["geneSymbol", "strand", "exonStart_0base", "exonEnd"]], on=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], how='left', indicator=True)
+rmats_CS = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
 
 # STEP 2: Prepare bedtools input
 
