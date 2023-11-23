@@ -24,21 +24,15 @@ rmats_CS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() < 0.2) & (pd.
 # FILTER 2: If skipped exon is reported many times,  pick single dPSI score (can happen if down/upstream exons vary)
 
 ## get the largest dPSI value for AS exons (most differentially used score)
-rmats_AS['dPSI'] = rmats_AS.groupby('exonStart_0base')['IncLevelDifference'].transform(lambda x: ','.join(x.astype(str)))
-rmats_AS['max_dPSI'] = rmats_AS['dPSI'].str.split(',')\
-                        .apply(lambda x: max(map(float, x
-                        )) if x[0] else None)  # string -> list of strings -> list of floats -> max float
-rmats_AS = rmats_AS[rmats_AS['IncLevelDifference'] == rmats_AS['max_dPSI']]
 
-## get the smallest dPSI value for CS exons (most constitutively used score)
-rmats_CS['dPSI'] = rmats_CS.groupby('exonStart_0base')['IncLevelDifference'].transform(lambda x: ','.join(x.astype(str)))
-rmats_CS['min_dPSI'] = rmats_CS['dPSI'].str.split(',')\
-                        .apply(lambda x: min(map(float, x)) if x[0] else None)  
-rmats_CS = rmats_CS[rmats_CS['IncLevelDifference'] == rmats_CS['min_dPSI']]
+for df in [rmats_AS, rmats_CS]:
+    df['dPSI'] = df.groupby('exonStart_0base')['IncLevelDifference'].transform(lambda x: ','.join(x.astype(str)))
+    df['max_dPSI'] = df['dPSI'].str.split(',')\
+                            .apply(lambda x: max(map(float, x)) if x[0] else None)  # string -> list of strings -> list of floats -> max float
+    df = df[df['IncLevelDifference'] == df['max_dPSI']]
 
-# FILTER 3: Drop duplicate exon entries (occurs when exon has multiple, identical dPSI entries)
-rmats_AS = rmats_AS.drop_duplicates(subset=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], keep='first')
-rmats_CS = rmats_CS.drop_duplicates(subset=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], keep='first')
+    # FILTER 3: Drop duplicate exon entries (occurs when exon has multiple, identical dPSI entries)
+    df = df.drop_duplicates(subset=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], keep='first')
 
 # FILTER 4: Get only the exons from rmats_CS that are unique to it (not in rmats_AS)
 merged_df = pd.merge(rmats_CS, rmats_AS[["geneSymbol", "strand", "exonStart_0base", "exonEnd"]], on=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], how='left', indicator=True)
