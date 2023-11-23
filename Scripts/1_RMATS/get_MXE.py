@@ -14,6 +14,10 @@ rmats = pd.read_csv(file, delimiter='\t')
 col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', '1stExonStart_0base', '1stExonEnd', '2ndExonStart_0base', '2ndExonEnd']
 rmats = rmats[col_list]
 
+# use | dPSI | and only true values
+rmats['IncLevelDifference'] = rmats['IncLevelDifference'].abs()
+rmats = rmats[rmats['FDR'] <=0.05]
+
 # STEP 2 : Split into multiple rows, keeping one exon coord in one row.
 
 # Create two DataFrames, one for each row
@@ -24,15 +28,60 @@ row2 = rmats[['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FD
 row1.columns = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd']
 row2.columns = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd']
 
+# mark exon order
+row1['exon_order'] = 1
+row2['exon_order'] = 2
+
 # Concatenate the two DataFrames to get the output
 rmats = pd.concat([row1, row2], ignore_index=True)
 
-# FILTER 1: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
+# STEP 3: Get dPSI scores based on inclusion exon
+# NOTE: the inclusion isoform includes the exon that is “earlier” in the transcript.
+
+rmats['dPSI'] = np.where(
+    (rmats['strand'] == '+') & (rmats['exon_order'] == 1),
+    rmats['IncLevelDifference'],
+    np.where(
+        (rmats['strand'] == '+') & (rmats['exon_order'] == 2),
+        1 - rmats['IncLevelDifference'],
+        np.where(
+            (rmats['strand'] == '-') & (rmats['exon_order'] == 2),
+            rmats['IncLevelDifference'],
+            np.where(
+                (rmats['strand'] == '-') & (rmats['exon_order'] == 1),
+                1 - rmats['IncLevelDifference'],
+                np.nan  # default value for other cases
+            )
+        )
+    )
+)
+
+# FILTER 1: Get true MXE events
+SE_exons = list(set(pd.read_csv("0_Files/SE_exons_AS.csv", delimiter='\t').exon_coord0.values.tolist()))
+rmats = rmats[(~rmats['exonStart_0base'].isin(SE_exons)) & (~rmats['exonEnd'].isin(SE_exons))] # covers A3SS,A5SS versions of skipped exons
+
+
+# FILTER 2: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
 rmats_AS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() >= 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
 rmats_CS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() < 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
 
+# FILTER 3: Get only the exons from rmats_CS that are unique to it (not in rmats_AS)
+merged_df = pd.merge(rmats_CS, rmats_AS[["geneSymbol", "strand", "exonStart_0base", "exonEnd"]], on=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], how='left', indicator=True)
+rmats_CS = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
 
-# STEP 2: Prepare bedtools input
+# FILTER 4: Keep coords of single version of exon if A3SS/A5SS events exist (to prevent 2+ flanks per exon)
+
+# A5SS
+rmats_AS.sort_values(by=['exonStart_0base', 'IncLevelDifference'], ascending=[True, False], inplace=True)
+rmats_AS.drop_duplicates(subset=['exonStart_0base'], keep='first', inplace=True)
+rmats_CS.sort_values(by=['exonStart_0base', 'IncLevelDifference'], ascending=[True, False], inplace=True)
+rmats_CS.drop_duplicates(subset=['exonStart_0base'], keep='first', inplace=True)
+
+# A3SS
+rmats_AS.sort_values(by=['exonEnd', 'IncLevelDifference'], ascending=[True, False], inplace=True)
+rmats_AS.drop_duplicates(subset=['exonEnd'], keep='first', inplace=True)
+rmats_CS.sort_values(by=['exonEnd', 'IncLevelDifference'], ascending=[True, False], inplace=True)
+rmats_CS.drop_duplicates(subset=['exonEnd'], keep='first', inplace=True)
 
 dfs = [rmats_AS, rmats_CS]
 type = ['AS', 'CS']
@@ -60,4 +109,3 @@ for i in range(0,2):
     df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
     df_bed.to_csv(f'0_Files/MXE_{type[i]}.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
     df.to_csv(f'0_Files/MXE_exons_{type[i]}.csv', index=False, sep='\t', header=True)
-
