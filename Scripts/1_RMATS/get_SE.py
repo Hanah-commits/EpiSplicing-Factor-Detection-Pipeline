@@ -38,6 +38,21 @@ for df in [rmats_AS, rmats_CS]:
 merged_df = pd.merge(rmats_CS, rmats_AS[["geneSymbol", "strand", "exonStart_0base", "exonEnd"]], on=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], how='left', indicator=True)
 rmats_CS = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
 
+# FILTER 5: Keep coords of single version of exon if A3SS/A5SS events exist (to prevent 2+ flanks per exon)
+
+# A5SS
+rmats_AS.sort_values(by=['exonStart_0base', 'max_dPSI'], ascending=[True, False], inplace=True)
+rmats_AS.drop_duplicates(subset=['exonStart_0base'], keep='first', inplace=True)
+rmats_CS.sort_values(by=['exonStart_0base', 'max_dPSI'], ascending=[True, False], inplace=True)
+rmats_CS.drop_duplicates(subset=['exonStart_0base'], keep='first', inplace=True)
+
+# A3SS
+rmats_AS.sort_values(by=['exonEnd', 'max_dPSI'], ascending=[True, False], inplace=True)
+rmats_AS.drop_duplicates(subset=['exonEnd'], keep='first', inplace=True)
+rmats_CS.sort_values(by=['exonEnd', 'max_dPSI'], ascending=[True, False], inplace=True)
+rmats_CS.drop_duplicates(subset=['exonEnd'], keep='first', inplace=True)
+
+
 # STEP 2: Prepare bedtools input
 
 dfs = [rmats_AS, rmats_CS]
