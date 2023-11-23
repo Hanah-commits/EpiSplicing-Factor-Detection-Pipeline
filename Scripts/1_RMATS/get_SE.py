@@ -36,6 +36,10 @@ rmats_CS['min_dPSI'] = rmats_CS['dPSI'].str.split(',')\
                         .apply(lambda x: min(map(float, x)) if x[0] else None)  
 rmats_CS = rmats_CS[rmats_CS['IncLevelDifference'] == rmats_CS['min_dPSI']]
 
+# incase same dpsi score occurs many times
+rmats_AS = rmats_AS.drop_duplicates(subset=["geneSymbol", "strand", "exonStart_0base", "exonEnd"])
+rmats_CS = rmats_CS.drop_duplicates(subset=["geneSymbol", "strand", "exonStart_0base", "exonEnd"])
+
 # STEP 2: Prepare bedtools input
 
 dfs = [rmats_AS, rmats_CS]
