@@ -24,14 +24,13 @@ rmats_CS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() < 0.2) & (pd.
 # FILTER 2: If skipped exon is reported many times,  pick single dPSI score (can happen if down/upstream exons vary)
 
 ## get the largest dPSI value for AS exons (most differentially used score)
-rmats_AS['mad_dPSI'] = 0
 for i, df in enumerate([rmats_AS, rmats_CS]):
-    # Create 'dPSI' and 'max_dPSI' columns
+    # Create 'dPSI' and 'dPSI' columns
     df['dPSI'] = df.groupby('exonStart_0base')['IncLevelDifference'].transform(lambda x: ','.join(x.astype(str)))
-    df['max_dPSI'] = df['dPSI'].str.split(',').apply(lambda x: max(map(float, x)) if x[0] else None)
+    df['dPSI'] = df['dPSI'].str.split(',').apply(lambda x: max(map(float, x)) if x[0] else None)
 
-    # Keep only rows where 'IncLevelDifference' is equal to 'max_dPSI'
-    df = df[df['IncLevelDifference'] == df['max_dPSI']]
+    # Keep only rows where 'IncLevelDifference' is equal to 'dPSI'
+    df = df[df['IncLevelDifference'] == df['dPSI']]
 
     # FILTER 3: Drop duplicate exon entries
     df = df.drop_duplicates(subset=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], keep='first')
@@ -49,15 +48,15 @@ rmats_CS = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge']
 # FILTER 5: Keep coords of single version of exon if A3SS/A5SS events exist (to prevent 2+ flanks per exon)
 
 # A5SS
-rmats_AS.sort_values(by=['exonStart_0base', 'max_dPSI'], ascending=[True, False], inplace=True)
+rmats_AS.sort_values(by=['exonStart_0base', 'dPSI'], ascending=[True, False], inplace=True)
 rmats_AS.drop_duplicates(subset=['exonStart_0base'], keep='first', inplace=True)
-rmats_CS.sort_values(by=['exonStart_0base', 'max_dPSI'], ascending=[True, False], inplace=True)
+rmats_CS.sort_values(by=['exonStart_0base', 'dPSI'], ascending=[True, False], inplace=True)
 rmats_CS.drop_duplicates(subset=['exonStart_0base'], keep='first', inplace=True)
 
 # A3SS
-rmats_AS.sort_values(by=['exonEnd', 'max_dPSI'], ascending=[True, False], inplace=True)
+rmats_AS.sort_values(by=['exonEnd', 'dPSI'], ascending=[True, False], inplace=True)
 rmats_AS.drop_duplicates(subset=['exonEnd'], keep='first', inplace=True)
-rmats_CS.sort_values(by=['exonEnd', 'max_dPSI'], ascending=[True, False], inplace=True)
+rmats_CS.sort_values(by=['exonEnd', 'dPSI'], ascending=[True, False], inplace=True)
 rmats_CS.drop_duplicates(subset=['exonEnd'], keep='first', inplace=True)
 
 
