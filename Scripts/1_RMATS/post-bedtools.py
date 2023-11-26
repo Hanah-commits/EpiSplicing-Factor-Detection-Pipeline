@@ -3,7 +3,7 @@ import os
 import json
 
 exon_types = ['CS', 'AS']
-event_types = ['A3SS', 'A5SS', 'SE', 'MXE']
+event_types = ['SE', 'MXE']
 flank_lens = [50, 100, 200]
 
 for exon_type in exon_types:
@@ -83,7 +83,7 @@ for exon_type in exon_types:
 
                 # FILTER 3: if flank has 1+ junctions, keep junction with highest dPSI value
                 flank_jns_group['max_dPSI'] = flank_jns_group['IncLevelDifference'].str.split(',')\
-                        .apply(lambda x: min(map(float, x)))  # string -> list of strings -> list of floats -> max float
+                        .apply(lambda x: max(map(float, x)))  # string -> list of strings -> list of floats -> max float
 
                 # # get the corresponding junction for each flank's max dPSI value
                 flank_jns_group = pd.merge(flank_jns_group[['flanks', 'max_dPSI']], flank_jns, on=['flanks'], how='inner')
