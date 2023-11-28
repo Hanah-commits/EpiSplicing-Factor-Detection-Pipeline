@@ -109,3 +109,22 @@ for i in range(0,2):
     df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
     df_bed.to_csv(f'0_Files/MXE_{type[i]}.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
     df.to_csv(f'0_Files/MXE_exons_{type[i]}.csv', index=False, sep='\t', header=True)
+
+
+# FILTER 5: Remove CS SE exons which are reported in AS MXE event
+SE_exons_CS = pd.read_csv("0_Files/SE_exons_CS.csv", delimiter='\t')
+rmats_AS_exons = list(set(rmats_AS.exonStart_0base.values.tolist() + rmats_AS.exonEnd.values.tolist()))
+df = SE_exons_CS[~SE_exons_CS['exon_coord0'].isin(rmats_AS_exons)]
+
+keep_cols = ['chr', 'exon_coord0', 'strand']
+df_bed = df[keep_cols]
+df_bed = df_bed.drop_duplicates()
+# to fit bedtools input requirements
+df_bed['exon_coord1'] = pd.to_numeric(df_bed['exon_coord0']) + 1
+df_bed['feature'] = "flank"
+df_bed['score'] = "."
+
+
+df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
+df_bed.to_csv(f'0_Files/SE_CS.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
+df.to_csv(f'0_Files/SE_exons_CS.csv', index=False, sep='\t', header=True)
