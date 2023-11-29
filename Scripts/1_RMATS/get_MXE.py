@@ -47,7 +47,7 @@ os.system('bedtools intersect -a 0_Files/rmats_query.bed -b 0_Files/exon_coords.
 rmats_filtered = pd.read_csv('0_Files/rmats_result.bed', delimiter='\t', header=None) # 6489
 rmats_filtered.columns = ['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand']
 rmats = pd.merge(rmats, rmats_filtered, on=['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand'], how='inner')
-col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd']
+col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd', 'exon_order']
 rmats = rmats[col_list]
 
 # housekeeping
