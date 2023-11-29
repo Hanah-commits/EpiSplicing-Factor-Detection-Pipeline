@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
+import os
 
 
 
@@ -16,6 +17,25 @@ rmats = rmats[col_list]
 # use | dPSI | and only true values
 rmats['IncLevelDifference'] = rmats['IncLevelDifference'].abs()
 rmats = rmats[rmats['FDR'] <=0.05]
+
+
+# FILTER 0: Filter out exons reported by RMATS that don't belong to transcripts with TSL 1-3
+
+# write df into bed file
+rmats['feature'] = "flank"
+rmats['score'] = "."
+rmats[['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand']].to_csv('0_Files/rmats_query.bed', index=False, sep='\t', header=False )
+
+# run bedtools
+os.system('bedtools intersect -a 0_Files/rmats_query.bed -b 0_Files/exon_coords.bed -wa | sort | uniq > 0_Files/rmats_result.bed')
+
+rmats_filtered = pd.read_csv('0_Files/rmats_result.bed', delimiter='\t', header=None) # 6489
+rmats_filtered.columns = ['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand']
+rmats = pd.merge(rmats, rmats_filtered, on=['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand'], how='inner')
+
+# housekeeping
+os.system('rm 0_Files/rmats_*.bed')
+
 
 # FILTER 1: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
 rmats_AS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() >= 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
@@ -70,7 +90,7 @@ for i, df in enumerate([rmats_AS, rmats_CS]):
         rmats_CS = df
 
 
-# STEP 2: Prepare bedtools input
+STEP 2: Prepare bedtools input
 
 dfs = [rmats_AS, rmats_CS]
 type = ['AS', 'CS']
