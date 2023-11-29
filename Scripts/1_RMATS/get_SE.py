@@ -47,17 +47,27 @@ rmats_CS = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge']
 
 # FILTER 5: Keep coords of single version of exon if A3SS/A5SS events exist (to prevent 2+ flanks per exon)
 
-# A5SS
-rmats_AS.sort_values(by=['exonStart_0base', 'dPSI'], ascending=[True, False], inplace=True)
-rmats_AS.drop_duplicates(subset=['exonStart_0base'], keep='first', inplace=True)
-rmats_CS.sort_values(by=['exonStart_0base', 'dPSI'], ascending=[True, False], inplace=True)
-rmats_CS.drop_duplicates(subset=['exonStart_0base'], keep='first', inplace=True)
+# #                   GeneID geneSymbol    chr strand  IncLevelDifference       FDR  exonStart_0base   exonEnd   dPSI
+# # 4634  ENSG00000126456.15       IRF3  chr19      -               0.449  0.000202         49664442  49664673  0.449
+# # 4636  ENSG00000126456.15       IRF3  chr19      -               0.584  0.000012         49664552  49664673  0.584
+# # 4640  ENSG00000126456.15       IRF3  chr19      -               0.363  0.015466         49664586  49664673  0.363
 
-# A3SS
-rmats_AS.sort_values(by=['exonEnd', 'dPSI'], ascending=[True, False], inplace=True)
-rmats_AS.drop_duplicates(subset=['exonEnd'], keep='first', inplace=True)
-rmats_CS.sort_values(by=['exonEnd', 'dPSI'], ascending=[True, False], inplace=True)
-rmats_CS.drop_duplicates(subset=['exonEnd'], keep='first', inplace=True)
+def A3SS_A5SS_filter(group, subset_column):
+    group.sort_values(by=['exonStart_0base', subset_column], ascending=[True, False], inplace=True)
+    group.drop_duplicates(subset=['exonStart_0base'], keep='first', inplace=True)
+    group.sort_values(by=['exonEnd', subset_column], ascending=[True, False], inplace=True)
+    group.drop_duplicates(subset=['exonEnd'], keep='first', inplace=True)
+    return group
+
+for i, df in enumerate([rmats_AS, rmats_CS]):
+    df = df.groupby('geneSymbol').apply(lambda x: A3SS_A5SS_filter(x, 'dPSI'))
+    df = df.reset_index(drop=True)
+
+    # Assign the modified DataFrame back to the original variable
+    if i == 0:
+        rmats_AS = df
+    else:
+        rmats_CS = df
 
 
 # STEP 2: Prepare bedtools input
