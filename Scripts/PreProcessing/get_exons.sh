@@ -36,7 +36,12 @@ awk 'BEGIN {OFS="\t"} {
 awk 'BEGIN {OFS="\t"} {print $1,$7, $7+1, "TSS", ".", $6}' 0_Files/TSS.tsv | sort | uniq > 0_Files/TSS.bed
 
 # Get all exons of transcripts with TSL 1-3
-grep -E "transcript_support_level=[123]" $gff3 | grep "protein_coding" | awk -F'\t' -v OFS='\t' '$3 == "exon" { print $1, $4, $5, "Exon", ".", $7}' | sort | uniq > 0_Files/all_exons.bed
+grep -E "transcript_support_level=[123]" $gff3 | grep "protein_coding" | awk -F'\t' -v OFS='\t' '
+    $3 == "exon" {
+        match($9, /gene_name=([^;]+)/, gene_name);
+        print $1, $4, $5, "Exon", ".", $7, gene_name[1];
+    }
+' | sort | uniq > 0_Files/all_exons.bed
 
 #extend exon body by 200bp
 bedtools slop -i 0_Files/all_exons.bed -g $fasta.fai  -b 200 > 0_Files/exons_flanked.bed
