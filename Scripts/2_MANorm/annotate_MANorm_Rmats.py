@@ -14,7 +14,6 @@ prefix = sys.argv[1]+ 'MANorm/'
 for hm in hms:
     
     input = prefix + hm + '_' + tissue1 + '_peak_vs_' + hm + '_' + tissue2 +  '_peak_all_MAvalues.xls'
+    output = prefix + hm + '_flanks.bed'
 
-    for type in ['AS', 'CS']:
-        output = prefix + hm + '_flanks_' + type + '.bed'
-        os.system(f'bedtools intersect -loj -a 0_Files/filtered_flanks_{type}.bed -b ' + input + ' | sort | uniq > ' + output)
+    os.system('bedtools intersect -loj -a 0_Files/rmats_flanks200.bed -b ' + input + ' | sort | uniq > ' + output)
