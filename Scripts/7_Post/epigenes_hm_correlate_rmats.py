@@ -86,19 +86,9 @@ def indiv_hms():
     tissue1 = d['tissue1'].capitalize()
     tissue2 = d['tissue2'].capitalize()
 
-    dPSI_AS = pd.read_csv('0_Files/Filtered_dPSI_AS.csv', delimiter='\t')
-    dPSI_CS = pd.read_csv('0_Files/Filtered_dPSI_CS.csv', delimiter='\t')
-    peaks_AS = pd.read_csv('0_Files/Filtered_MValues_AS.csv', delimiter='\t')
-    peaks_CS = pd.read_csv('0_Files/Filtered_MValues_CS.csv', delimiter='\t')
-    dPSI_AS.drop_duplicates(inplace=True)
-    dPSI_CS.drop_duplicates(inplace=True)
-    peaks_AS.drop_duplicates(inplace=True)
-    peaks_CS.drop_duplicates(inplace=True)
-
-    # combine the scores of AS and CS
-    flanks_AS = pd.merge(dPSI_AS, peaks_AS, how="outer")
-    flanks_CS = pd.merge(dPSI_CS, peaks_CS, how="outer")
-    flanks = pd.concat([flanks_AS, flanks_CS], ignore_index=True)
+        # read dPSI and M-values
+    flanks = pd.read_csv('0_Files/Filtered_MValues_rmats.csv', delimiter='\t')
+    del flanks['strand']
 
     # FILTER 1: drop genes with less than 3 flanks
     flanks = flanks[flanks.groupby('geneSymbol').geneSymbol.transform(len) > 2]

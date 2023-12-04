@@ -73,16 +73,9 @@ def make_df(hm, control_flanks):
     print(hm)
 
     epi_file = '0_Files/dPSI_Mval_epi_' + hm + '.csv'
-    epi_hm_flanks = pd.read_csv(epi_file, delimiter='\t')
-    dju_genes = list(set(epi_hm_flanks['geneSymbol'].values.tolist()))
-    
-    
-    # split into AS and CS flanks
-    nondju_hm_flanks = control_flanks[control_flanks['geneSymbol'].isin(dju_genes) & (control_flanks["type"] == "non-dju")] 
-    dju_hm_flanks = control_flanks[control_flanks['geneSymbol'].isin(dju_genes) & (control_flanks["type"] == "dju")]
-
-    # get dju and non-dju flanks
-    both_hm_flanks = pd.concat([dju_hm_flanks, nondju_hm_flanks], ignore_index=True) #[['geneSymbol', 'dPSI', hm]]    
+    both_hm_flanks = pd.read_csv(epi_file, delimiter='\t')
+    dju_genes = list(set(both_hm_flanks['geneSymbol'].values.tolist()))
+    both_hm_flanks["type"] = both_hm_flanks.apply(lambda row: 'dju' if row['dPSI'] != 0 else 'non-dju', axis=1)
 
     # impute missing data points
     both_hm_flanks.fillna(0,inplace=True)
@@ -200,21 +193,10 @@ if __name__ == "__main__":
 
     hms = d["Histone modifications"]
 
-    dPSI_AS = pd.read_csv('0_Files/Filtered_dPSI_AS.csv', delimiter='\t')
-    dPSI_CS = pd.read_csv('0_Files/Filtered_dPSI_CS.csv', delimiter='\t')
-    peaks_AS = pd.read_csv('0_Files/Filtered_MValues_AS.csv', delimiter='\t')
-    peaks_CS = pd.read_csv('0_Files/Filtered_MValues_CS.csv', delimiter='\t')
-    dPSI_AS.drop_duplicates(inplace=True)
-    dPSI_CS.drop_duplicates(inplace=True)
-    peaks_AS.drop_duplicates(inplace=True)
-    peaks_CS.drop_duplicates(inplace=True)
+    # read dPSI and M-values
+    flanks = pd.read_csv('0_Files/Filtered_MValues_rmats.csv', delimiter='\t')
+    del flanks['strand']
 
-    # combine the scores of AS and CS
-    flanks_AS = pd.merge(dPSI_AS, peaks_AS, how="outer")
-    flanks_CS = pd.merge(dPSI_CS, peaks_CS, how="outer")
-    flanks_AS['type'] = 'dju'
-    flanks_CS['type'] = 'non-dju'
-    flanks = pd.concat([flanks_AS, flanks_CS], ignore_index=True)
 
     for hm in hms:
         # make correlation    plot of true epoigenes
