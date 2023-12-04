@@ -39,57 +39,63 @@ with open('paths.json') as f:
 
 hms = d["Histone modifications"]
 
-for type in ['AS', 'CS']:
-    peaksfiles = [f'{hm}_flanks_{type}.bed' for hm in hms] 
-    peak_dfs = []
 
-    flanks = pd.read_csv(f'0_Files/filtered_flanks_{type}.bed', delimiter='\t', header=None)
-    flanks.columns = ['seqid', 'start', 'stop']
-    flanks['flanks'] = flanks[['start', 'stop']].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
-    flanks.drop_duplicates(inplace=True)
+peaksfiles = [f'{hm}_flanks.bed' for hm in hms] 
+peak_dfs = []
 
-    for file in peaksfiles:
+flanks = pd.read_csv(f'0_Files/rmats_flanks200.bed', delimiter='\t', header=None)
+flanks.columns = ['chr', "flank_start", "flank_stop", "feature", "score", "strand", "geneSymbol", "dPSI"]
+flanks['flanks'] = flanks[['flank_start', 'flank_stop']].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
+flanks.drop_duplicates(inplace=True)
 
-        hm = file.split('_flanks')[0]
-        peaks = pd.read_csv(prefix+file, delimiter='\t', header=None)
-        peaks.drop([3, 8, 10, 11, 12], axis=1, inplace=True)
+for file in peaksfiles:
 
-        # assign 0 to flanks that have no peaks
-        peaks.replace([-1, '.'], [0, 0], inplace=True)
-        peaks[3] = peaks[[1, 2]].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
-        peaks.columns = ['seqid', 'flank0', 'flank1', 'peak0', 'peak1', 'summit', 'M_value', 'p_value', 'flanks']
+    hm = file.split('_flanks')[0]
+    peaks = pd.read_csv(prefix+file, delimiter='\t', header=None)
+    peaks.drop([3, 4, 8, 13, 15, 16, 17], axis=1, inplace=True)
 
-        peaks['M_value_abs'] = pd.to_numeric(peaks['M_value']).abs()
-        peaks.loc[peaks['M_value'] == 0, 'p_value'] = np.NaN # null pvalues if no peak in flank
+    # assign 0 to flanks that have no peaks
+    peaks.replace([-1, '.'], [0, 0], inplace=True)
+    peaks[3] = peaks[[1, 2]].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
+    peaks.columns = ['chr',  "flank_start", "flank_stop", "strand", "geneSymbol", "dPSI", 'peak0', 'peak1', 'summit', 'M_value', 'p_value', 'flanks']
 
-        # keep M-values of peaks with adj P-value <= 0.05
-        peaks['p_value'] = pd.to_numeric(peaks['p_value'])
-        peaks = adjust_pvalue(peaks, col='p_value')
-        peaks.loc[pd.to_numeric(peaks['adj_pval']) > 0.05, 'M_value_abs'] = 0 
+    peaks['M_value_abs'] = pd.to_numeric(peaks['M_value']).abs()
+    peaks.loc[peaks['M_value'] == 0, 'p_value'] = np.NaN # null pvalues if no peak in flank
 
-        # # get all peaks that belong to each flank
-        flank_peaks_group = peaks.groupby(['seqid', 'flanks'])['M_value_abs'] \
-            .apply(lambda val: ','.join(str(v) for v in val)).reset_index()
+    # keep M-values of peaks with adj P-value <= 0.05
+    peaks['p_value'] = pd.to_numeric(peaks['p_value'])
+    peaks = adjust_pvalue(peaks, col='p_value')
+    peaks.loc[pd.to_numeric(peaks['adj_pval']) > 0.05, 'M_value_abs'] = 0
 
-        # # FILTER 1: if flank has 1+ peaks, keep peak with highest abs M-value
-        flank_peaks_group['M_value_abs'] = flank_peaks_group['M_value_abs'].str.split(',')  # string -> list of strings
-        flank_peaks_group['max_' + hm] = flank_peaks_group['M_value_abs'].apply(lambda x: max(map(float, x)))  # max MValue
-        # # flank_peaks_group['#peaks_'+hm] = flank_peaks_group['M_value'].apply(lambda x: len(x))  # no of peaks/ flank
+    # # get all peaks that belong to each flank
+    flank_peaks_group = peaks.groupby(['chr', 'flanks'])['M_value_abs'] \
+        .apply(lambda val: ','.join(str(v) for v in val)).reset_index()
 
-        # # get the corresponding peak for each flank's max M-value
-        flank_peaks_group = pd.merge(flank_peaks_group[['flanks', 'max_' + hm]], peaks, on=['flanks'],
-                                    how='inner')
-        # # flank_peaks_group = pd.merge(flank_peaks_group[['flanks', 'max_'+hm, '#peaks_'+hm]], peaks, on=['flanks'], how='inner')
-        flank_peaks_group = flank_peaks_group[flank_peaks_group['M_value_abs'] == flank_peaks_group['max_' + hm]]
+    # # FILTER 1: if flank has 1+ peaks, keep peak with highest abs M-value
+    flank_peaks_group['M_value_abs'] = flank_peaks_group['M_value_abs'].str.split(',')  # string -> list of strings
+    flank_peaks_group['max_' + hm] = flank_peaks_group['M_value_abs'].apply(lambda x: max(map(float, x)))  # max MValue
+    # # flank_peaks_group['#peaks_'+hm] = flank_peaks_group['M_value'].apply(lambda x: len(x))  # no of peaks/ flank
 
-        # FILTER 4: If flank has 1+ peaks with same max |Mvalue|, keep one
-        flank_peaks_group.drop_duplicates(subset='flanks', keep='first', inplace=True)
+    # # get the corresponding peak for each flank's max M-value
+    flank_peaks_group = pd.merge(flank_peaks_group[['flanks', 'max_' + hm]], peaks, on=['flanks'],
+                                how='inner')
+    # # flank_peaks_group = pd.merge(flank_peaks_group[['flanks', 'max_'+hm, '#peaks_'+hm]], peaks, on=['flanks'], how='inner')
+    flank_peaks_group = flank_peaks_group[flank_peaks_group['M_value_abs'] == flank_peaks_group['max_' + hm]]
 
-        flank_peaks_group.rename(columns={'M_value': hm}, inplace=True)
-        peak_dfs.append(flank_peaks_group[['flanks', hm]])  # 'max_' + hm, '#peaks_'+hm]])
+    # FILTER 2: If flank has 1+ peaks with same max |Mvalue|, keep one
+    flank_peaks_group.drop_duplicates(subset='flanks', keep='first', inplace=True)
 
-    peak_dfs = [df.set_index('flanks') for df in peak_dfs]
-    peak_dfs = pd.concat(peak_dfs, axis=1)
-    peak_dfs = peak_dfs.loc[~(peak_dfs==0).all(axis=1)]
+    flank_peaks_group.rename(columns={'M_value': hm}, inplace=True)
+    peak_dfs.append(flank_peaks_group[['flanks', 'geneSymbol', 'strand', 'dPSI', hm]]) 
 
-    peak_dfs.to_csv(f'0_Files/Filtered_MValues_{type}.csv', sep='\t')
+peak_dfs = [df.set_index('flanks') for df in peak_dfs]
+peak_dfs = pd.concat(peak_dfs, axis=1)
+
+# Identify and keep only the first occurrence of each column name
+unique_columns = ~peak_dfs.columns.duplicated(keep='first')
+peak_dfs = peak_dfs.loc[:, unique_columns]
+
+# no peak for hm A in flank
+peak_dfs.fillna(0, inplace=True)
+
+peak_dfs.to_csv(f'0_Files/Filtered_MValues_rmats.csv', sep='\t')
