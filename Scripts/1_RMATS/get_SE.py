@@ -98,6 +98,11 @@ type = ['AS', 'CS']
 for i in range(0,2):
 
     df = dfs[i].copy()
+    # temp output fiilee
+    df['feature'] = "Exon"
+    df['score'] = "."
+    df['exonStart_0base'] = pd.to_numeric(df['exonStart_0base']) + 1
+    df[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"]].to_csv(f'0_Files/SE_exons_{type[i]}.tsv', index=False, sep='\t', header=True)
     df_temp = df.copy()
     del(df_temp['exonStart_0base'])
     del(df['exonEnd'])
