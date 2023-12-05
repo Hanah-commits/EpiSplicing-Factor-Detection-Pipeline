@@ -97,8 +97,7 @@ def find_epigenes(df, corr_genes):
     return epi_genes
 
 
-
-if __name__ == "__main__":
+def correlation():
 
     with open('paths.json') as f:
         d = json.load(f)
@@ -187,3 +186,13 @@ if __name__ == "__main__":
 
     # #clean-up
      #os.remove('0_Files/pvals.csv')
+
+
+
+
+if __name__ == "__main__":
+
+    correlation()
+
+
+    
