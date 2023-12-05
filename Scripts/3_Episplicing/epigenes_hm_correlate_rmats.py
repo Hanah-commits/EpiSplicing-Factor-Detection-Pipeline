@@ -88,7 +88,8 @@ def indiv_hms():
 
         # read dPSI and M-values
     flanks = pd.read_csv('0_Files/Filtered_MValues_rmats.csv', delimiter='\t')
-    del flanks['strand']
+    flanks_meta = flanks.copy()
+    flanks.drop(['chr', 'strand'], axis=1, inplace=True)
 
     # FILTER 1: drop genes with less than 3 flanks
     flanks = flanks[flanks.groupby('geneSymbol').geneSymbol.transform(len) > 2]
@@ -176,7 +177,7 @@ def indiv_hms():
         hm = elem.split('_')[0]
         print(hm, '  ', len(hm_epigenes[i]))
         # get flanks of epispliced genes
-        flanks[flanks['geneSymbol'].isin(hm_epigenes[i])].to_csv('0_Files/dPSI_Mval_epi_' + hm + '.csv', sep='\t', index=False)
+        flanks_meta[flanks_meta['geneSymbol'].isin(hm_epigenes[i])].to_csv('0_Files/dPSI_Mval_epi_' + hm + '.csv', sep='\t', index=False)
 
         i+=1
 

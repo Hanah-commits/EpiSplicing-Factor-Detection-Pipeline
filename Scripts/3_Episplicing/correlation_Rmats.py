@@ -106,7 +106,9 @@ def correlation():
 
     # read dPSI and M-values
     flanks = pd.read_csv('0_Files/Filtered_MValues_rmats.csv', delimiter='\t')
-    del flanks['strand']
+
+    flanks_meta = flanks.copy()
+    flanks.drop(['chr', 'strand'], axis=1, inplace=True)
 
     # FILTER 1: drop genes with less than 3 flanks
     flanks = flanks[flanks.groupby('geneSymbol').geneSymbol.transform(len) > 2]
@@ -179,10 +181,10 @@ def correlation():
 
 
     # # get flanks of epispliced genes
-    flanks[flanks['geneSymbol'].isin(epigenes)].to_csv('0_Files/dPSI_Mval_epi_rmats.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['geneSymbol'].isin(epigenes)].to_csv('0_Files/dPSI_Mval_epi_rmats.csv', sep='\t', index=False)
 
     # # # get flanks of non-epispliced genes
-    flanks[flanks['geneSymbol'].isin(non_epi)].to_csv('0_Files/dPSI_Mval_nonepi_rmats.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['geneSymbol'].isin(non_epi)].to_csv('0_Files/dPSI_Mval_nonepi_rmats.csv', sep='\t', index=False)
 
     # #clean-up
      #os.remove('0_Files/pvals.csv')

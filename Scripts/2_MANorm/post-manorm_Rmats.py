@@ -86,7 +86,7 @@ for file in peaksfiles:
     flank_peaks_group.drop_duplicates(subset='flanks', keep='first', inplace=True)
 
     flank_peaks_group.rename(columns={'M_value': hm}, inplace=True)
-    peak_dfs.append(flank_peaks_group[['flanks', 'geneSymbol', 'strand', 'dPSI', hm]]) 
+    peak_dfs.append(flank_peaks_group[['chr', 'flanks', 'geneSymbol', 'strand', 'dPSI', hm]]) 
 
 peak_dfs = [df.set_index('flanks') for df in peak_dfs]
 peak_dfs = pd.concat(peak_dfs, axis=1)
