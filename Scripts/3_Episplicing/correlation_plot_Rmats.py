@@ -72,7 +72,7 @@ def make_df(hm, control_flanks):
 
     print(hm)
 
-    epi_file = '0_Files/dPSI_Mval_epi_' + hm + '.csv'
+    epi_file = '0_Files/dPSI_Mval_epi_' + hm + '_rmats.csv'
     both_hm_flanks = pd.read_csv(epi_file, delimiter='\t')
     dju_genes = list(set(both_hm_flanks['geneSymbol'].values.tolist()))
     both_hm_flanks["type"] = both_hm_flanks.apply(lambda row: 'dju' if row['dPSI'] != 0 else 'non-dju', axis=1)
@@ -116,6 +116,10 @@ def make_df(hm, control_flanks):
     with open(f'0_Files/{hm}_truepos_epigenes.txt', 'w') as f:
         for line in true_genes:
             f.write("%s\n" % line)
+
+    both_hm_flanks = both_hm_flanks[both_hm_flanks['gene'].isin(true_genes)]
+    both_hm_flanks.to_csv('0_Files/dPSI_Mval_epi_' + hm + '_rmats.csv', sep='\t', index=False)
+
 
     # get correlation plot of true epigenes
     for gene in true_genes:
