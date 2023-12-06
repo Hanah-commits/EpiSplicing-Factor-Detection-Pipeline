@@ -50,8 +50,9 @@ def kde_MAJIQ():
 def kde_RMATS():
     col = 'dPSI'
 
-    df1 = pd.read_csv('0_Files/Filtered_dPSI_AS.csv', delimiter='\t')
-    df2 = pd.read_csv('0_Files/Filtered_dPSI_CS.csv', delimiter='\t')
+    df1 = pd.read_csv('0_Files/rmats_flanks200.bed', delimiter='\t')
+    df1.columns = ['chr', "flank_start", "flank_stop", "feature", "score", "strand", "geneSymbol", "dPSI"]
+    df2 = df1[df1.dPSI != 0.0]
 
     print(len(df1), len(df2))
     
@@ -74,13 +75,13 @@ def kde_RMATS():
 
     # Plot the KDE for data1 on the first subplot
     axs[0].plot(x1, kde_values1)
-    axs[0].set_xlabel('| dPSI | values of DJU events (Alternative)')
+    axs[0].set_xlabel('| dPSI | values of DEU and non-DEU events')
     axs[0].set_ylabel('Density')
     
 
     # Plot the KDE for data2 on the second subplot
     axs[1].plot(x2, kde_values2)
-    axs[1].set_xlabel('| dPSI | values of non-DJU events (constitutive)')
+    axs[1].set_xlabel('| dPSI | values of only DEU events')
     axs[1].set_ylabel('Density')
     
 
