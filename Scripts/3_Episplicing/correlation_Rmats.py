@@ -114,8 +114,12 @@ def correlation():
     flanks = flanks[flanks.groupby('geneSymbol').geneSymbol.transform(len) > 2]
 
     # # FILTER 2: genes with dPSI values but no peak -> non-epigenes
+    AS_flanks = flanks[flanks.dPSI != 0]
+    AS_flanks.replace(0, None, inplace=True) # to make comparison easier in next step
+
+    # # FILTER 2: genes with dPSI values but no peak -> non-epigenes
     cols = ['geneSymbol'] + hms
-    grouped = flanks[cols].groupby('geneSymbol')
+    grouped = AS_flanks[cols].groupby('geneSymbol')
     non_epi = []
     for gene, group in grouped:
         if group[hms].isnull().all().all():
