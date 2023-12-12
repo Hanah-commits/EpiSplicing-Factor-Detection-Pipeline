@@ -95,8 +95,12 @@ def indiv_hms():
     flanks = flanks[flanks.groupby('geneSymbol').geneSymbol.transform(len) > 2]
 
     # # FILTER 2: genes with dPSI values but no peak -> non-epigenes
+    AS_flanks = flanks[flanks.dPSI != 0]
+    AS_flanks.replace(0, None, inplace=True) # to make comparison easier in next step
+
+    # # FILTER 2: genes with dPSI values but no peak -> non-epigenes
     cols = ['geneSymbol'] + hms
-    grouped = flanks[cols].groupby('geneSymbol')
+    grouped = AS_flanks[cols].groupby('geneSymbol')
     non_epi = []
     for gene, group in grouped:
         if group[hms].isnull().all().all():
@@ -171,18 +175,28 @@ def indiv_hms():
         
         i += 1
 
-    print('Epigenes')
+    epigenes = list(set([item for items in hm_epigenes for item in items]))
+    print('Epigenes ', len(epigenes))
+
+    # get flanks of hm-specific epigenes
     i = 0
     for elem in hm_cols:
         hm = elem.split('_')[0]
         print(hm, '  ', len(hm_epigenes[i]))
         # get flanks of epispliced genes
-        flanks_meta[flanks_meta['geneSymbol'].isin(hm_epigenes[i])].to_csv('0_Files/dPSI_Mval_epi_' + hm + '.csv', sep='\t', index=False)
+        flanks_meta[flanks_meta['geneSymbol'].isin(hm_epigenes[i])].to_csv('0_Files/dPSI_Mval_epi_' + hm + '_rmats.csv', sep='\t', index=False)
 
         i+=1
 
 
     print('Non-Epigenes ', len(non_epi))
+    
+    # get flanks of all epispliced genes
+    flanks_meta[flanks_meta['geneSymbol'].isin(epigenes)].to_csv('0_Files/dPSI_Mval_epi_rmats.csv', sep='\t', index=False)
+
+    # # get flanks of non-epispliced genes
+    flanks_meta[flanks_meta['geneSymbol'].isin(non_epi)].to_csv('0_Files/dPSI_Mval_nonepi_rmats.csv', sep='\t', index=False)
+
 
     # remove unwnated
     os.remove('0_Files/pvals.csv')
