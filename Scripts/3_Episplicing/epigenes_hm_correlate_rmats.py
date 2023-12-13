@@ -6,6 +6,10 @@ from scipy.stats import pearsonr
 from scipy.stats import rankdata
 import matplotlib.pyplot as plt
 from venn import venn
+import seaborn as sns
+import numpy as np
+import scipy as sp
+from pathlib import Path
 
 
 def pearsonr_pval(x, y):
@@ -77,6 +81,97 @@ def find_epigenes(df, corr_genes):
     return epi_genes
 
 
+def find_final_epigenes(df):
+
+    corr_genes = (df.loc[df['coeff'].abs() >= 0.5, 'gene']).values.tolist()
+    significant_genes = (df.loc[df['adj_pvals'].abs() <= 0.05, 'gene']).values.tolist()
+
+    epi_genes = sorted(list(set(significant_genes) & set(corr_genes)))
+    return epi_genes
+
+
+def make_hm_plots(hm, both_hm_flanks):
+
+    both_hm_flanks = both_hm_flanks.copy() # Make a copy to avoid the SettingWithCopyWarning
+    dju_genes = list(set(both_hm_flanks['geneSymbol'].values.tolist()))
+    both_hm_flanks["type"] = both_hm_flanks.apply(lambda row: 'dju' if row['dPSI'] != 0 else 'non-dju', axis=1)
+
+    # impute missing data points
+    both_hm_flanks.fillna(0,inplace=True)
+
+    # get absolute DJU, DHM values
+    both_hm_flanks.loc[:, 'dPSI'] = both_hm_flanks['dPSI'].abs()
+    both_hm_flanks.loc[:, hm] = both_hm_flanks[hm].abs()
+    
+    # round off
+    both_hm_flanks.loc[:, 'dPSI'] = both_hm_flanks['dPSI'].round(2)
+    both_hm_flanks.loc[:, hm] = both_hm_flanks[hm].round(2)
+
+    # create directory to save files
+    Path(f'0_Files/RMATS/{hm}/').mkdir(parents=True, exist_ok=True)
+
+    p_vals = []
+    r_coeff = []
+    filter_out = []
+    # # get all genes
+    for gene in dju_genes:
+        gene_df = both_hm_flanks[both_hm_flanks['geneSymbol'] == gene]
+        r, p = sp.stats.pearsonr(x=gene_df['dPSI'], y=gene_df[hm])
+        p_vals.append(p)
+        r_coeff.append(r)
+        # plot_3(gene_df, gene, hm, path=f'0_Files/{hm}/')
+
+        ## FILTER 1: remve genes whee CS exons also have DHM peakss
+        if ((gene_df[hm] != 0) & (gene_df['type'] == 'non-dju')).any():
+            filter_out.append(gene)
+
+    ## FILTER 2: Remove genes with weak correlation between DEU-DHM
+    adj_pvals = p_adjust_bh(p_vals)
+    # make temp df
+    df = pd.DataFrame({'gene': dju_genes, 'coeff': r_coeff, 'adj_pvals': adj_pvals})
+    true_genes = find_final_epigenes(df)
+    true_genes = [g for g in dju_genes if g not in filter_out]
+
+    with open(f'0_Files/RMATS/{hm}_truepos_epigenes.txt', 'w') as f:
+        for line in true_genes:
+            f.write("%s\n" % line)
+
+    both_hm_flanks = both_hm_flanks[both_hm_flanks['geneSymbol'].isin(true_genes)]
+    both_hm_flanks.to_csv('0_Files/dPSI_Mval_epi_' + hm + '_rmats.csv', sep='\t', index=False)
+
+    print(hm, '  ', len(true_genes))
+
+
+    # get correlation plot of true epigenes
+    for gene in true_genes:
+        gene_df = both_hm_flanks[both_hm_flanks['geneSymbol'] == gene]
+        corr_plot(gene_df, gene, hm, path=f'0_Files/RMATS/{hm}/')
+    
+    return true_genes
+ 
+
+def corr_plot(gene_df, gene, hm, path):
+    
+    # plot deu vs dhm with regression line
+    sns.regplot(x='dPSI',y=hm,data=gene_df,fit_reg=True, scatter_kws={'alpha':0.3})
+
+    # call the scipy function for pearson correlation
+    r, p = sp.stats.pearsonr(x=gene_df['dPSI'], y=gene_df[hm])
+    # annotate the pearson correlation coefficient text to 2 decimal places
+    ax = plt.gca()
+    plt.text(0.45, 0.9, 'R = {:.2f}\np = {:.4f}'.format(r,p), transform=ax.transAxes)
+
+    # num of flanks
+    num = len(gene_df)
+    # define titles and axes labels
+    plt.title(f'{gene}  - {num} flanks')
+    plt.xlabel('DJU')
+    plt.ylabel(f'DHM - {hm}')
+
+    plt.savefig(path+f'{gene}.png', bbox_inches='tight', dpi=300)
+    plt.close()
+
+
 def indiv_hms():
 
     with open('paths.json') as f:
@@ -96,6 +191,7 @@ def indiv_hms():
 
     # # FILTER 2: genes with dPSI values but no peak -> non-epigenes
     AS_flanks = flanks[flanks.dPSI != 0]
+    AS_flanks = AS_flanks.copy() # Make a copy to avoid the SettingWithCopyWarning
     AS_flanks.replace(0, None, inplace=True) # to make comparison easier in next step
 
     # # FILTER 2: genes with dPSI values but no peak -> non-epigenes
@@ -175,20 +271,23 @@ def indiv_hms():
         
         i += 1
 
-    epigenes = list(set([item for items in hm_epigenes for item in items]))
-    print('Epigenes ', len(epigenes))
 
     # get flanks of hm-specific epigenes
     i = 0
+    true_epigenes = []
     for elem in hm_cols:
         hm = elem.split('_')[0]
-        print(hm, '  ', len(hm_epigenes[i]))
+        
         # get flanks of epispliced genes
-        flanks_meta[flanks_meta['geneSymbol'].isin(hm_epigenes[i])].to_csv('0_Files/dPSI_Mval_epi_' + hm + '_rmats.csv', sep='\t', index=False)
+        hm_df = flanks_meta[flanks_meta['geneSymbol'].isin(hm_epigenes[i])]
+
+        # hm-specific corrplot
+        true_epigenes.append(make_hm_plots(hm, hm_df))
 
         i+=1
 
-
+    epigenes = list(set([item for items in true_epigenes for item in items]))
+    print('Epigenes ', len(epigenes))
     print('Non-Epigenes ', len(non_epi))
     
     # get flanks of all epispliced genes
@@ -202,9 +301,44 @@ def indiv_hms():
     os.remove('0_Files/pvals.csv')
     os.remove('0_Files/coeff.csv')
 
+def plot_venn():
+
+    with open('paths.json') as f:
+        d = json.load(f)
+
+    hms = d["Histone modifications"]
+    tissue1 = d['tissue1'].capitalize()
+    tissue2 = d['tissue2'].capitalize()
+
+    hm_epigenes = []
+    
+    for hm in hms:
+        with open(f'0_Files/RMATS/{hm}_truepos_epigenes.txt') as file:
+            epigenes = [line.rstrip() for line in file]
+            hm_epigenes.append(epigenes)
+    
+    # visualise overlap
+    info = tissue1 + ' - ' + tissue2
+
+    unique_epi =  set(i for j in hm_epigenes for i in j)
+    title = info + ' : ' + str(len(unique_epi)) + ' Epigenes'
+
+    labels = [elem.split('_adj')[0]+ ' : ' + str(len(hm_epigenes[ind])) for ind,elem in enumerate(hms)]
+    values = [set(i) for i in hm_epigenes]
+
+    data = dict(zip(labels, values))
+    venn(data, cmap="plasma")
+
+    plt.title(title)
+    plt.savefig('0_Files/RMATS/hm_overlap_' + info + '.png')
+
 
 
 
 if __name__ == "__main__":
 
+    # # get epigenes and their correlation plots
     indiv_hms()
+
+    # venn diagram of true epigenes
+    plot_venn()
