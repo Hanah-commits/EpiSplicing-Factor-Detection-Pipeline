@@ -32,8 +32,9 @@ dexseq = dexseq[dexseq.pvalue < 0.05]
 ### STEP 2:  Get exons flanks
 dexseq = dexseq.assign(groupID=dexseq['groupID'].str.split('+')).explode('groupID')
 dexseq['feature'] = 'dexseq_exon'
+dexseq['score'] = '.'
 
-dexseq[['genomicData.seqnames', 'genomicData.start', 'genomicData.end', 'feature', 'stat', 'genomicData.strand', 'groupID']].to_csv('0_Files/dexseq_exons_coords.bed', index=False, sep='\t', header=False)
+dexseq[['genomicData.seqnames', 'genomicData.start', 'genomicData.end', 'feature', 'score', 'genomicData.strand', 'groupID', 'stat']].to_csv('0_Files/dexseq_exons_coords.bed', index=False, sep='\t', header=False)
 
 # exon boundary external flanks
 os.system("bedtools flank -i 0_Files/dexseq_exons_coords.bed -g " + ref_genome + " -b 200 > 0_Files/flanks.bed" )
