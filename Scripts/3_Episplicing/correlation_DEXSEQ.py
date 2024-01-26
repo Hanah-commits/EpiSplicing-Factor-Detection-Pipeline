@@ -192,7 +192,14 @@ def correlation():
 
     # #clean-up
      #os.remove('0_Files/pvals.csv')
+    
+    with open(f'0_Files/DEXSEQ_epigenes.txt', 'w') as f:
+        for line in list(set(epigenes)):
+            f.write("%s\n" % line)
 
+    with open(f'0_Files/DEXSEQ_nonepigenes.txt', 'w') as f:
+        for line in list(set(non_epi)):
+            f.write("%s\n" % line)
 
 
 
