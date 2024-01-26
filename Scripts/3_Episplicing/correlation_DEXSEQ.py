@@ -107,6 +107,14 @@ def correlation():
     # read dPSI and M-values
     flanks = pd.read_csv('0_Files/Filtered_MValues_dexseq.csv', delimiter='\t')
 
+    # change geneID
+    flanks['geneSymbol'] = flanks['geneSymbol'].str.split('.').str[0]  # ENSG00000116691.11 -> ENSG00000116691
+    names = pd.read_csv('HelperFunctions/GeneID_Name.csv', delimiter='\t')
+    names.columns = ['geneSymbol', 'gene']
+    flanks = pd.merge(flanks, names, on='geneSymbol')
+    del flanks['geneSymbol']
+    flanks.rename(columns={'gene':'geneSymbol'}, inplace=True)
+
     flanks_meta = flanks.copy()
     flanks.drop(['chr', 'strand'], axis=1, inplace=True)
 
