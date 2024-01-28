@@ -3,7 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 import os
+from pathlib import Path
 
+
+# STEP 0: Create directories to store RMATS files
+output_dir = str(Path(os.getcwd())) + "/0_Files/RMATS/"
+Path(output_dir).mkdir(parents=True, exist_ok=True)
 
 
 # STEP 1: Extract required columns and split individual dpsi values, their probabilities and junction coords
@@ -24,19 +29,19 @@ rmats = rmats[rmats['FDR'] <=0.05]
 # write df into bed file
 rmats['feature'] = "flank"
 rmats['score'] = "."
-rmats[['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand']].to_csv('0_Files/rmats_query.bed', index=False, sep='\t', header=False )
+rmats[['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand']].to_csv('0_Files/RMATS/rmats_query.bed', index=False, sep='\t', header=False )
 
 # run bedtools
-os.system('bedtools intersect -a 0_Files/rmats_query.bed -b 0_Files/exon_coords.bed -wa | sort | uniq > 0_Files/rmats_result.bed')
+os.system('bedtools intersect -a 0_Files/RMATS/rmats_query.bed -b 0_Files/exon_coords.bed -wa | sort | uniq > 0_Files/RMATS/rmats_result.bed')
 
-rmats_filtered = pd.read_csv('0_Files/rmats_result.bed', delimiter='\t', header=None) # 6489
+rmats_filtered = pd.read_csv('0_Files/RMATS/rmats_result.bed', delimiter='\t', header=None) # 6489
 rmats_filtered.columns = ['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand']
 rmats = pd.merge(rmats, rmats_filtered, on=['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand'], how='inner')
 col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd']
 rmats = rmats[col_list]
 
 # housekeeping
-os.system('rm 0_Files/rmats_*.bed')
+os.system('rm 0_Files/RMATS/rmats_*.bed')
 
 
 # FILTER 1: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
@@ -102,7 +107,7 @@ for i in range(0,2):
     df['feature'] = "Exon"
     df['score'] = "."
     df['exonStart_0base'] = pd.to_numeric(df['exonStart_0base']) + 1
-    df[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"]].to_csv(f'0_Files/SE_exons_{type[i]}.tsv', index=False, sep='\t', header=True)
+    df[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"]].to_csv(f'0_Files/RMATS/SE_exons_{type[i]}.tsv', index=False, sep='\t', header=True)
     df_temp = df.copy()
     del(df_temp['exonStart_0base'])
     del(df['exonEnd'])
@@ -122,8 +127,8 @@ for i in range(0,2):
     
 
     df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
-    df_bed.to_csv(f'0_Files/SE_{type[i]}.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
-    df.to_csv(f'0_Files/SE_exons_{type[i]}.csv', index=False, sep='\t', header=True)
+    df_bed.to_csv(f'0_Files/RMATS/SE_{type[i]}.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
+    df.to_csv(f'0_Files/RMATS/SE_exons_{type[i]}.csv', index=False, sep='\t', header=True)
 
     
     

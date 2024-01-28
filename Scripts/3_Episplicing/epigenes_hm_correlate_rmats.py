@@ -137,7 +137,7 @@ def make_hm_plots(hm, both_hm_flanks):
             f.write("%s\n" % line)
 
     both_hm_flanks = both_hm_flanks[both_hm_flanks['geneSymbol'].isin(true_genes)]
-    both_hm_flanks.to_csv('0_Files/dPSI_Mval_epi_' + hm + '_rmats.csv', sep='\t', index=False)
+    both_hm_flanks.to_csv('0_Files/RMATS/dPSI_Mval_epi_' + hm + '_rmats.csv', sep='\t', index=False)
 
     print(hm, '  ', len(true_genes))
 
@@ -182,7 +182,7 @@ def indiv_hms():
     tissue2 = d['tissue2'].capitalize()
 
         # read dPSI and M-values
-    flanks = pd.read_csv('0_Files/Filtered_MValues_rmats.csv', delimiter='\t')
+    flanks = pd.read_csv('0_Files/RMATS/Filtered_MValues_rmats.csv', delimiter='\t')
     flanks_meta = flanks.copy()
     flanks.drop(['chr', 'strand'], axis=1, inplace=True)
 
@@ -291,10 +291,10 @@ def indiv_hms():
     print('Non-Epigenes ', len(non_epi))
     
     # get flanks of all epispliced genes
-    flanks_meta[flanks_meta['geneSymbol'].isin(epigenes)].to_csv('0_Files/dPSI_Mval_epi_rmats.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['geneSymbol'].isin(epigenes)].to_csv('0_Files/RMATS/dPSI_Mval_epi_rmats.csv', sep='\t', index=False)
 
     # # get flanks of non-epispliced genes
-    flanks_meta[flanks_meta['geneSymbol'].isin(non_epi)].to_csv('0_Files/dPSI_Mval_nonepi_rmats.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['geneSymbol'].isin(non_epi)].to_csv('0_Files/RMATS/dPSI_Mval_nonepi_rmats.csv', sep='\t', index=False)
 
 
     # remove unwnated

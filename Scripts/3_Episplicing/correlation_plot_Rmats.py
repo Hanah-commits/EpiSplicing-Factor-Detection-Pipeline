@@ -72,7 +72,7 @@ def make_df(hm, control_flanks):
 
     print(hm)
 
-    epi_file = '0_Files/dPSI_Mval_epi_' + hm + '_rmats.csv'
+    epi_file = '0_Files/RMATS/dPSI_Mval_epi_' + hm + '_rmats.csv'
     both_hm_flanks = pd.read_csv(epi_file, delimiter='\t')
     dju_genes = list(set(both_hm_flanks['geneSymbol'].values.tolist()))
     both_hm_flanks["type"] = both_hm_flanks.apply(lambda row: 'dju' if row['dPSI'] != 0 else 'non-dju', axis=1)
@@ -89,7 +89,7 @@ def make_df(hm, control_flanks):
     both_hm_flanks[hm] = both_hm_flanks[hm].round(2)
 
     # create directory to save files
-    Path(f'0_Files/{hm}/').mkdir(parents=True, exist_ok=True)
+    Path(f'0_Files/RMATS/{hm}/').mkdir(parents=True, exist_ok=True)
 
     p_vals = []
     r_coeff = []
@@ -100,7 +100,7 @@ def make_df(hm, control_flanks):
         r, p = sp.stats.pearsonr(x=gene_df['dPSI'], y=gene_df[hm])
         p_vals.append(p)
         r_coeff.append(r)
-        # plot_3(gene_df, gene, hm, path=f'0_Files/{hm}/')
+        # plot_3(gene_df, gene, hm, path=f'0_Files/RMATS/{hm}/')
 
         ## FILTER 1: remve genes whee CS exons also have DHM peakss
         if ((gene_df[hm] != 0) & (gene_df['type'] == 'non-dju')).any():
@@ -113,18 +113,18 @@ def make_df(hm, control_flanks):
     true_genes = find_final_epigenes(df)
     true_genes = [g for g in dju_genes if g not in filter_out]
 
-    with open(f'0_Files/{hm}_truepos_epigenes.txt', 'w') as f:
+    with open(f'0_Files/RMATS/{hm}_truepos_epigenes.txt', 'w') as f:
         for line in true_genes:
             f.write("%s\n" % line)
 
     both_hm_flanks = both_hm_flanks[both_hm_flanks['geneSymbol'].isin(true_genes)]
-    both_hm_flanks.to_csv('0_Files/dPSI_Mval_epi_' + hm + '_rmats.csv', sep='\t', index=False)
+    both_hm_flanks.to_csv('0_Files/RMATS/dPSI_Mval_epi_' + hm + '_rmats.csv', sep='\t', index=False)
 
 
     # get correlation plot of true epigenes
     for gene in true_genes:
         gene_df = both_hm_flanks[both_hm_flanks['geneSymbol'] == gene]
-        plot_3(gene_df, gene, hm, path=f'0_Files/{hm}/')
+        plot_3(gene_df, gene, hm, path=f'0_Files/RMATS/{hm}/')
     
  
 
@@ -166,7 +166,7 @@ def venn_plot(values, labels, info):
     venn(data, cmap="plasma")
 
     plt.title(title)
-    plt.savefig('0_Files/hm_overlap_' + info + '.png')
+    plt.savefig('0_Files/RMATS/hm_overlap_' + info + '.png')
 
 
 def plot_venn():
@@ -181,7 +181,7 @@ def plot_venn():
     hm_epigenes = []
     
     for hm in hms:
-        with open(f'0_Files/{hm}_truepos_epigenes.txt') as file:
+        with open(f'0_Files/RMATS/{hm}_truepos_epigenes.txt') as file:
             epigenes = [line.rstrip() for line in file]
             hm_epigenes.append(epigenes)
     
@@ -198,7 +198,7 @@ if __name__ == "__main__":
     hms = d["Histone modifications"]
 
     # read dPSI and M-values
-    flanks = pd.read_csv('0_Files/Filtered_MValues_rmats.csv', delimiter='\t')
+    flanks = pd.read_csv('0_Files/RMATS/Filtered_MValues_rmats.csv', delimiter='\t')
     del flanks['strand']
 
 

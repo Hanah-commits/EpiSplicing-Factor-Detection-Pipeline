@@ -105,7 +105,7 @@ def correlation():
     hms = d["Histone modifications"]
 
     # read dPSI and M-values
-    flanks = pd.read_csv('0_Files/Filtered_MValues_rmats.csv', delimiter='\t')
+    flanks = pd.read_csv('0_Files/RMATS/Filtered_MValues_rmats.csv', delimiter='\t')
 
     flanks_meta = flanks.copy()
     flanks.drop(['chr', 'strand'], axis=1, inplace=True)
@@ -185,19 +185,19 @@ def correlation():
 
 
     # # get flanks of epispliced genes
-    flanks_meta[flanks_meta['geneSymbol'].isin(epigenes)].to_csv('0_Files/dPSI_Mval_epi_rmats.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['geneSymbol'].isin(epigenes)].to_csv('0_Files/RMATS/dPSI_Mval_epi_rmats.csv', sep='\t', index=False)
 
     # # # get flanks of non-epispliced genes
-    flanks_meta[flanks_meta['geneSymbol'].isin(non_epi)].to_csv('0_Files/dPSI_Mval_nonepi_rmats.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['geneSymbol'].isin(non_epi)].to_csv('0_Files/RMATS/dPSI_Mval_nonepi_rmats.csv', sep='\t', index=False)
 
     # #clean-up
      #os.remove('0_Files/pvals.csv')
 
-    with open(f'0_Files/RMATS_epigenes.txt', 'w') as f:
+    with open(f'0_Files/RMATS/RMATS_epigenes.txt', 'w') as f:
         for line in list(set(epigenes)):
             f.write("%s\n" % line)
 
-    with open(f'0_Files/RMATS_nonepigenes.txt', 'w') as f:
+    with open(f'0_Files/RMATS/RMATS_nonepigenes.txt', 'w') as f:
         for line in list(set(non_epi)):
             f.write("%s\n" % line)
 

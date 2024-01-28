@@ -40,7 +40,7 @@ with open('paths.json') as f:
 hms = d["Histone modifications"]
 
 
-peaksfiles = [f'{hm}_flanks.bed' for hm in hms] 
+peaksfiles = [f'{hm}_rmats_flanks.bed' for hm in hms] 
 peak_dfs = []
 
 flanks = pd.read_csv(f'0_Files/rmats_flanks200.bed', delimiter='\t', header=None)
@@ -50,7 +50,7 @@ flanks.drop_duplicates(inplace=True)
 
 for file in peaksfiles:
 
-    hm = file.split('_flanks')[0]
+    hm = file.split('_rmats_flanks')[0]
     peaks = pd.read_csv(prefix+file, delimiter='\t', header=None)
     peaks.drop([3, 4, 8, 13, 15, 16, 17], axis=1, inplace=True)
 
@@ -98,4 +98,4 @@ peak_dfs = peak_dfs.loc[:, unique_columns]
 # no peak for hm A in flank
 peak_dfs.fillna(0, inplace=True)
 
-peak_dfs.to_csv(f'0_Files/Filtered_MValues_rmats.csv', sep='\t')
+peak_dfs.to_csv(f'0_Files/RMATS/Filtered_MValues_rmats.csv', sep='\t')
