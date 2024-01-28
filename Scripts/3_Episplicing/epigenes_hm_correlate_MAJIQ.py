@@ -139,7 +139,7 @@ def make_hm_plots(hm, both_hm_flanks):
             f.write("%s\n" % line)
 
     both_hm_flanks = both_hm_flanks[both_hm_flanks['gene'].isin(true_genes)]
-    both_hm_flanks.to_csv('0_Files/dPSI_Mval_epi_' + hm + '_majiq.csv', sep='\t', index=False)
+    both_hm_flanks.to_csv('0_Files/MAJIQ/dPSI_Mval_epi_' + hm + '_majiq.csv', sep='\t', index=False)
     
     print(hm, '  ', len(true_genes))
 
@@ -300,10 +300,10 @@ def indiv_hms():
     print('Non-Epigenes ', len(non_epi))
     
     # get flanks of all epispliced genes
-    flanks_meta[flanks_meta['gene'].isin(epigenes)].to_csv('0_Files/dPSI_Mval_epi_majiq.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['gene'].isin(epigenes)].to_csv('0_Files/MAJIQ/dPSI_Mval_epi_majiq.csv', sep='\t', index=False)
 
     # # get flanks of non-epispliced genes
-    flanks_meta[flanks_meta['gene'].isin(non_epi)].to_csv('0_Files/dPSI_Mval_nonepi_majiq.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['gene'].isin(non_epi)].to_csv('0_Files/MAJIQ/dPSI_Mval_nonepi_majiq.csv', sep='\t', index=False)
 
 
     # remove unwnated

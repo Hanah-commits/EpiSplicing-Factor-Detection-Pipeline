@@ -106,7 +106,7 @@ if __name__ == "__main__":
     hms = d["Histone modifications"]
 
     # read dPSI and M-values
-    flanks = pd.read_csv('0_Files/Filtered_MValues_majiq.csv', delimiter='\t')
+    flanks = pd.read_csv('0_Files/MAJIQ/Filtered_MValues_majiq.csv', delimiter='\t')
 
     # change geneID
     flanks['gene_id'] = flanks['gene_id'].str.split('.').str[0]  # ENSG00000116691.11 -> ENSG00000116691
@@ -195,18 +195,18 @@ if __name__ == "__main__":
 
 
     # get flanks of epispliced genes
-    flanks_meta[flanks_meta['gene_id'].isin(epigenes)].to_csv('0_Files/dPSI_Mval_epi_majiq.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['gene_id'].isin(epigenes)].to_csv('0_Files/MAJIQ/dPSI_Mval_epi_majiq.csv', sep='\t', index=False)
 
     # # get flanks of non-epispliced genes
-    flanks_meta[flanks_meta['gene_id'].isin(non_epi)].to_csv('0_Files/dPSI_Mval_nonepi_majiq.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['gene_id'].isin(non_epi)].to_csv('0_Files/MAJIQ/dPSI_Mval_nonepi_majiq.csv', sep='\t', index=False)
 
     #clean-up
     os.remove('0_Files/pvals.csv')
 
-    with open(f'0_Files/MAJIQ_epigenes.txt', 'w') as f:
+    with open(f'0_Files/MAJIQ/MAJIQ_epigenes.txt', 'w') as f:
         for line in list(set(epigenes)):
             f.write("%s\n" % line)
 
-    with open(f'0_Files/MAJIQ_nonepigenes.txt', 'w') as f:
+    with open(f'0_Files/MAJIQ/MAJIQ_nonepigenes.txt', 'w') as f:
         for line in list(set(non_epi)):
             f.write("%s\n" % line)

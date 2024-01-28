@@ -48,7 +48,7 @@ flanks.drop_duplicates(inplace=True)
 
 for file in peaksfiles:
 
-    hm = file.split('_flanks')[0]
+    hm = file.split('_majiq_flanks')[0]
     peaks = pd.read_csv(prefix+file, delimiter='\t', header=None)
     peaks.drop([3, 4, 8, 13, 15, 16, 17], axis=1, inplace=True)
 
