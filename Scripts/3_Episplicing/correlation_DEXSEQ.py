@@ -105,7 +105,7 @@ def correlation():
     hms = d["Histone modifications"]
 
     # read dPSI and M-values
-    flanks = pd.read_csv('0_Files/Filtered_MValues_dexseq.csv', delimiter='\t')
+    flanks = pd.read_csv('0_Files/DEXSEQ/Filtered_MValues_dexseq.csv', delimiter='\t')
 
     # change geneID
     flanks['geneSymbol'] = flanks['geneSymbol'].str.split('.').str[0]  # ENSG00000116691.11 -> ENSG00000116691
@@ -193,19 +193,19 @@ def correlation():
 
 
     # # get flanks of epispliced genes
-    flanks_meta[flanks_meta['geneSymbol'].isin(epigenes)].to_csv('0_Files/dPSI_Mval_epi_dexseq.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['geneSymbol'].isin(epigenes)].to_csv('0_Files/DEXSEQ/dPSI_Mval_epi_dexseq.csv', sep='\t', index=False)
 
     # # # get flanks of non-epispliced genes
-    flanks_meta[flanks_meta['geneSymbol'].isin(non_epi)].to_csv('0_Files/dPSI_Mval_nonepi_dexseq.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['geneSymbol'].isin(non_epi)].to_csv('0_Files/DEXSEQ/dPSI_Mval_nonepi_dexseq.csv', sep='\t', index=False)
 
     # #clean-up
-     #os.remove('0_Files/pvals.csv')
+     #os.remove('0_Files/DEXSEQ/pvals.csv')
     
-    with open(f'0_Files/DEXSEQ_epigenes.txt', 'w') as f:
+    with open(f'0_Files/DEXSEQ/DEXSEQ_epigenes.txt', 'w') as f:
         for line in list(set(epigenes)):
             f.write("%s\n" % line)
 
-    with open(f'0_Files/DEXSEQ_nonepigenes.txt', 'w') as f:
+    with open(f'0_Files/DEXSEQ/DEXSEQ_nonepigenes.txt', 'w') as f:
         for line in list(set(non_epi)):
             f.write("%s\n" % line)
 

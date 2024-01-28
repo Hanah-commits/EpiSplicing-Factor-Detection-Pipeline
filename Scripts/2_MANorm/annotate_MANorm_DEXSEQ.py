@@ -16,4 +16,4 @@ for hm in hms:
     input = prefix + hm + '_' + tissue1 + '_peak_vs_' + hm + '_' + tissue2 +  '_peak_all_MAvalues.xls'
     output = prefix + hm + '_dexseq_flanks.bed'
 
-    os.system('bedtools intersect -loj -a 0_Files/dexseq_flanks200.bed -b ' + input + ' | sort | uniq > ' + output)
+    os.system('bedtools intersect -loj -a 0_Files/DEXSEQ/dexseq_flanks200.bed -b ' + input + ' | sort | uniq > ' + output)

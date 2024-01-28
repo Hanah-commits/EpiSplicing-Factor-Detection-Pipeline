@@ -43,7 +43,7 @@ hms = d["Histone modifications"]
 peaksfiles = [f'{hm}_dexseq_flanks.bed' for hm in hms] 
 peak_dfs = []
 
-flanks = pd.read_csv(f'0_Files/dexseq_flanks200.bed', delimiter='\t', header=None)
+flanks = pd.read_csv(f'0_Files/DEXSEQ/dexseq_flanks200.bed', delimiter='\t', header=None)
 flanks.columns = ['chr', "flank_start", "flank_stop", "feature", "score", "strand", "geneSymbol", 'dPSI']
 flanks['flanks'] = flanks[['flank_start', 'flank_stop']].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
 flanks.drop_duplicates(inplace=True)
@@ -98,4 +98,4 @@ peak_dfs = peak_dfs.loc[:, unique_columns]
 # no peak for hm A in flank
 peak_dfs.fillna(0, inplace=True)
 
-peak_dfs.to_csv(f'0_Files/Filtered_MValues_dexseq.csv', sep='\t')
+peak_dfs.to_csv(f'0_Files/DEXSEQ/Filtered_MValues_dexseq.csv', sep='\t')
