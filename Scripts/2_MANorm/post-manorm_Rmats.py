@@ -43,7 +43,7 @@ hms = d["Histone modifications"]
 peaksfiles = [f'{hm}_rmats_flanks.bed' for hm in hms] 
 peak_dfs = []
 
-flanks = pd.read_csv(f'0_Files/rmats_flanks200.bed', delimiter='\t', header=None)
+flanks = pd.read_csv(f'0_Files/RMATS/rmats_flanks200.bed', delimiter='\t', header=None)
 flanks.columns = ['chr', "flank_start", "flank_stop", "feature", "score", "strand", "geneSymbol", "dPSI"]
 flanks['flanks'] = flanks[['flank_start', 'flank_stop']].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
 flanks.drop_duplicates(inplace=True)
