@@ -38,10 +38,10 @@ with open('paths.json') as f:
     d = json.load(f)
 
 hms = d["Histone modifications"]
-peaksfiles = [hm+'_flanks.bed' for hm in hms]
+peaksfiles = [hm+'_majiq_flanks.bed' for hm in hms]
 peak_dfs = []
 
-flanks = pd.read_csv('0_Files/majiq_filtered_flanks.bed', delimiter='\t', header=None)
+flanks = pd.read_csv('0_Files/MAJIQ/majiq_filtered_flanks.bed', delimiter='\t', header=None)
 flanks.columns = ['seqid', 'start', 'stop', 'feature', 'score', 'strand', 'gene_id', 'dPSI']
 flanks['flanks'] = flanks[['start', 'stop']].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
 flanks.drop_duplicates(inplace=True)
@@ -94,4 +94,4 @@ peak_dfs = peak_dfs.loc[~(peak_dfs==0).all(axis=1)]
 unique_columns = ~peak_dfs.columns.duplicated(keep='first')
 peak_dfs = peak_dfs.loc[:, unique_columns]
 
-peak_dfs.to_csv('0_Files/Filtered_MValues_majiq.csv', sep='\t')
+peak_dfs.to_csv('0_Files/MAJIQ/Filtered_MValues_majiq.csv', sep='\t')
