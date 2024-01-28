@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from pandas import Series
 import sys
+from pathlib import Path
+import os
 
 
 def adjust_pvalue(df, col):
@@ -32,6 +34,9 @@ def p_adjust_bh(p):
     q = np.minimum(1, np.minimum.accumulate(steps * p[by_descend]))
     return q[by_orig]
 
+# STEP 0: Create directories to store MAJIQ files
+output_dir = str(Path(os.getcwd())) + "/0_Files/MAJIQ/"
+Path(output_dir).mkdir(parents=True, exist_ok=True)
 
 # STEP 1: Extract required columns and split individual dpsi values, their probabilities and junction coords
 
@@ -83,5 +88,5 @@ majiq_bed['feature'] = "flank"
 majiq_bed['score'] = "."
 # rearrange
 majiq_bed = majiq_bed[['seqid', "junction0", "junction1", "feature", "score", "strand"]]
-majiq_bed.to_csv('0_Files/majiq.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
-voila.to_csv('0_Files/majiq_junctions.csv', index=False, sep='\t', header=True)
+majiq_bed.to_csv('0_Files/MAJIQ/majiq.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
+voila.to_csv('0_Files/MAJIQ/majiq_junctions.csv', index=False, sep='\t', header=True)

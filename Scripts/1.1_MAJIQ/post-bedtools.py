@@ -4,7 +4,7 @@ import json
 
 
 flank_lens = [50, 100, 200]
-junctions = pd.read_csv('0_Files/majiq_junctions.csv', delimiter='\t')
+junctions = pd.read_csv('0_Files/MAJIQ/majiq_junctions.csv', delimiter='\t')
 with open('paths.json') as f:
     d = json.load(f)
 
@@ -20,33 +20,33 @@ for length in flank_lens:
                 adjust_size = str(200 -length)
 
                 # separate start,stop flank coords
-                os.system("cut -f 1-3 0_Files/"+  file +" > 0_Files/coords.bed")
+                os.system("cut -f 1-3 0_Files/MAJIQ/"+  file +" > 0_Files/coords.bed")
 
                 # adjust flank boundaries
                 os.system("bedtools slop -i 0_Files/coords.bed" + " -g " + ref_genome + " -b " + adjust_size + " > 0_Files/coords_adjusted.bed")
 
                 # replace flank coords with adjusted coords
-                os.system("awk 'FNR==NR{a[NR]=$2;next}{$2=a[FNR]}1' 0_Files/coords_adjusted.bed 0_Files/" + file + " > 0_Files/adjusted_flanks.bed")
+                os.system("awk 'FNR==NR{a[NR]=$2;next}{$2=a[FNR]}1' 0_Files/coords_adjusted.bed 0_Files/MAJIQ/" + file + " > 0_Files/adjusted_flanks.bed")
                 os.system("awk 'FNR==NR{a[NR]=$3;next}{$3=a[FNR]}1' 0_Files/coords_adjusted.bed 0_Files/adjusted_flanks.bed > 0_Files/adjusted.bed")
-                os.system("sed 's/ /\t/g' 0_Files/adjusted.bed > 0_Files/"+file)
+                os.system("sed 's/ /\t/g' 0_Files/adjusted.bed > 0_Files/MAJIQ/"+file)
 
                 # remove intermediate files
                 os.system("rm 0_Files/coords*.bed")
                 os.system("rm  0_Files/adjusted*.bed")
 
 
-        flanks = pd.read_csv('0_Files/majiq_flanks' + str(length) + '.bed', delimiter='\t', header=None)
+        flanks = pd.read_csv('0_Files/MAJIQ/majiq_flanks' + str(length) + '.bed', delimiter='\t', header=None)
 
         # drop flanks that have no junction
-        ##chrY    13359417        13360117        Exon    .       -       ENSG00000274847.1     chrY    13359767        13359768        flank   .       - 
-        ##chr10   100041843       100042543       Exon    .       -       ENSG00000274847.1     .       -1      -1      .       -1      . 
+        ##chrY    13359417        13360117        Exon    .       -       chrY    13359767        13359768        flank   .       -     ENSG00000274847.1 
+        ##chr10   100041843       100042543       Exon    .       -     .       -1      -1      .       -1      .       ENSG00000274847.1 
 
         flanks = flanks[flanks[8] != -1]
 
         # merge the flanks df with the jns df
-        flanks[12] = flanks[[1, 2]].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
-        flanks.drop([3, 4, 5, 7, 9, 10, 11], axis=1, inplace=True)
-        flanks.columns = ['seqid', 'start', 'stop', 'gene', 'junction0', 'flanks']
+        flanks[11] = flanks[[1, 2]].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
+        flanks.drop([3, 4, 5, 6, 8, 9, 10], axis=1, inplace=True)
+        flanks.columns = ['seqid', 'start', 'stop', 'junction0', 'flanks', 'gene']
 
         junctions['index'] = junctions.index
         flank_jns = pd.merge(junctions, flanks, on=['junction0', 'seqid'])
@@ -88,8 +88,8 @@ flank_jns_group = flank_jns_group[['gene_id', 'lsv_id', 'seqid', 'junction0', 'm
         'probability_changing', 'flanks', 'start', 'stop', 'strand']]
 
 # Get all filtered flanks
-flank_jns_group.drop_duplicates().to_csv('0_Files/all_flanks.csv', sep='\t', index=False)
+flank_jns_group.drop_duplicates().to_csv('0_Files/MAJIQ/all_flanks.csv', sep='\t', index=False)
 
 
 # Get dPSI values of filtered flanks
-flank_jns_group[['seqid', 'strand', 'start', 'stop', 'gene_id', 'mean_dpsi_per_lsv_junction']].drop_duplicates().to_csv('0_Files/Filtered_dPSI.csv', index=False, sep='\t')
+flank_jns_group[['seqid', 'strand', 'start', 'stop', 'gene_id', 'mean_dpsi_per_lsv_junction']].drop_duplicates().to_csv('0_Files/MAJIQ/Filtered_dPSI.csv', index=False, sep='\t')
