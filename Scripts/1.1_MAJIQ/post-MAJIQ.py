@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 from pandas import Series
 import sys
-import json
 
 
 def adjust_pvalue(df, col):
@@ -37,31 +36,28 @@ def p_adjust_bh(p):
 # STEP 1: Extract required columns and split individual dpsi values, their probabilities and junction coords
 
 # Keep relevant columns
-with open('paths.json') as f:
-    d = json.load(f)
-name = d["tissue1"] + "-" + d["tissue2"]
-file = sys.argv[1]+'MAJIQ/deltapsi/' + name + '.deltapsi.tsv'
-voila = pd.read_csv(file, delimiter='\t')
-col_list = ['gene_id', 'lsv_id', 'mean_dpsi_per_lsv_junction', 'probability_non_changing', 'junctions_coords', 'num_exons'] #, 'exons_coords']
+file = sys.argv[1]+'MAJIQ/majiq_output' #'~/Desktop/majiq_output'
+voila = pd.read_csv(file, delimiter='\t', skiprows=10)
+col_list = ['gene_id', 'lsv_id', 'seqid', 'mean_dpsi_per_lsv_junction', 'probability_changing', 'junctions_coords', 'num_exons', 'strand'] #, 'exons_coords']
 voila = voila[col_list]
 
-# FILTER 1: filter erroneous LSVs
+# FILTER 1: remove LSVs with 2 exons
 voila["num_exons"] = voila["num_exons"].replace('na' ,'0')
 voila["num_exons"] = pd.to_numeric(voila["num_exons"])
-voila = voila[voila['num_exons'] > 0]
+voila = voila[voila['num_exons'] > 2]
 
 # split column values to multiple lines
-voila = voila.assign(junctions_coords=voila['junctions_coords'].str.split(';'), mean_dpsi_per_lsv_junction=voila['mean_dpsi_per_lsv_junction'].str.split(';'), probability_non_changing=voila['probability_non_changing'].str.split(';'))
+voila = voila.assign(junctions_coords=voila['junctions_coords'].str.split(';'), mean_dpsi_per_lsv_junction=voila['mean_dpsi_per_lsv_junction'].str.split(';'), probability_changing=voila['probability_changing'].str.split(';'))
 
 # explode the list in the columns to create individual rows
-voila = voila.explode(['junctions_coords', 'mean_dpsi_per_lsv_junction', 'probability_non_changing']).reset_index(drop=True)
+voila = voila.explode(['junctions_coords', 'mean_dpsi_per_lsv_junction', 'probability_changing']).reset_index(drop=True)
 
 voila = voila[col_list]
 # skipping nan -> 99464127-nan
 voila = voila[~voila['junctions_coords'].str.contains("nan")]
 
-# FILTER 2: Drop rows with non_changing probability <= 0.05. (keep non-DJU events)
-voila['pval'] = 1- pd.to_numeric(voila['probability_non_changing'])
+# FILTER 2: Keep rows with non-changing probability < 0.05
+voila['pval'] = 1- pd.to_numeric(voila['probability_changing'])
 voila = adjust_pvalue(voila, col='pval')
 voila = voila[pd.to_numeric(voila['adj_pval']) <= 0.05]
 
@@ -77,4 +73,15 @@ voila.rename(columns={'target': 'junction0'}, inplace = True)
 voila_temp.rename(columns={'source': 'junction0'}, inplace=True)
 
 voila = pd.concat([voila_temp, voila]).sort_index(kind='merge')
-voila.to_csv('0_Files/majiq_junctions_control.csv', index=False, sep='\t', header=True)
+
+keep_cols = ['seqid', 'junction0', 'strand']
+majiq_bed = voila[keep_cols]
+majiq_bed = majiq_bed.drop_duplicates()
+# to fit bedtools input requirements
+majiq_bed['junction1'] = pd.to_numeric(majiq_bed['junction0']) + 1
+majiq_bed['feature'] = "flank"
+majiq_bed['score'] = "."
+# rearrange
+majiq_bed = majiq_bed[['seqid', "junction0", "junction1", "feature", "score", "strand"]]
+majiq_bed.to_csv('0_Files/majiq.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
+voila.to_csv('0_Files/majiq_junctions.csv', index=False, sep='\t', header=True)

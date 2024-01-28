@@ -38,15 +38,15 @@ for length in flank_lens:
         flanks = pd.read_csv('0_Files/majiq_flanks' + str(length) + '.bed', delimiter='\t', header=None)
 
         # drop flanks that have no junction
-        ##chrY    13359417        13360117        Exon    .       -       chrY    13359767        13359768        flank   .       - 
-        ##chr10   100041843       100042543       Exon    .       -       .       -1      -1      .       -1      . 
+        ##chrY    13359417        13360117        Exon    .       -       ENSG00000274847.1     chrY    13359767        13359768        flank   .       - 
+        ##chr10   100041843       100042543       Exon    .       -       ENSG00000274847.1     .       -1      -1      .       -1      . 
 
         flanks = flanks[flanks[8] != -1]
 
         # merge the flanks df with the jns df
         flanks[12] = flanks[[1, 2]].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
-        flanks.drop([3, 4, 5, 6, 8, 9, 10, 11], axis=1, inplace=True)
-        flanks.set_axis(['seqid', 'start', 'stop', 'junction0', 'flanks'], axis=1, inplace=True)
+        flanks.drop([3, 4, 5, 7, 9, 10, 11], axis=1, inplace=True)
+        flanks.columns = ['seqid', 'start', 'stop', 'gene', 'junction0', 'flanks']
 
         junctions['index'] = junctions.index
         flank_jns = pd.merge(junctions, flanks, on=['junction0', 'seqid'])
@@ -90,8 +90,6 @@ flank_jns_group = flank_jns_group[['gene_id', 'lsv_id', 'seqid', 'junction0', 'm
 # Get all filtered flanks
 flank_jns_group.drop_duplicates().to_csv('0_Files/all_flanks.csv', sep='\t', index=False)
 
-# Get new annotation file with flanks (to annotate MANorm peaks)
-flank_jns_group[['seqid', 'start', 'stop']].drop_duplicates().to_csv('0_Files/filtered_flanks.bed', index=False, sep='\t', header=False)
 
 # Get dPSI values of filtered flanks
-flank_jns_group[['flanks', 'gene_id', 'mean_dpsi_per_lsv_junction']].drop_duplicates().to_csv('0_Files/Filtered_dPSI.csv', index=False, sep='\t')
+flank_jns_group[['seqid', 'strand', 'start', 'stop', 'gene_id', 'mean_dpsi_per_lsv_junction']].drop_duplicates().to_csv('0_Files/Filtered_dPSI.csv', index=False, sep='\t')
