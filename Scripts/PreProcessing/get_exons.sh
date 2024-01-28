@@ -38,8 +38,8 @@ awk 'BEGIN {OFS="\t"} {print $1,$7, $7+1, "TSS", ".", $6}' 0_Files/TSS.tsv | sor
 # Get all exons of transcripts with TSL 1-3
 grep -E "transcript_support_level=[123]" $gff3 | grep "protein_coding" | awk -F'\t' -v OFS='\t' '
     $3 == "exon" {
-        match($9, /gene_name=([^;]+)/, gene_name);
-        print $1, $4, $5, "Exon", ".", $7, gene_name[1];
+        match($9, /gene_id=([^;]+)/, gene_id);
+        print $1, $4, $5, "Exon", ".", $7, gene_id[1];
     }
 ' | sort | uniq > 0_Files/all_exons.bed
 
