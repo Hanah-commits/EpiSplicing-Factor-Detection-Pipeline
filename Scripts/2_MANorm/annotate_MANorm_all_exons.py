@@ -59,9 +59,9 @@ for hm in hms:
     output2 = output_dir+ hm + '_exons.bed'
 
     ## STEP 1: annotate all exons
-    os.system('bedtools intersect -loj -a 0_Files/all_exons.bed -b ' + input + ' | sort | uniq > ' + output1)
-    ## STEP 12: annotate non-tss-overlap-exons
-    os.system('bedtools intersect -loj -a 0_Files/exon_coords.bed -b ' + input + ' | sort | uniq > ' + output2)
+    # os.system('bedtools intersect -loj -a 0_Files/all_exons.bed -b ' + input + ' | sort | uniq > ' + output1)
+    # ## STEP 12: annotate non-tss-overlap-exons
+    # os.system('bedtools intersect -loj -a 0_Files/exon_coords.bed -b ' + input + ' | sort | uniq > ' + output2)
 
     ## STEP 3.a: mark exons overlapping with TSS
 
@@ -124,13 +124,13 @@ for hm in hms:
     # get non-TSS exons + peaks
     exons = exons[(exons.TSS_exon == False) & (exons.chr_2 != 0)]
     # save exons
-    exons[['chr', 'exon_start', 'exon_end', "feature", "score", "strand", "geneSymbol"]].to_csv(output_dir+f'{hm}_filtered_exons.bed', sep='\t', index=False, header=False)
+    exons[['chr', 'exon_start', 'exon_end', "feature", "score", "strand", "geneSymbol"]].drop_duplicates().to_csv(output_dir+f'{hm}_filtered_exons.bed', sep='\t', index=False, header=False)
     # save peaks
     exons['peak_feature'] = hm + '_peak'
-    exons[['chr_2', 'peak_start', 'peak_end', "peak_feature", "M_value"]].to_csv(output_dir+f'{hm}_filtered_peaks.bed', sep='\t', index=False, header=False)
+    exons[['chr_2', 'peak_start', 'peak_end', "peak_feature", "M_value"]].drop_duplicates().to_csv(output_dir+f'{hm}_filtered_peaks.bed', sep='\t', index=False, header=False)
 
     # exon boundary external flanks
-    os.system("bedtools flank -i 0_Files/RMATS/rmats_exons_coords.bed -g " + ref_genome + " -b 200 > 0_Files/flanks.bed" )
+    os.system(f"bedtools flank -i {output_dir}/{hm}_filtered_exons.bed -g " + ref_genome + " -b 200 > 0_Files/flanks.bed" )
 
     # separate start,stop flank coords
     os.system("sed -n 'n;p' 0_Files/flanks.bed > 0_Files/stop.bed")
