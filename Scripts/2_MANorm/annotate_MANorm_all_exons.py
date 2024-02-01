@@ -141,9 +141,12 @@ for hm in hms:
     os.system("bedtools slop -i 0_Files/stop.bed -g " + ref_genome +" -l 200 -r 0 > 0_Files/stop_flanks.bed")
 
     # combine start,stop flank coords
-    os.system(f"paste -d'\n' 0_Files/start_flanks.bed 0_Files/stop_flanks.bed | sort -k1,1 -k2,2n > {output_dir}/{hm}_flanks.bed")
+    os.system(f"paste -d'\n' 0_Files/start_flanks.bed 0_Files/stop_flanks.bed | sort -k1,1 -k2,2n > {output_dir}/{hm}_unannotated_flanks.bed")
 
     # remove intermediate files
     os.system("rm 0_Files/start*.bed")
     os.system("rm  0_Files/stop*.bed")
     os.system("rm 0_Files/flanks.bed")
+
+    # annotate flanks
+    os.system(f'bedtools intersect -loj -a {output_dir}/{hm}_unannotated_flanks.bed -b {output_dir}/{hm}_filtered_peaks.bed | sort | uniq > {output_dir}/{hm}_annotated_flanks.bed') 
