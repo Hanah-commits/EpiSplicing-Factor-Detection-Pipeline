@@ -3,6 +3,37 @@ import sys
 import json
 import pandas as pd
 from pathlib import Path
+import numpy as np
+
+def adjust_pvalue(df, col):
+
+    # get indices of null values
+    na_idx = df[df[col].isnull()].index.tolist()
+
+    # adjust non-null p values
+    pvals = df[col].values.tolist()
+    pvals = [x for x in pvals if str(x) != 'nan']
+    adj_pval = p_adjust_bh(pvals).tolist()
+
+    # insert null at original indices
+    for idx in na_idx:
+        adj_pval.insert(idx, None)
+
+    # adjusted p values as new df
+    df['adj_pval'] = adj_pval
+    return df
+
+
+def p_adjust_bh(p):
+    ## multiple hypothesis testing
+    p = np.asfarray(p)
+    by_descend = p.argsort()[::-1]
+    by_orig = by_descend.argsort()
+    steps = float(len(p)) / np.arange(len(p), 0, -1)
+    q = np.minimum(1, np.minimum.accumulate(steps * p[by_descend]))
+    return q[by_orig]
+
+
 
 # STEP 0: Create directories to store MANorm files
 output_dir = str(Path(os.getcwd())) + "/0_Files/MANorm/"
@@ -29,7 +60,7 @@ for hm in hms:
     ## STEP 12: annotate non-tss-overlap-exons
     os.system('bedtools intersect -loj -a 0_Files/exon_coords.bed -b ' + input + ' | sort | uniq > ' + output2)
 
-    ## STEP 3: mark exons overlapping with TSS
+    ## STEP 3.a: mark exons overlapping with TSS
 
     # read output into dataframe
     exons = pd.read_csv(output1, delimiter='\t', header=None)
@@ -49,6 +80,13 @@ for hm in hms:
     # Update 'TSS_exon' to 'False' for rows that have matches
     exons.loc[exons.index.isin(merged.index), 'TSS_exon'] = False
 
+    ## STEP 3.b: keep M-values of peaks with adj P-value <= 0.05
+    # assign 0 to exons that have no peak coords
+    exons.replace([-1, '.'], [0, 0], inplace=True)
+    exons['p_value'] = pd.to_numeric(exons['p_value'])
+    exons = adjust_pvalue(exons, col='p_value')
+    exons.loc[pd.to_numeric(exons['adj_pval']) > 0.05, ['chr_2', 'peak_start', 'peak_end', 'summit', 'M_value']] = 0 
+
     ## STEP 4: get length of overlap
     exons['overlap_bp'] = exons.apply(lambda row: max(0, min(row['exon_end'], row['peak_end']) - max(row['exon_start'], row['peak_start'])) 
                             if row['peak_start'] != 0 and row['peak_end'] != 0 else 0, axis=1)
@@ -56,14 +94,12 @@ for hm in hms:
     #'overlap_bp_norm' based on the normalized overlap
     exons['overlap_bp_norm'] = exons.apply(lambda row: row['overlap_bp'] / (row['exon_end'] - row['exon_start']) if row['peak_start'] != 0 and row['peak_end'] != 0 else 0, axis=1)
 
-    # assign 0 to flanks that have no peak coords
-    exons.replace([-1, '.'], [0, 0], inplace=True)
 
     ## STEP 5: find if same histone peak is annotated to multiple exons
     duplicates = exons[exons.duplicated(subset=['chr_2', 'peak_start', 'peak_end', 'summit', 'M_value'], keep=False) &
                     (exons['peak_start'] != 0) & (exons['peak_end'] != 0) & (exons['summit'] != 0) & (exons['M_value'] != 0)]
 
-    ## STEP 5.1: Assign peaks to exons where TSS_exon is true
+    ## STEP 5.1: Assign peaks to exons where TSS_exon is true (TSS-peak-leak)
     mask = (duplicates.groupby(['chr_2', 'peak_start', 'peak_end', 'summit', 'M_value'])['TSS_exon'].transform('any'))
     duplicates.loc[~mask, 'TSS_exon'] = False
     # Mark the rest with 0
@@ -74,6 +110,7 @@ for hm in hms:
     exons.loc[exons['overlap_bp_norm'] < 0.5, ['chr_2', 'peak_start', 'peak_end', 'summit', 'M_value', 'p_value']] = 0
 
     # print(len(exons[exons.chr_2 !=0][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates()))
-
+    # print(len(exons[(exons.chr_2 !=0) & (exons.TSS_exon == False)][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates())) # final num non-TSS exons
+    # print(len(set(exons[(exons.chr_2 !=0) & (exons.TSS_exon == False)]['geneSymbol'].values.tolist()))) # final num of genes with annotated non-TSS exons
 
 
