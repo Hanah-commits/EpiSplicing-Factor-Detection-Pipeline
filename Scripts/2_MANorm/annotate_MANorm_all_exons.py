@@ -46,6 +46,9 @@ with open('paths.json') as f:
 tissue1 = d["tissue1"]
 tissue2 = d["tissue2"]
 hms = d["Histone modifications"]
+ref = d['Reference genome']
+fasta = d['Reference fasta']
+ref_genome= fasta+".fai"
 
 prefix = sys.argv[1]+ 'MANorm/'
 
@@ -114,3 +117,33 @@ for hm in hms:
     # print(len(set(exons[(exons.chr_2 !=0) & (exons.TSS_exon == False)]['geneSymbol'].values.tolist()))) # final num of genes with annotated non-TSS exons
 
 
+    ## STEP 6: Assign peaks to flanks of exons
+
+    ## STEP 6.1: make flanks of filtered exons
+    
+    # get non-TSS exons + peaks
+    exons = exons[(exons.TSS_exon == False) & (exons.chr_2 != 0)]
+    # save exons
+    exons[['chr', 'exon_start', 'exon_end', "feature", "score", "strand", "geneSymbol"]].to_csv(output_dir+f'{hm}_filtered_exons.bed', sep='\t', index=False, header=False)
+    # save peaks
+    exons['peak_feature'] = hm + '_peak'
+    exons[['chr_2', 'peak_start', 'peak_end', "peak_feature", "M_value"]].to_csv(output_dir+f'{hm}_filtered_peaks.bed', sep='\t', index=False, header=False)
+
+    # exon boundary external flanks
+    os.system("bedtools flank -i 0_Files/RMATS/rmats_exons_coords.bed -g " + ref_genome + " -b 200 > 0_Files/flanks.bed" )
+
+    # separate start,stop flank coords
+    os.system("sed -n 'n;p' 0_Files/flanks.bed > 0_Files/stop.bed")
+    os.system("sed -n 'p;n' 0_Files/flanks.bed > 0_Files/start.bed")
+
+    # exon boundary internal flanks
+    os.system("bedtools slop -i 0_Files/start.bed -g " + ref_genome + " -l 0 -r 200 > 0_Files/start_flanks.bed")
+    os.system("bedtools slop -i 0_Files/stop.bed -g " + ref_genome +" -l 200 -r 0 > 0_Files/stop_flanks.bed")
+
+    # combine start,stop flank coords
+    os.system(f"paste -d'\n' 0_Files/start_flanks.bed 0_Files/stop_flanks.bed | sort -k1,1 -k2,2n > {output_dir}/{hm}_flanks.bed")
+
+    # remove intermediate files
+    os.system("rm 0_Files/start*.bed")
+    os.system("rm  0_Files/stop*.bed")
+    os.system("rm 0_Files/flanks.bed")
