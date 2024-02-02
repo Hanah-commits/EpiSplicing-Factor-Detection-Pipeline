@@ -173,5 +173,6 @@ for hm in hms:
     flanks = flanks.loc[max_overlap_idx]
 
     ## save filtere flanks
-    flanks.loc[flanks['chr_2'] == '.', ['peak_start', 'peak_end', 'peak_feature', 'M_value']] = '.'
+    flanks.loc[flanks['chr_2'] == '.', ['peak_start', 'peak_end', 'peak_feature']] = '.'
+    flanks.loc[flanks['chr_2'] == '.', ['M_value']] = 0
     flanks.to_csv(f'{output_dir}/{hm}_annotated_flanks.bed', sep='\t', header=False, index=False)
