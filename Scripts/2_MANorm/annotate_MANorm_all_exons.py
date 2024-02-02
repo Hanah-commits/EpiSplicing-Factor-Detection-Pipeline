@@ -188,13 +188,13 @@ for hm in hms:
     flank_peaks_group['max_' + hm] = flank_peaks_group['M_value_abs'].apply(lambda x: max(map(float, x)))  # max MValue
 
     # # get the corresponding peak for each flank's max M-value
-    flank_peaks_group = pd.merge(flank_peaks_group[['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol', 'max_' + hm]], flanks, on=['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'],
+    flanks = pd.merge(flank_peaks_group[['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol', 'max_' + hm]], flanks, on=['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'],
                                 how='inner')
     # # flank_peaks_group = pd.merge(flank_peaks_group[['flanks', 'max_'+hm, '#peaks_'+hm]], peaks, on=['flanks'], how='inner')
-    flank_peaks_group = flank_peaks_group[flank_peaks_group['M_value_abs'] == flank_peaks_group['max_' + hm]]
+    flanks = flanks[flanks['M_value_abs'] == flanks['max_' + hm]]
 
     # FILTER 2: If flank has 1+ peaks with same max |Mvalue|, keep one
-    flank_peaks_group.drop_duplicates(subset=['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'], keep='first', inplace=True)
+    flanks.drop_duplicates(subset=['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'], keep='first', inplace=True)
 
     ## save filtere flanks
-    flank_peaks_group.to_csv(f'{output_dir}/{hm}_annotated_flanks.bed', sep='\t', header=False, index=False)
+    flanks.to_csv(f'{output_dir}/{hm}_annotated_flanks.bed', sep='\t', header=False, index=False)
