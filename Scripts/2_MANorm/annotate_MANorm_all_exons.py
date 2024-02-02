@@ -116,6 +116,8 @@ for hm in hms:
     # print(len(exons[(exons.chr_2 !=0) & (exons.TSS_exon == False)][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates())) # final num non-TSS exons
     # print(len(set(exons[(exons.chr_2 !=0) & (exons.TSS_exon == False)]['geneSymbol'].values.tolist()))) # final num of genes with annotated non-TSS exons
 
+    ## save non-TSS exons with peaks
+    exons[(exons.TSS_exon == False)].to_csv(output2, sep='\t', header=False, index=False)
 
     ## STEP 6: Assign peaks to flanks of exons
 
