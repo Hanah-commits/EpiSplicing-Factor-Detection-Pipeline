@@ -195,6 +195,7 @@ for hm in hms:
 
     # FILTER 2: If flank has 1+ peaks with same max |Mvalue|, keep one
     flanks.drop_duplicates(subset=['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'], keep='first', inplace=True)
+    flanks = flanks[['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol', 'peak_start', 'peak_end', 'peak_feature', f'max_{hm}']]
 
     ## save filtere flanks
     flanks.to_csv(f'{output_dir}/{hm}_annotated_flanks.bed', sep='\t', header=False, index=False)
