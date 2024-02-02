@@ -174,7 +174,27 @@ for hm in hms:
     # Select the corresponding rows based on the index
     flanks = flanks.loc[max_overlap_idx]
 
-    ## save filtere flanks
+    ## STEP 6.4: Deal with multiple peaks annotated to same flank (precaution)
     flanks.loc[flanks['chr_2'] == '.', ['peak_start', 'peak_end', 'peak_feature']] = '.'
     flanks.loc[flanks['chr_2'] == '.', ['M_value']] = 0
-    flanks.to_csv(f'{output_dir}/{hm}_annotated_flanks.bed', sep='\t', header=False, index=False)
+    flanks['M_value_abs'] = pd.to_numeric(flanks['M_value']).abs()
+
+    # get all peaks that belong to each flank
+    flank_peaks_group = flanks.groupby(['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'])['M_value_abs'] \
+        .apply(lambda val: ','.join(str(v) for v in val)).reset_index()
+
+    # # FILTER 1: if flank has 1+ peaks, keep peak with highest abs M-value
+    flank_peaks_group['M_value_abs'] = flank_peaks_group['M_value_abs'].str.split(',')  # string -> list of strings
+    flank_peaks_group['max_' + hm] = flank_peaks_group['M_value_abs'].apply(lambda x: max(map(float, x)))  # max MValue
+
+    # # get the corresponding peak for each flank's max M-value
+    flank_peaks_group = pd.merge(flank_peaks_group[['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol', 'max_' + hm]], flanks, on=['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'],
+                                how='inner')
+    # # flank_peaks_group = pd.merge(flank_peaks_group[['flanks', 'max_'+hm, '#peaks_'+hm]], peaks, on=['flanks'], how='inner')
+    flank_peaks_group = flank_peaks_group[flank_peaks_group['M_value_abs'] == flank_peaks_group['max_' + hm]]
+
+    # FILTER 2: If flank has 1+ peaks with same max |Mvalue|, keep one
+    flank_peaks_group.drop_duplicates(subset=['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'], keep='first', inplace=True)
+
+    ## save filtere flanks
+    flank_peaks_group.to_csv(f'{output_dir}/{hm}_annotated_flanks.bed', sep='\t', header=False, index=False)
