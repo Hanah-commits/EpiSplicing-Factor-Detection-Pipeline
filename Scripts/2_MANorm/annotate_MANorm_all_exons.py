@@ -58,10 +58,10 @@ for hm in hms:
     output1 = output_dir+ hm + '_all_exons.bed'
     output2 = output_dir+ hm + '_exons.bed'
 
-    ## STEP 1: annotate all exons
-    # os.system('bedtools intersect -loj -a 0_Files/all_exons.bed -b ' + input + ' | sort | uniq > ' + output1)
-    # ## STEP 12: annotate non-tss-overlap-exons
-    # os.system('bedtools intersect -loj -a 0_Files/exon_coords.bed -b ' + input + ' | sort | uniq > ' + output2)
+    # STEP 1: annotate all exons
+    os.system('bedtools intersect -loj -a 0_Files/all_exons.bed -b ' + input + ' | sort | uniq > ' + output1)
+    ## STEP 12: annotate non-tss-overlap-exons
+    os.system('bedtools intersect -loj -a 0_Files/exon_coords.bed -b ' + input + ' | sort | uniq > ' + output2)
 
     ## STEP 3.a: mark exons overlapping with TSS
 
@@ -124,7 +124,8 @@ for hm in hms:
     # get non-TSS exons + peaks
     exons = exons[(exons.TSS_exon == False) & (exons.chr_2 != 0)]
     # save exons
-    exons[['chr', 'exon_start', 'exon_end', "feature", "score", "strand", "geneSymbol"]].drop_duplicates().to_csv(output_dir+f'{hm}_filtered_exons.bed', sep='\t', index=False, header=False)
+    exons['flank_feature'] = 'flank'
+    exons[['chr', 'exon_start', 'exon_end', "flank_feature", "score", "strand", "geneSymbol"]].drop_duplicates().to_csv(output_dir+f'{hm}_filtered_exons.bed', sep='\t', index=False, header=False)
     # save peaks
     exons['peak_feature'] = hm + '_peak'
     exons[['chr_2', 'peak_start', 'peak_end', "peak_feature", "M_value"]].drop_duplicates().to_csv(output_dir+f'{hm}_filtered_peaks.bed', sep='\t', index=False, header=False)
@@ -148,5 +149,24 @@ for hm in hms:
     os.system("rm  0_Files/stop*.bed")
     os.system("rm 0_Files/flanks.bed")
 
-    # annotate flanks
+    ## STEP 6.2: annotate flanks of filtered exons with peaks
     os.system(f'bedtools intersect -loj -a {output_dir}/{hm}_unannotated_flanks.bed -b {output_dir}/{hm}_filtered_peaks.bed | sort | uniq > {output_dir}/{hm}_annotated_flanks.bed') 
+
+    ## STEP 6.3: Deal with peak-leak in annotated flanks
+
+    flanks = pd.read_csv(f'{output_dir}/{hm}_annotated_flanks.bed', delimiter='\t', header=None)
+    flanks.columns = ['chr', "flank_start", "flank_end", "feature", "score", "strand", "geneSymbol", 'chr_2', 'peak_start', 'peak_end', 'feature', 'M_value']
+
+    ## STEP 6.3.1: get length of overlap
+    flanks['overlap_bp'] = flanks.apply(lambda row: max(0, min(row['flank_end'], row['peak_end']) - max(row['flank_start'], row['peak_start'])) 
+                            if row['peak_start'] != 0 and row['peak_end'] != 0 else 0, axis=1)
+
+    ## STEP 6.3.2: find if same histone peak is annotated to multiple exons
+    duplicates = flanks[flanks.duplicated(subset=['chr', 'flank_start', 'flank_end', 'geneSymbol'], keep=False) &
+                    (flanks['peak_start'] != -1) & (flanks['peak_end'] != -1) & (flanks['M_value'] != -1)]
+    
+    # Find the index of the row with the maximum 'overlap_bp' within each group
+    max_overlap_idx = flanks.groupby(['chr', 'flank_start', 'flank_end', 'geneSymbol'])['overlap_bp'].idxmax()
+
+    # Select the corresponding rows based on the index
+    result_df = flanks.loc[max_overlap_idx]
