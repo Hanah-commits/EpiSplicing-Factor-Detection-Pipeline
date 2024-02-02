@@ -155,7 +155,7 @@ for hm in hms:
     ## STEP 6.3: Deal with peak-leak in annotated flanks
 
     flanks = pd.read_csv(f'{output_dir}/{hm}_annotated_flanks.bed', delimiter='\t', header=None)
-    flanks.columns = ['chr', "flank_start", "flank_end", "feature", "score", "strand", "geneSymbol", 'chr_2', 'peak_start', 'peak_end', 'feature', 'M_value']
+    flanks.columns = ['chr', "flank_start", "flank_end", "feature", "score", "strand", "geneSymbol", 'chr_2', 'peak_start', 'peak_end', 'peak_feature', 'M_value']
 
     ## STEP 6.3.1: get length of overlap
     flanks['overlap_bp'] = flanks.apply(lambda row: max(0, min(row['flank_end'], row['peak_end']) - max(row['flank_start'], row['peak_start'])) 
@@ -166,7 +166,12 @@ for hm in hms:
                     (flanks['peak_start'] != -1) & (flanks['peak_end'] != -1) & (flanks['M_value'] != -1)]
     
     # Find the index of the row with the maximum 'overlap_bp' within each group
+    ## if single flank has 1+ peak annotations, choose using max overlap
     max_overlap_idx = flanks.groupby(['chr', 'flank_start', 'flank_end', 'geneSymbol'])['overlap_bp'].idxmax()
 
     # Select the corresponding rows based on the index
-    result_df = flanks.loc[max_overlap_idx]
+    flanks = flanks.loc[max_overlap_idx]
+
+    ## save filtere flanks
+    flanks.loc[flanks['chr_2'] == '.', ['peak_start', 'peak_end', 'peak_feature', 'M_value']] = '.'
+    flanks.to_csv(f'{output_dir}/{hm}_annotated_flanks.bed', sep='\t', header=False, index=False)
