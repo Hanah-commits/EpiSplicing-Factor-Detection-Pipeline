@@ -3,36 +3,6 @@ import numpy as np
 import json
 import sys
 
-def adjust_pvalue(df, col):
-
-    # get indices of null values
-    na_idx = df[df[col].isnull()].index.tolist()
-
-    # adjust non-null p values
-    pvals = df[col].values.tolist()
-    pvals = [x for x in pvals if str(x) != 'nan']
-    adj_pval = p_adjust_bh(pvals).tolist()
-
-    # insert null at original indices
-    for idx in na_idx:
-        adj_pval.insert(idx, None)
-
-    # adjusted p values as new df
-    df['adj_pval'] = adj_pval
-    return df
-
-
-def p_adjust_bh(p):
-    ## multiple hypothesis testing
-    p = np.asfarray(p)
-    by_descend = p.argsort()[::-1]
-    by_orig = by_descend.argsort()
-    steps = float(len(p)) / np.arange(len(p), 0, -1)
-    q = np.minimum(1, np.minimum.accumulate(steps * p[by_descend]))
-    return q[by_orig]
-
-
-prefix = sys.argv[1] + 'MANorm/'
 
 with open('paths.json') as f:
     d = json.load(f)
@@ -40,7 +10,7 @@ with open('paths.json') as f:
 hms = d["Histone modifications"]
 
 
-peaksfiles = [f'{hm}_dexseq_flanks.bed' for hm in hms] 
+peaksfiles = [f'0_Files/MANorm/{hm}_annotated_flanks.bed' for hm in hms] 
 peak_dfs = []
 
 flanks = pd.read_csv(f'0_Files/DEXSEQ/dexseq_flanks200.bed', delimiter='\t', header=None)
@@ -50,25 +20,19 @@ flanks.drop_duplicates(inplace=True)
 
 for file in peaksfiles:
 
-    hm = file.split('_dexseq')[0]
-    peaks = pd.read_csv(prefix+file, delimiter='\t', header=None)
-    peaks.drop([3, 4, 8, 13, 15, 16, 17], axis=1, inplace=True)
+    hm = file.split('_annotated')[0]
+    peaks = pd.read_csv(file, delimiter='\t', header=None)
+    peaks.drop([3, 4, 7, 10], axis=1, inplace=True)
     
     # assign 0 to flanks that have no peaks
     peaks.replace([-1, '.'], [0, 0], inplace=True)
-    peaks[3] = peaks[[1, 2]].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
-    peaks.columns = ['chr',  "flank_start", "flank_stop", "strand", "geneSymbol", "dPSI", 'peak0', 'peak1', 'summit', 'M_value', 'p_value', 'flanks']
+    # peaks[3] = peaks[[1, 2]].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
+    peaks.columns = ['chr',  "flank_start", "flank_stop", "strand", "geneSymbol", 'peak_start', 'peak_stop', 'M_value', 'overlap_bp']
 
     peaks['M_value_abs'] = pd.to_numeric(peaks['M_value']).abs()
-    peaks.loc[peaks['M_value'] == 0, 'p_value'] = np.NaN # null pvalues if no peak in flank
 
-    # keep M-values of peaks with adj P-value <= 0.05
-    peaks['p_value'] = pd.to_numeric(peaks['p_value'])
-    peaks = adjust_pvalue(peaks, col='p_value')
-    peaks.loc[pd.to_numeric(peaks['adj_pval']) > 0.05, 'M_value_abs'] = 0
-
-    # # get all peaks that belong to each flank
-    flank_peaks_group = peaks.groupby(['chr', 'flanks'])['M_value_abs'] \
+    # get all peaks that belong to each flank
+    flank_peaks_group = peaks.groupby(['chr', 'flank_start', 'flank_stop'])['M_value_abs'] \
         .apply(lambda val: ','.join(str(v) for v in val)).reset_index()
 
     # # FILTER 1: if flank has 1+ peaks, keep peak with highest abs M-value
@@ -77,13 +41,13 @@ for file in peaksfiles:
     # # flank_peaks_group['#peaks_'+hm] = flank_peaks_group['M_value'].apply(lambda x: len(x))  # no of peaks/ flank
 
     # # get the corresponding peak for each flank's max M-value
-    flank_peaks_group = pd.merge(flank_peaks_group[['flanks', 'max_' + hm]], peaks, on=['flanks'],
+    flank_peaks_group = pd.merge(flank_peaks_group[['flank_start', 'flank_stop', 'max_' + hm]], peaks, on=['flank_start', 'flank_stop'],
                                 how='inner')
     # # flank_peaks_group = pd.merge(flank_peaks_group[['flanks', 'max_'+hm, '#peaks_'+hm]], peaks, on=['flanks'], how='inner')
     flank_peaks_group = flank_peaks_group[flank_peaks_group['M_value_abs'] == flank_peaks_group['max_' + hm]]
 
     # FILTER 2: If flank has 1+ peaks with same max |Mvalue|, keep one
-    flank_peaks_group.drop_duplicates(subset='flanks', keep='first', inplace=True)
+    flank_peaks_group.drop_duplicates(subset=['flank_start', 'flank_stop'], keep='first', inplace=True)
 
     flank_peaks_group.rename(columns={'M_value': hm}, inplace=True)
     peak_dfs.append(flank_peaks_group[['chr', 'flanks', 'geneSymbol', 'strand', 'dPSI', hm]]) 
