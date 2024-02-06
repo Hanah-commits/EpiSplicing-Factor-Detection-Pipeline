@@ -52,7 +52,7 @@ ref_genome= fasta+".fai"
 
 prefix = sys.argv[1]+ 'MANorm/'
 
-for hm in hms[:1]:
+for hm in hms:
     
     input = prefix + hm + '_' + tissue1 + '_peak_vs_' + hm + '_' + tissue2 +  '_peak_all_MAvalues.xls'
     output1 = output_dir+ hm + '_all_exons.bed'
