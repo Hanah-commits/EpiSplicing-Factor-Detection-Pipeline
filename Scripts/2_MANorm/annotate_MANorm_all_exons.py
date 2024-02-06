@@ -60,7 +60,7 @@ for hm in hms:
 
     # STEP 1: annotate all exons
     os.system('bedtools intersect -loj -a 0_Files/all_exons.bed -b ' + input + ' | sort | uniq > ' + output1)
-    ## STEP 12: annotate non-tss-overlap-exons
+    ## STEP 2: annotate non-tss-overlap-exons
     os.system('bedtools intersect -loj -a 0_Files/exon_coords.bed -b ' + input + ' | sort | uniq > ' + output2)
 
     ## STEP 3.a: mark exons overlapping with TSS
@@ -94,7 +94,7 @@ for hm in hms:
     exons['overlap_bp'] = exons.apply(lambda row: max(0, min(row['exon_end'], row['peak_end']) - max(row['exon_start'], row['peak_start'])) 
                             if row['peak_start'] != 0 and row['peak_end'] != 0 else 0, axis=1)
     
-    #'overlap_bp_norm' based on the normalized overlap
+    #'overlap_bp_norm' based on the normalized overlap (by exon length)
     exons['overlap_bp_norm'] = exons.apply(lambda row: row['overlap_bp'] / (row['exon_end'] - row['exon_start']) if row['peak_start'] != 0 and row['peak_end'] != 0 else 0, axis=1)
 
 
