@@ -32,7 +32,8 @@ for flank in flanks:
     os.system("bedtools slop -i 0_Files/stop.bed -g " + ref_genome +" -l " + flank + " -r 0 > 0_Files/stop_flanks.bed")
 
     # combine start,stop flank coords
-    os.system("paste -d'\n' 0_Files/start_flanks.bed 0_Files/stop_flanks.bed > 0_Files/flanks" + flank + ".bed")
+    # ( 2 * num exons != num flanks: exons can be A3SS/A5SS versions, can have duplicate flanks)
+    os.system("paste -d'\n' 0_Files/start_flanks.bed 0_Files/stop_flanks.bed | sort | uniq > 0_Files/flanks" + flank + ".bed")
 
     # remove intermediate files
     os.system("rm 0_Files/start*.bed")
