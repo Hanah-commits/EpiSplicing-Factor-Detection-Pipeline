@@ -52,7 +52,7 @@ ref_genome= fasta+".fai"
 
 prefix = sys.argv[1]+ 'MANorm/'
 
-for hm in hms:
+for hm in hms[:1]:
     
     input = prefix + hm + '_' + tissue1 + '_peak_vs_' + hm + '_' + tissue2 +  '_peak_all_MAvalues.xls'
     output1 = output_dir+ hm + '_all_exons.bed'
@@ -74,14 +74,24 @@ for hm in hms:
     non_tss_exons.drop([12, 14, 15, 16], axis=1, inplace=True)
     non_tss_exons.columns = ['chr', "exon_start", "exon_end", "feature", "score", "strand", "geneSymbol", 'chr_2', 'peak_start', 'peak_end', 'summit', 'M_value', 'p_value']
 
-    # # Create a new column 'TSS_exon' in exons with initial value 'True'
-    exons['TSS_exon'] = True
+    # # Create a new column 'TSS_exon' in exons with initial value 'False'
+    exons['TSS_exon'] = False
+
+    exons.reset_index(drop=True, inplace=True)
+    non_tss_exons.reset_index(drop=True, inplace=True)
 
     # Use merge to check for matches and update 'TSS_exon' accordingly
-    merged = pd.merge(exons, non_tss_exons, how='inner', suffixes=('', '_non_tss'))
+    merged = exons.merge(non_tss_exons, on=['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'geneSymbol'], how='left', suffixes=('', '_non_tss'))
+    # Drop duplicate rows while keeping the first occurrence
+    merged.drop_duplicates(subset=['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'geneSymbol', 'chr_2', 'peak_start', 'peak_end', 'summit', 'M_value', 'p_value', 'TSS_exon'], keep='first', inplace=True)
 
-    # Update 'TSS_exon' to 'False' for rows that have matches
-    exons.loc[exons.index.isin(merged.index), 'TSS_exon'] = False
+    # Realign indices of both DataFrames
+    exons.reset_index(drop=True, inplace=True)
+    merged.reset_index(drop=True, inplace=True)
+
+    # Update TSS_exon based on the merge
+    exons.loc[merged.index, 'TSS_exon'] = ~merged['M_value_non_tss'].notna()
+
 
     ## STEP 3.b: keep M-values of peaks with adj P-value <= 0.05
     # assign 0 to exons that have no peak coords
