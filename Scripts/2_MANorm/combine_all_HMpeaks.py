@@ -10,14 +10,15 @@ hms = d["Histone modifications"]
 
 concat = []
 all_flanks = pd.read_csv('0_Files/flanks200.bed', delimiter='\t', header=None)
-all_flanks.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand']
+all_flanks.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'geneSymbol']
 
 peak_dfs = []
 for hm in hms:
     flank_peaks = pd.read_csv(f'0_Files/MANorm/{hm}_annotated_flanks.bed', delimiter='\t', header=None)
     flank_peaks.columns = ['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol', 'peak_start', 'peak_end', 'peak_feature', hm]
 
-    hm_flanks = all_flanks.merge(flank_peaks, on=['chr', 'flank_start', 'flank_end', 'strand'], how='left')
+    hm_flanks = all_flanks.merge(flank_peaks, on=['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'], how='left')
+
     # Fill NaN values with 0 
     hm_flanks[['peak_start', 'peak_end', 'peak_feature',  hm]] = hm_flanks[['peak_start', 'peak_end', 'peak_feature',  hm]].fillna(0)
 
