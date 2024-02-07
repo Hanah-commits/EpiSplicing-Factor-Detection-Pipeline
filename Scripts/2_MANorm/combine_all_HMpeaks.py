@@ -33,3 +33,7 @@ peak_dfs = peak_dfs.loc[~(peak_dfs==0).all(axis=1)]
 # Identify and keep only the first occurrence of each column name
 unique_columns = ~peak_dfs.columns.duplicated(keep='first')
 peak_dfs = peak_dfs.loc[:, unique_columns]
+
+# save 
+peak_dfs['feature'] = 'exon flank'
+peak_dfs.to_csv('0_Files/MANorm/DHM_peaks_annotation.tsv', sep='\t', index=False)
