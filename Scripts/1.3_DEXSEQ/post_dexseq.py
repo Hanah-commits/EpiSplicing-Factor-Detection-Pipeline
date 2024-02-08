@@ -31,7 +31,7 @@ dexseq = dexseq[~dexseq.padj.isna()]
 #dexseq = adjust_pvalue(dexseq, col='pvalue')
 
 # get significant exons
-dexseq = dexseq[dexseq.pvalue < 0.05]
+dexseq = dexseq[dexseq.padj < 0.05]
 
 ### STEP 2:  Get exons flanks
 dexseq = dexseq.assign(groupID=dexseq['groupID'].str.split('+')).explode('groupID')
