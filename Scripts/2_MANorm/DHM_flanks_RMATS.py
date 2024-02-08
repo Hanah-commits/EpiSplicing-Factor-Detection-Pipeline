@@ -13,13 +13,13 @@ deu_flanks.drop_duplicates(inplace=True)
 
 dhm_flanks = pd.read_csv('0_Files/MANorm/DHM_peaks_annotation.tsv', delimiter='\t')
 
-# combine DEU and DHM scores
+## STEP 1: combine DEU and DHM scores
 dhm_flanks = dhm_flanks.merge(deu_flanks, on=['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'], how='left')
 
 # Fill NaN values with 0 
 dhm_flanks['dPSI'] = dhm_flanks['dPSI'].fillna(0)
 
-# keep only genes where DEU scores are available
+## STEP 2:  keep only genes where DEU scores are available
 deu_genes = list(set(deu_flanks.geneSymbol.values.tolist()))
 dhm_flanks = dhm_flanks[dhm_flanks.geneSymbol.isin(deu_genes)]
 
