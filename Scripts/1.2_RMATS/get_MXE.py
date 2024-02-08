@@ -84,7 +84,7 @@ rmats_AS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() >= 0.2) & (pd
 rmats_CS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() < 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
 
 # FILTER 3: Get only the exons from rmats_CS that are unique to it (not in rmats_AS)
-merged_df = pd.merge(rmats_CS, rmats_AS[["geneSymbol", "strand", "exonStart_0base", "exonEnd"]], on=["geneSymbol", "strand", "exonStart_0base", "exonEnd"], how='left', indicator=True)
+merged_df = pd.merge(rmats_CS, rmats_AS[["GeneID", "strand", "exonStart_0base", "exonEnd"]], on=["GeneID", "strand", "exonStart_0base", "exonEnd"], how='left', indicator=True)
 rmats_CS = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
 
 # FILTER 4: Keep coords of single version of exon if A3SS/A5SS events exist (to prevent 2+ flanks per exon)
@@ -102,7 +102,7 @@ def A3SS_A5SS_filter(group, subset_column):
     return group
 
 for i, df in enumerate([rmats_AS, rmats_CS]):
-    df = df.groupby('geneSymbol').apply(lambda x: A3SS_A5SS_filter(x, 'dPSI'))
+    df = df.groupby('GeneID').apply(lambda x: A3SS_A5SS_filter(x, 'dPSI'))
     df = df.reset_index(drop=True)
 
     # Assign the modified DataFrame back to the original variable
@@ -120,7 +120,7 @@ for i in range(0,2):
     df['feature'] = "Exon"
     df['score'] = "."
     df['exonStart_0base'] = pd.to_numeric(df['exonStart_0base']) + 1
-    df[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"]].to_csv(f'0_Files/RMATS/MXE_exons_{type[i]}.tsv', index=False, sep='\t', header=True)
+    df[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "GeneID", "dPSI"]].to_csv(f'0_Files/RMATS/MXE_exons_{type[i]}.tsv', index=False, sep='\t', header=True)
     df_temp = df.copy()
     del(df_temp['exonStart_0base'])
     del(df['exonEnd'])
