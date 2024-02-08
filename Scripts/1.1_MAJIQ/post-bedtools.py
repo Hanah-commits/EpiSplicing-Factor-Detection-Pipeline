@@ -45,11 +45,11 @@ for length in flank_lens:
 
         # merge the flanks df with the jns df
         flanks[11] = flanks[[1, 2]].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
-        flanks.drop([3, 4, 5, 6, 8, 9, 10], axis=1, inplace=True)
-        flanks.columns = ['seqid', 'start', 'stop', 'junction0', 'flanks', 'gene']
+        flanks.drop([3, 4, 5, 7, 9, 10, 12], axis=1, inplace=True)
+        flanks.columns = ['seqid', 'start', 'stop', 'gene_id', 'junction0', 'flanks']
 
         junctions['index'] = junctions.index
-        flank_jns = pd.merge(junctions, flanks, on=['junction0', 'seqid'])
+        flank_jns = pd.merge(junctions, flanks, on=['junction0', 'seqid', 'gene_id'])
 
         flank_jns.sort_values(['index'], inplace=True)
         flank_jns = flank_jns.reset_index(drop=True)
