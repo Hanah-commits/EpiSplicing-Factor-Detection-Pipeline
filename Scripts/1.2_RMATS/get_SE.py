@@ -96,39 +96,40 @@ for i, df in enumerate([rmats_AS, rmats_CS]):
     else:
         rmats_CS = df
 
-# STEP 2: Prepare bedtools input
+# FILTER 6: Drop genes that only have exons with DEU scores < 0.2 (no alternate exons)
+rmats = pd.concat([rmats_AS, rmats_CS],axis=0,sort=False).reset_index()
+rmats = rmats.groupby('GeneID').filter(lambda x: (x['dPSI'] > 0.2).any())
 
-dfs = [rmats_AS, rmats_CS]
-type = ['AS', 'CS']
-for i in range(0,2):
 
-    df = dfs[i].copy()
-    # temp output fiilee
-    df['feature'] = "Exon"
-    df['score'] = "."
-    df['exonStart_0base'] = pd.to_numeric(df['exonStart_0base']) + 1
-    df[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "GeneID", "dPSI"]].to_csv(f'0_Files/RMATS/SE_exons_{type[i]}.tsv', index=False, sep='\t', header=True)
-    df_temp = df.copy()
-    del(df_temp['exonStart_0base'])
-    del(df['exonEnd'])
+## STEP 2: Prepare bedtools input
 
-    df.rename(columns={'exonStart_0base': 'exon_coord0'}, inplace = True)
-    df_temp.rename(columns={'exonEnd': 'exon_coord0'}, inplace=True)
+# temp output fiilee
+df = rmats.copy()
+df['feature'] = "Exon"
+df['score'] = "."
+df['exonStart_0base'] = pd.to_numeric(df['exonStart_0base']) + 1
+df[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "GeneID", "dPSI"]].to_csv(f'0_Files/df/SE_exons.tsv', index=False, sep='\t', header=True)
+df_temp = df.copy()
+del(df_temp['exonStart_0base'])
+del(df['exonEnd'])
 
-    df = pd.concat([df_temp, df]).sort_index(kind='merge')
+df.rename(columns={'exonStart_0base': 'exon_coord0'}, inplace = True)
+df_temp.rename(columns={'exonEnd': 'exon_coord0'}, inplace=True)
 
-    keep_cols = ['chr', 'exon_coord0', 'strand']
-    df_bed = df[keep_cols]
-    df_bed = df_bed.drop_duplicates()
-    # to fit bedtools input requirements
-    df_bed['exon_coord1'] = pd.to_numeric(df_bed['exon_coord0']) + 1
-    df_bed['feature'] = "flank"
-    df_bed['score'] = "."
-    
+df = pd.concat([df_temp, df]).sort_index(kind='merge')
 
-    df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
-    df_bed.to_csv(f'0_Files/RMATS/SE_{type[i]}.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
-    df.to_csv(f'0_Files/RMATS/SE_exons_{type[i]}.csv', index=False, sep='\t', header=True)
+keep_cols = ['chr', 'exon_coord0', 'strand']
+df_bed = df[keep_cols]
+df_bed = df_bed.drop_duplicates()
+# to fit bedtools input requirements
+df_bed['exon_coord1'] = pd.to_numeric(df_bed['exon_coord0']) + 1
+df_bed['feature'] = "flank"
+df_bed['score'] = "."
+
+
+df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
+df_bed.to_csv(f'0_Files/RMATS/SE.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
+df.to_csv(f'0_Files/RMATS/SE_exons.csv', index=False, sep='\t', header=True)
 
     
     
