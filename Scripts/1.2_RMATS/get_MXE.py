@@ -34,22 +34,6 @@ row2['exon_order'] = 2
 # Concatenate the two DataFrames to get the output
 rmats = pd.concat([row1, row2], ignore_index=True)
 
-# # FILTER 0: Filter out exons reported by RMATS that don't belong to transcripts with TSL 1-3
-
-# # write df into bed file
-# rmats['feature'] = "flank"
-# rmats['score'] = "."
-# rmats[['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand']].to_csv('0_Files/RMATS/rmats_query.bed', index=False, sep='\t', header=False )
-
-# # run bedtools
-# os.system('bedtools intersect -a 0_Files/RMATS/rmats_query.bed -b 0_Files/exon_coords.bed -wa | sort | uniq > 0_Files/RMATS/rmats_result.bed')
-
-# rmats_filtered = pd.read_csv('0_Files/RMATS/rmats_result.bed', delimiter='\t', header=None) # 6489
-# rmats_filtered.columns = ['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand']
-# rmats = pd.merge(rmats, rmats_filtered, on=['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand'], how='inner')
-# col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd', 'exon_order']
-# rmats = rmats[col_list]
-
 # # housekeeping
 # os.system('rm 0_Files/RMATS/rmats_*.bed')
 
@@ -145,21 +129,3 @@ df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "stran
 df_bed.to_csv(f'0_Files/RMATS/MXE.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
 df.to_csv(f'0_Files/RMATS/MXE_exons.csv', index=False, sep='\t', header=True)
 
-
-# FILTER 6: Remove CS SE exons which are reported in AS MXE event
-SE_exons = pd.read_csv("0_Files/RMATS/SE_exons.csv", delimiter='\t')
-rmats_AS_exons = list(set(rmats_AS.exonStart_0base.values.tolist() + rmats_AS.exonEnd.values.tolist()))
-df = SE_exons[~((SE_exons['dPSI'] < 0.2) & (SE_exons['exon_coord0'].isin(rmats_AS_exons)))]
-
-keep_cols = ['chr', 'exon_coord0', 'strand']
-df_bed = df[keep_cols]
-df_bed = df_bed.drop_duplicates()
-# to fit bedtools input requirements
-df_bed['exon_coord1'] = pd.to_numeric(df_bed['exon_coord0']) + 1
-df_bed['feature'] = "flank"
-df_bed['score'] = "."
-
-
-df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
-df_bed.to_csv(f'0_Files/RMATS/SE.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
-df.to_csv(f'0_Files/RMATS/SE_exons.csv', index=False, sep='\t', header=True)
