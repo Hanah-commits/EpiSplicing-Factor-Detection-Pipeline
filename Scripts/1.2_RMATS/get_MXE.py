@@ -75,13 +75,14 @@ rmats['dPSI'] = np.where(
 )
 
 # FILTER 1: Get true MXE events
-SE_exons = list(set(pd.read_csv("0_Files/RMATS/SE_exons_AS.csv", delimiter='\t').exon_coord0.values.tolist()))
+SE_exons = pd.read_csv("0_Files/RMATS/SE_exons.csv", delimiter='\t')
+SE_exons = list(set(SE_exons[SE_exons.dPSI > 0.2].exon_coord0.values.tolist()))
 rmats = rmats[(~rmats['exonStart_0base'].isin(SE_exons)) & (~rmats['exonEnd'].isin(SE_exons))] # covers A3SS,A5SS versions of skipped exons
 
 
 # FILTER 2: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
-rmats_AS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() >= 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
-rmats_CS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() < 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
+rmats_AS = rmats[(pd.to_numeric(rmats['dPSI'] >= 0.2)) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
+rmats_CS = rmats[(pd.to_numeric(rmats['dPSI'] < 0.2))  & (pd.to_numeric(rmats['FDR']) <= 0.05)]
 
 # FILTER 3: Get only the exons from rmats_CS that are unique to it (not in rmats_AS)
 merged_df = pd.merge(rmats_CS, rmats_AS[["GeneID", "strand", "exonStart_0base", "exonEnd"]], on=["GeneID", "strand", "exonStart_0base", "exonEnd"], how='left', indicator=True)
@@ -111,43 +112,25 @@ for i, df in enumerate([rmats_AS, rmats_CS]):
     else:
         rmats_CS = df
 
-dfs = [rmats_AS, rmats_CS]
-type = ['AS', 'CS']
-for i in range(0,2):
-
-    df = dfs[i].copy()
-    # temp output fiilee
-    df['feature'] = "Exon"
-    df['score'] = "."
-    df['exonStart_0base'] = pd.to_numeric(df['exonStart_0base']) + 1
-    df[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "GeneID", "dPSI"]].to_csv(f'0_Files/RMATS/MXE_exons_{type[i]}.tsv', index=False, sep='\t', header=True)
-    df_temp = df.copy()
-    del(df_temp['exonStart_0base'])
-    del(df['exonEnd'])
-
-    df.rename(columns={'exonStart_0base': 'exon_coord0'}, inplace = True)
-    df_temp.rename(columns={'exonEnd': 'exon_coord0'}, inplace=True)
-
-    df = pd.concat([df_temp, df]).sort_index(kind='merge')
-
-    keep_cols = ['chr', 'exon_coord0', 'strand']
-    df_bed = df[keep_cols]
-    df_bed = df_bed.drop_duplicates()
-    # to fit bedtools input requirements
-    df_bed['exon_coord1'] = pd.to_numeric(df_bed['exon_coord0']) + 1
-    df_bed['feature'] = "flank"
-    df_bed['score'] = "."
-    
-
-    df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
-    df_bed.to_csv(f'0_Files/RMATS/MXE_{type[i]}.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
-    df.to_csv(f'0_Files/RMATS/MXE_exons_{type[i]}.csv', index=False, sep='\t', header=True)
+# FILTER 5: Drop genes that only have exons with DEU scores < 0.2 (no alternate exons)
+rmats = pd.concat([rmats_AS, rmats_CS],axis=0,sort=False).reset_index()
+rmats = rmats.groupby('GeneID').filter(lambda x: (x['dPSI'] > 0.2).any())
 
 
-# FILTER 5: Remove CS SE exons which are reported in AS MXE event
-SE_exons_CS = pd.read_csv("0_Files/RMATS/SE_exons_CS.csv", delimiter='\t')
-rmats_AS_exons = list(set(rmats_AS.exonStart_0base.values.tolist() + rmats_AS.exonEnd.values.tolist()))
-df = SE_exons_CS[~SE_exons_CS['exon_coord0'].isin(rmats_AS_exons)]
+df = rmats.copy()
+# temp output fiilee
+df['feature'] = "Exon"
+df['score'] = "."
+df['exonStart_0base'] = pd.to_numeric(df['exonStart_0base']) + 1
+df[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "GeneID", "dPSI"]].to_csv(f'0_Files/RMATS/MXE_exons.tsv', index=False, sep='\t', header=True)
+df_temp = df.copy()
+del(df_temp['exonStart_0base'])
+del(df['exonEnd'])
+
+df.rename(columns={'exonStart_0base': 'exon_coord0'}, inplace = True)
+df_temp.rename(columns={'exonEnd': 'exon_coord0'}, inplace=True)
+
+df = pd.concat([df_temp, df]).sort_index(kind='merge')
 
 keep_cols = ['chr', 'exon_coord0', 'strand']
 df_bed = df[keep_cols]
@@ -159,5 +142,24 @@ df_bed['score'] = "."
 
 
 df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
-df_bed.to_csv(f'0_Files/RMATS/SE_CS.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
-df.to_csv(f'0_Files/RMATS/SE_exons_CS.csv', index=False, sep='\t', header=True)
+df_bed.to_csv(f'0_Files/RMATS/MXE.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
+df.to_csv(f'0_Files/RMATS/MXE_exons.csv', index=False, sep='\t', header=True)
+
+
+# FILTER 6: Remove CS SE exons which are reported in AS MXE event
+SE_exons = pd.read_csv("0_Files/RMATS/SE_exons.csv", delimiter='\t')
+rmats_AS_exons = list(set(rmats_AS.exonStart_0base.values.tolist() + rmats_AS.exonEnd.values.tolist()))
+df = SE_exons[~((SE_exons['dPSI'] < 0.2) & (SE_exons['exon_coord0'].isin(rmats_AS_exons)))]
+
+keep_cols = ['chr', 'exon_coord0', 'strand']
+df_bed = df[keep_cols]
+df_bed = df_bed.drop_duplicates()
+# to fit bedtools input requirements
+df_bed['exon_coord1'] = pd.to_numeric(df_bed['exon_coord0']) + 1
+df_bed['feature'] = "flank"
+df_bed['score'] = "."
+
+
+df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
+df_bed.to_csv(f'0_Files/RMATS/SE.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
+df.to_csv(f'0_Files/RMATS/SE_exons.csv', index=False, sep='\t', header=True)
