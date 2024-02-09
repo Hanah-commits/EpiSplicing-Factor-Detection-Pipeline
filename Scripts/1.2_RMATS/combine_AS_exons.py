@@ -10,8 +10,8 @@ ref = d['Reference genome']
 fasta = d['Reference fasta']
 ref_genome= fasta+".fai"
 
-SE_AS = pd.read_csv(f'0_Files/RMATS/SE_exons_AS.tsv', delimiter='\t', names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI" ], skiprows=1)
-MXE_AS = pd.read_csv(f'0_Files/RMATS/MXE_exons_AS.tsv', delimiter='\t',  names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"], skiprows=1)
+SE = pd.read_csv(f'0_Files/RMATS/SE_exons.tsv', delimiter='\t', names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI" ], skiprows=1)
+MXE = pd.read_csv(f'0_Files/RMATS/MXE_exons.tsv', delimiter='\t',  names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"], skiprows=1)
 all_exons = pd.read_csv('0_Files/exon_coords.bed', delimiter='\t', names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol"], skiprows=1)
 
 
@@ -29,40 +29,18 @@ def A3SS_A5SS_filter(group, subset_column):
 
 
 ## STEP 1: get combined dPSI scores of AS exons
-SE_MXE_exons =  pd.concat([SE_AS, MXE_AS], ignore_index=True)
+SE_MXE_exons =  pd.concat([SE, MXE], ignore_index=True)
 
 ## FILTER 1: A3SS/A5SS -  Avoid many A3SS/A5SS versions of AS exons
 SE_MXE_exons = SE_MXE_exons.groupby('geneSymbol').apply(lambda x: A3SS_A5SS_filter(x, 'dPSI'))
 SE_MXE_exons = SE_MXE_exons.reset_index(drop=True)
 
-## STEP 2: fetch CS exons
-# add label
-SE_MXE_exons['label'] = 'AS'
-all_exons['label'] = 'CS'
-all_exons['dPSI'] = 0.0
+## FILTER 2: Keep only AS exons
+SE_MXE_exons = SE_MXE_exons[SE_MXE_exons.dPSI > 0.2]
 
-# list of SE genes
-AS_genes = list(set(SE_MXE_exons.geneSymbol.values.tolist()))
+## STEP 2: Get exon flanks
 
-combined_AS_CS = []
-
-for gene in AS_genes:
-    AS_exons = SE_MXE_exons[SE_MXE_exons.geneSymbol == gene]
-    exons_gene = all_exons[all_exons.geneSymbol == gene]
-    exons_gene= pd.concat([AS_exons, exons_gene], ignore_index=True)
-    exons_gene = exons_gene.drop_duplicates(subset=['chr', 'exonStart_0base', 'exonEnd', 'geneSymbol'])
-    combined_AS_CS.append(exons_gene)
-
-# Concatenate the dataframes in the list
-all_genes = pd.concat(combined_AS_CS, ignore_index=True)
-
-## FILTER 2: A3SS/A5SS -  Avoid marking A3SS/A5SS versions of AS exons as CS
-all_genes = all_genes.groupby('geneSymbol').apply(lambda x: A3SS_A5SS_filter(x, 'dPSI'))
-all_genes = all_genes.reset_index(drop=True)
-
-#@ STEP 3: Get exon flanks
-
-all_genes[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"]].to_csv('0_Files/RMATS/rmats_exons_coords.bed', index=False, sep='\t', header=False)
+SE_MXE_exons[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"]].to_csv('0_Files/RMATS/rmats_exons_coords.bed', index=False, sep='\t', header=False)
 
  # exon boundary external flanks
 os.system("bedtools flank -i 0_Files/RMATS/rmats_exons_coords.bed -g " + ref_genome + " -b 200 > 0_Files/flanks.bed" )
