@@ -43,8 +43,6 @@ rmats = rmats[col_list]
 # housekeeping
 os.system('rm 0_Files/RMATS/rmats_*.bed')
 
-print(rmats[rmats.GeneID == 'ENSG00000237441.9'])
-
 
 # FILTER 1: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
 rmats_AS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() >= 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
