@@ -34,24 +34,24 @@ row2['exon_order'] = 2
 # Concatenate the two DataFrames to get the output
 rmats = pd.concat([row1, row2], ignore_index=True)
 
-# FILTER 0: Filter out exons reported by RMATS that don't belong to transcripts with TSL 1-3
+# # FILTER 0: Filter out exons reported by RMATS that don't belong to transcripts with TSL 1-3
 
-# write df into bed file
-rmats['feature'] = "flank"
-rmats['score'] = "."
-rmats[['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand']].to_csv('0_Files/RMATS/rmats_query.bed', index=False, sep='\t', header=False )
+# # write df into bed file
+# rmats['feature'] = "flank"
+# rmats['score'] = "."
+# rmats[['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand']].to_csv('0_Files/RMATS/rmats_query.bed', index=False, sep='\t', header=False )
 
-# run bedtools
-os.system('bedtools intersect -a 0_Files/RMATS/rmats_query.bed -b 0_Files/exon_coords.bed -wa | sort | uniq > 0_Files/RMATS/rmats_result.bed')
+# # run bedtools
+# os.system('bedtools intersect -a 0_Files/RMATS/rmats_query.bed -b 0_Files/exon_coords.bed -wa | sort | uniq > 0_Files/RMATS/rmats_result.bed')
 
-rmats_filtered = pd.read_csv('0_Files/RMATS/rmats_result.bed', delimiter='\t', header=None) # 6489
-rmats_filtered.columns = ['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand']
-rmats = pd.merge(rmats, rmats_filtered, on=['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand'], how='inner')
-col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd', 'exon_order']
-rmats = rmats[col_list]
+# rmats_filtered = pd.read_csv('0_Files/RMATS/rmats_result.bed', delimiter='\t', header=None) # 6489
+# rmats_filtered.columns = ['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand']
+# rmats = pd.merge(rmats, rmats_filtered, on=['chr', 'exonStart_0base', 'exonEnd', 'feature', 'score', 'strand'], how='inner')
+# col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd', 'exon_order']
+# rmats = rmats[col_list]
 
-# housekeeping
-os.system('rm 0_Files/RMATS/rmats_*.bed')
+# # housekeeping
+# os.system('rm 0_Files/RMATS/rmats_*.bed')
 
 # STEP 3: Get dPSI scores based on inclusion exon
 # NOTE: the inclusion isoform includes the exon that is “earlier” in the transcript.
