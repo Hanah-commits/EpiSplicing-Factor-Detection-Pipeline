@@ -33,10 +33,10 @@ merged_data$external_gene_name[missing_or_whitespace] <- merged_data$geneSymbol[
 merged_data_ids = unique(merged_data$geneSymbol)
 
 # Remove ensembl_ids and geneSymbol columns
-merged_data <- merged_data[, !names(merged_data) %in% c("ensembl_ids", "geneSymbol")]
+merged_data <- merged_data[, !names(merged_data) %in% c("ensembl_ids")]
 
-# Rename external_gene_name to geneSymbol
-names(merged_data)[names(merged_data) == "external_gene_name"] <- "geneSymbol"
+# Rename external_gene_name to gene_name
+names(merged_data)[names(merged_data) == "external_gene_name"] <- "gene_name"
 
 # Save the dataframe as a TSV file
 write.table(merged_data, file = "0_Files/MANorm/DHM_peaks_annotation.tsv", sep = "\t", quote = FALSE, row.names = FALSE)
