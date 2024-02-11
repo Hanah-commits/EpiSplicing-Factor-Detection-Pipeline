@@ -122,6 +122,7 @@ def correlation(dir):
 
     # # FILTER 2: genes with dPSI values but no peak -> non-epigenes
     AS_flanks = flanks[flanks.dPSI != 0]
+    AS_flanks = AS_flanks.copy()  # Make a copy to avoid the SettingWithCopyWarning
     AS_flanks.replace(0, None, inplace=True) # to make comparison easier in next step
 
     # # FILTER 2: genes with dPSI values but no peak -> non-epigenes
