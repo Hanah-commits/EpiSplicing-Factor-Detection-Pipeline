@@ -8,6 +8,8 @@ from pathlib import Path
 with open('paths.json') as f:
     d = json.load(f)
 
+tissue1 = d["tissue1"]
+tissue2 = d["tissue2"]
 ref = d['Reference genome']
 fasta = d['Reference fasta']
 ref_genome= fasta+".fai"
@@ -18,7 +20,8 @@ Path(output_dir).mkdir(parents=True, exist_ok=True)
 
 # read dexseq output
 file = '/Users/hanah/EpiSplicing_RMATS/Output/neuro-H1/DEXSEQ/DEXSEQ.tsv'
-dexseq = pd.read_csv(file, delimiter='\t')[['groupID', 'featureID', 'dispersion', 'stat', 'pvalue', 'padj', 'genomicData.seqnames', 'genomicData.start', 'genomicData.end', 'genomicData.strand']]
+log2FC = f"log2fold_{tissue1}_{tissue2}"
+dexseq = pd.read_csv(file, delimiter='\t')[['groupID', 'featureID', 'dispersion', 'stat', 'pvalue', 'padj', log2FC, 'genomicData.seqnames', 'genomicData.start', 'genomicData.end', 'genomicData.strand']]
 
 ### STEP 1: Get DEU exons
 
@@ -33,12 +36,15 @@ dexseq = dexseq[~dexseq.padj.isna()]
 # get significant exons
 dexseq = dexseq[dexseq.padj < 0.05]
 
+## keep exons with | fold change | >= 2
+dexseq = dexseq[dexseq[log2FC].abs() >= 1]
+
 ### STEP 2:  Get exons flanks
 dexseq = dexseq.assign(groupID=dexseq['groupID'].str.split('+')).explode('groupID')
 dexseq['feature'] = 'dexseq_exon'
 dexseq['score'] = '.'
 
-dexseq[['genomicData.seqnames', 'genomicData.start', 'genomicData.end', 'feature', 'score', 'genomicData.strand', 'groupID', 'stat']].to_csv('0_Files/DEXSEQ/dexseq_exons_coords.bed', index=False, sep='\t', header=False)
+dexseq[['genomicData.seqnames', 'genomicData.start', 'genomicData.end', 'feature', 'score', 'genomicData.strand', 'groupID', log2FC]].to_csv('0_Files/DEXSEQ/dexseq_exons_coords.bed', index=False, sep='\t', header=False)
 
 # exon boundary external flanks
 os.system("bedtools flank -i 0_Files/DEXSEQ/dexseq_exons_coords.bed -g " + ref_genome + " -b 200 > 0_Files/flanks.bed" )
