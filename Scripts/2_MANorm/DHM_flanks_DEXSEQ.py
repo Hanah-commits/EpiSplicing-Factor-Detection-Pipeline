@@ -26,7 +26,7 @@ flanks_dpsi_group['dPSI_abs'] = flanks_dpsi_group['dPSI_abs'].str.split(',')  # 
 flanks_dpsi_group['max_dPSI'] = flanks_dpsi_group['dPSI_abs'].apply(lambda x: max(map(float, x)))  # max dPSI
 
 # get the corresponding DEU for each flank's max dPSI
-flanks_dpsi_group = pd.merge(flanks_dpsi_group[['flank_start', 'flank_end', 'max_dPSI']], deu_flanks, on=['flank_start', 'flank_end'],
+flanks_dpsi_group = pd.merge(flanks_dpsi_group[['flank_start', 'flank_end', 'max_dPSI', 'geneSymbol']], deu_flanks, on=['flank_start', 'flank_end', 'geneSymbol'],
                             how='inner')
 flanks_dpsi_group = flanks_dpsi_group[flanks_dpsi_group['dPSI_abs'] == flanks_dpsi_group['max_dPSI']]
 
