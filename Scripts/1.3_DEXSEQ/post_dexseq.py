@@ -23,6 +23,9 @@ file = '/Users/hanah/EpiSplicing_RMATS/Output/neuro-H1/DEXSEQ/DEXSEQ.tsv'
 log2FC = f"log2fold_{tissue1}_{tissue2}"
 dexseq = pd.read_csv(file, delimiter='\t')[['groupID', 'featureID', 'dispersion', 'stat', 'pvalue', 'padj', log2FC, 'genomicData.seqnames', 'genomicData.start', 'genomicData.end', 'genomicData.strand']]
 
+# dexseq = dexseq.assign(groupID=dexseq['groupID'].str.split('+')).explode('groupID')
+# print(len(set(dexseq.groupID.values.tolist())))
+
 ### STEP 1: Get DEU exons
 
 # remove exons with nan
