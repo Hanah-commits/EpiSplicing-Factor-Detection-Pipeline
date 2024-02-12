@@ -35,6 +35,7 @@ flanks_dpsi_group.drop_duplicates(subset=['chr', 'flank_start', 'flank_end', 'ge
 
 
 ## STEP 1: combine DEU and DHM scores
+flanks_dpsi_group.drop(['max_dPSI', 'dPSI_abs'], axis=1, inplace=True)
 dhm_flanks = dhm_flanks.merge(flanks_dpsi_group, on=['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'], how='left')
 
 # Fill NaN values with 0 
