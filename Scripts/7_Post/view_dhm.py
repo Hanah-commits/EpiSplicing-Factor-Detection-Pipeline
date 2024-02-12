@@ -187,4 +187,67 @@ def kde_rmats():
         plt.show()
 
 
-kde_rmats()
+def kde_all(dir):
+
+    file = dir.lower()
+    with open('paths.json') as f:
+        d = json.load(f)
+
+    hms = d["Histone modifications"]
+
+    for hm in hms:
+
+        flanks = pd.read_csv(f'0_Files/{dir}/DEU_DHM_{file}_flanks.tsv', delimiter='\t')
+        del flanks['geneSymbol']
+
+        dju_hm_flanks = flanks[flanks.dPSI !=0]
+        nondju_hm_flanks = flanks[flanks.dPSI ==0]
+
+        # impute missing data points
+        dju_hm_flanks.fillna(0,inplace=True)
+        nondju_hm_flanks.fillna(0, inplace=True)
+            
+        data1 = dju_hm_flanks[hm].abs().values.tolist()
+        data2 = nondju_hm_flanks[hm].abs().values.tolist()
+
+        data1 = [score for score in data1 if score != 0]
+        data2 = [score for score in data2 if score != 0]
+
+        kde1 = gaussian_kde(data1)
+        kde2 = gaussian_kde(data2)
+
+        # Generate points on the x-axis for the KDE plots
+        x1 = np.linspace(min(data1), max(data1), 1000)
+        x2 = np.linspace(min(data2), max(data2), 1000)
+
+        # Calculate the KDE values for both data lists
+        kde_values1 = kde1(x1)
+        kde_values2 = kde2(x2)
+
+        # Create two subplots side by side
+        fig, axs = plt.subplots(1, 2, figsize=(12, 5))
+
+        # Plot the KDE for data1 on the first subplot
+        axs[0].plot(x1, kde_values1)
+        axs[0].set_xlabel(f'Non-zero {hm} peak scores flanking alternative exons')
+        axs[0].set_ylabel('Density')
+        
+
+        # Plot the KDE for data2 on the second subplot
+        axs[1].plot(x2, kde_values2)
+        axs[1].set_xlabel(f'Non-zero {hm} peaks scores flanking constitutive exons')
+        axs[1].set_ylabel('Density')
+        
+
+        # Adjust spacing between subplots
+        plt.tight_layout()
+
+        # Show the plots
+        # plt.show()
+        # plt.savefig(f'0_Files/{dir}/{hm}.png', bbox_inches='tight')
+
+
+tools = ['DEXSEQ', 'MAJIQ', 'RMATS']
+
+for tool in tools:
+    kde_all(tool)
