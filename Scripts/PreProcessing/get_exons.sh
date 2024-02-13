@@ -47,6 +47,15 @@ bedtools intersect -wa -a 0_Files/exons_flanked.bed -b 0_Files/TSS.bed -s -v > 0
 # get exon coordinates (remove flanking regions)
 bedtools slop -i 0_Files/filtered_flanked_exons.bed -g $fasta.fai -l -200 -r -200 -s > 0_Files/exon_coords.bed
 
+# get TSS exons
+grep -vFf 0_Files/exon_coords.bed 0_Files/all_exons.bed > 0_Files/TSS_exons.bed
+
+# drop exons that overlap with TSS exons (longer/shorter version of TSS exons)
+bedtools intersect -v -a 0_Files/exon_coords.bed -b 0_Files/TSS_exons.bed > 0_Files/exon_coords_temp.bed && mv 0_Files/exon_coords_temp.bed 0_Files/exon_coords.bed 
+
+# get updated TSS exons
+grep -vFf 0_Files/exon_coords.bed 0_Files/all_exons.bed > 0_Files/TSS_exons.bed
+
 #cleanup
 rm 0_Files/*flanked*.bed
 rm 0_Files/*.tsv
