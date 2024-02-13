@@ -53,7 +53,8 @@ ref_genome= fasta+".fai"
 prefix = sys.argv[1]+ 'MANorm/'
 
 for hm in hms:
-    
+    print(hm)
+
     input = prefix + hm + '_' + tissue1 + '_peak_vs_' + hm + '_' + tissue2 +  '_peak_all_MAvalues.xls'
     output1 = output_dir+ hm + '_all_exons.bed'
     output2 = output_dir+ hm + '_exons.bed'
@@ -89,9 +90,8 @@ for hm in hms:
     exons.reset_index(drop=True, inplace=True)
     merged.reset_index(drop=True, inplace=True)
 
-    # Update TSS_exon based on the merge
-    exons.loc[merged.index, 'TSS_exon'] = ~merged['M_value_non_tss'].notna()
-
+    # Update TSS_exon based on the merge (exons not in non_tss are TSS exons)
+    exons.loc[merged.index, 'TSS_exon'] = merged['M_value_non_tss'].isna()
 
     ## STEP 3.b: keep M-values of peaks with adj P-value <= 0.05
     # assign 0 to exons that have no peak coords
@@ -99,6 +99,12 @@ for hm in hms:
     exons['p_value'] = pd.to_numeric(exons['p_value'])
     exons = adjust_pvalue(exons, col='p_value')
     exons.loc[pd.to_numeric(exons['adj_pval']) > 0.05, ['chr_2', 'peak_start', 'peak_end', 'summit', 'M_value']] = 0 
+
+    print('Post FDR-filtering')
+    print('All annotated exons:       ', len(exons[exons.chr_2 !=0][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates()))
+    print('Annotated non-TSS exons:   ', len(exons[(exons.chr_2 !=0) & (exons.TSS_exon == False)][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates())) # final num non-TSS exons
+    print('Annotated TSS exons:       ', len(exons[(exons.chr_2 !=0) & (exons.TSS_exon == True)][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates())) # final num non-TSS exons
+    print('All annotated Genes:       ', len(set(exons[(exons.chr_2 !=0)]['geneSymbol'].values.tolist())), '\n') # genes with peak-annotated exons  
 
     ## STEP 4: get length of overlap
     exons['overlap_bp'] = exons.apply(lambda row: max(0, min(row['exon_end'], row['peak_end']) - max(row['exon_start'], row['peak_start'])) 
@@ -111,23 +117,38 @@ for hm in hms:
     ## STEP 5: find if same histone peak is annotated to multiple exons
     duplicates = exons[exons.duplicated(subset=['chr_2', 'peak_start', 'peak_end', 'summit', 'M_value'], keep=False) &
                     (exons['peak_start'] != 0) & (exons['peak_end'] != 0) & (exons['summit'] != 0) & (exons['M_value'] != 0)]
-
+    
     ## STEP 5.1: Assign peaks to exons where TSS_exon is true (TSS-peak-leak)
-    mask = (duplicates.groupby(['chr_2', 'peak_start', 'peak_end', 'summit', 'M_value'])['TSS_exon'].transform('any'))
-    duplicates.loc[~mask, 'TSS_exon'] = False
-    # Mark the rest with 0
-    duplicates.loc[~mask, ['chr_2', 'peak_start', 'peak_end', 'summit', 'M_value', 'p_value']] = 0
+    # Identifying duplicated rows
+    duplicated_rows = exons.duplicated(subset=['chr_2', 'peak_start', 'peak_end', 'summit', 'M_value', 'p_value'], keep=False)
+
+    # Check if any of the duplicated rows have TSS_exon set to True
+    mask = (duplicated_rows & duplicates['TSS_exon'])
+
+    # Set values to zero where TSS_exon is False and any of the duplicated rows have TSS_exon set to True
+    duplicates.loc[(duplicated_rows) & (~mask) & (~duplicates['TSS_exon']), ['chr_2', 'peak_start', 'peak_end', 'summit', 'M_value', 'p_value']] = 0
+
     exons.update(duplicates)
+
+    print('Post TSS Peak-leak Filtering')
+    print('All annotated exons:       ', len(exons[exons.chr_2 !=0][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates()))
+    print('Annotated non-TSS exons:   ', len(exons[(exons.chr_2 !=0) & (exons.TSS_exon == False)][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates())) # final num non-TSS exons
+    print('Annotated TSS exons:       ', len(exons[(exons.chr_2 !=0) & (exons.TSS_exon == True)][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates())) # final num non-TSS exons
+    print('All annotated Genes:       ', len(set(exons[(exons.chr_2 !=0)]['geneSymbol'].values.tolist())), '\n') # genes with peak-annotated exons  
 
     ## STEP 5.2: Assign peaks to exons with at least 50% exon overlap
     exons.loc[exons['overlap_bp_norm'] < 0.5, ['chr_2', 'peak_start', 'peak_end', 'summit', 'M_value', 'p_value']] = 0
 
-    # print(len(exons[exons.chr_2 !=0][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates()))
-    # print(len(exons[(exons.chr_2 !=0) & (exons.TSS_exon == False)][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates())) # final num non-TSS exons
-    # print(len(set(exons[(exons.chr_2 !=0) & (exons.TSS_exon == False)]['geneSymbol'].values.tolist()))) # final num of genes with annotated non-TSS exons
-
     ## save non-TSS exons with peaks
     exons[(exons.TSS_exon == False)].to_csv(output2, sep='\t', header=False, index=False)
+
+    print('Post Neighboring Exon Peak-leak Filtering')
+    print('All annotated exons:       ', len(exons[exons.chr_2 !=0][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates()))
+    print('Annotated non-TSS exons:   ', len(exons[(exons.chr_2 !=0) & (exons.TSS_exon == False)][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates())) # final num non-TSS exons
+    print('Annotated TSS exons:       ', len(exons[(exons.chr_2 !=0) & (exons.TSS_exon == True)][['chr', 'exon_start', 'exon_end', 'strand']].drop_duplicates())) # final num non-TSS exons
+    print('All annotated Genes:       ', len(set(exons[(exons.chr_2 !=0)]['geneSymbol'].values.tolist()))) # genes with peak-annotated exons  
+    print('Candidate annotated Genes: ', len(set(exons[(exons.chr_2 !=0) & (exons.TSS_exon == False)]['geneSymbol'].values.tolist())), '\n')# final num of genes with annotated non-TSS exons  
+
 
     ## STEP 6: Assign peaks to flanks of exons
 
@@ -207,5 +228,5 @@ for hm in hms:
     flanks.drop_duplicates(subset=['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'], keep='first', inplace=True)
     flanks = flanks[['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol', 'peak_start', 'peak_end', 'peak_feature', f'max_{hm}']]
 
-    ## save filtere flanks
+    ## save filtered flanks
     flanks.to_csv(f'{output_dir}/{hm}_annotated_flanks.bed', sep='\t', header=False, index=False)
