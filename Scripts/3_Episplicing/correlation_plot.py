@@ -1,4 +1,4 @@
-import os
+import sys
 import json
 import pandas as pd
 import numpy as np
@@ -163,8 +163,13 @@ def indiv_hms(dir):
     hms = d["Histone modifications"]
 
     # read dPSI and M-values
-    flanks = pd.read_csv(f'0_Files/{dir}/DEU_DHM_{file}_flanks.tsv', delimiter='\t')
-    del flanks['geneSymbol']
+    try:
+        flanks = pd.read_csv(f'0_Files/{dir}/DEU_DHM_{file}_flanks.tsv', delimiter='\t')
+        del flanks['geneSymbol']
+    except:
+        print(f'No DEUs, and consequently, no DHMs available for {dir}')
+        return
+    
     
     # unique row index
     flanks['idx'] =  flanks['gene_name'] + flanks[['flank_start', 'flank_end']].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
@@ -287,10 +292,14 @@ def plot_venn(dir):
 
     hm_epigenes = []
     
-    for hm in hms:
-        with open(f'0_Files/{dir}/{hm}/{hm}_truepos_epigenes.txt') as file:
-            epigenes = [line.rstrip() for line in file]
-            hm_epigenes.append(epigenes)
+    try:
+        for hm in hms:
+            with open(f'0_Files/{dir}/{hm}/{hm}_truepos_epigenes.txt') as file:
+                epigenes = [line.rstrip() for line in file]
+                hm_epigenes.append(epigenes)
+    except:
+        print(f'No epigenes available for {dir}. Cannot make a venn diagram.')
+        return
     
     # visualise overlap
     info = tissue1 + ' - ' + tissue2
@@ -322,10 +331,14 @@ def common_genes():
     epigenes = {}
     for dir in dirs:
             hm_epigenes = []
-            for hm in hms:
-                with open(f'0_Files/{dir}/{hm}/{hm}_truepos_epigenes.txt') as file:
-                    genes = [line.rstrip() for line in file]
-                    hm_epigenes.extend(genes)
+            try:
+                for hm in hms:
+                    with open(f'0_Files/{dir}/{hm}/{hm}_truepos_epigenes.txt') as file:
+                        genes = [line.rstrip() for line in file]
+                        hm_epigenes.extend(genes)
+            except:
+                print(f'No epigenes available for {dir}. Cannot find common epigenes between tools.')
+                continue
 
             epigenes[dir] = list(set(hm_epigenes))        
 
@@ -344,8 +357,11 @@ def common_genes():
     nonepigenes = {}
     for dir in dirs:
         file = dir.lower()
-        with open(f'0_Files/{dir}/{file}_nonepigenes.txt') as file:
-                    nonepigenes[dir]  = [line.rstrip() for line in file]
+        try:
+            with open(f'0_Files/{dir}/{file}_nonepigenes.txt') as file:
+                        nonepigenes[dir]  = [line.rstrip() for line in file]
+        except:
+            print(f'No DEUs available for {dir}, and hence no epi/nonepigenes.')
                     
     # Count occurrences of genes across all three tools
     nonepigene_counts = Counter(value for sublist in nonepigenes.values() for value in sublist)

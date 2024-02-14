@@ -29,6 +29,10 @@ rmats = rmats[rmats['FDR'] <=0.05]
 
 print('FDR-adj pvalue <= 0.05:          ', len(set(rmats.geneSymbol.values.tolist()))) # log
 
+if len(rmats) == 0:
+    print(' No skipped exons to process \n')
+    sys.exit(0)
+
 # FILTER 1: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
 rmats_AS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() >= 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
 rmats_CS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() < 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]

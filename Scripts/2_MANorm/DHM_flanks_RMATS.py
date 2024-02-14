@@ -1,12 +1,18 @@
 import pandas as pd
 import json
+import sys
 
 with open('paths.json') as f:
     d = json.load(f)
 
 hms = d["Histone modifications"]
 
-deu_flanks = pd.read_csv('0_Files/RMATS/rmats_flanks200.bed', delimiter='\t', header=None)
+try:
+    deu_flanks = pd.read_csv('0_Files/RMATS/rmats_flanks200.bed', delimiter='\t', header=None)
+except:
+    print('No RMATS exons to annotate \n \n')
+    sys.exit()
+
 deu_flanks.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'geneSymbol', 'dPSI']
 deu_flanks.drop(columns=['feature', 'score'], inplace=True)
 deu_flanks.drop_duplicates(inplace=True)

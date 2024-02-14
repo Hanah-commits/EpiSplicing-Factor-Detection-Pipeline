@@ -22,6 +22,11 @@ rmats = rmats[rmats['FDR'] <=0.05]
 
 print('FDR-adj pvalue <= 0.05:          ', len(set(rmats.geneSymbol.values.tolist()))) # log
 
+if len(rmats) == 0:
+    print(' No mutually exclusive exons to process \n')
+    sys.exit(0)
+
+
 # STEP 2 : Split into multiple rows, keeping one exon coord in one row.
 
 # Create two DataFrames, one for each row
@@ -64,11 +69,14 @@ rmats['dPSI'] = np.where(
 )
 
 # FILTER 1: Get true MXE events
-SE_exons = pd.read_csv("0_Files/RMATS/SE_exons.csv", delimiter='\t')
-SE_exons = list(set(SE_exons[SE_exons.dPSI > 0.2].exon_coord0.values.tolist()))
-rmats = rmats[(~rmats['exonStart_0base'].isin(SE_exons)) & (~rmats['exonEnd'].isin(SE_exons))] # covers A3SS,A5SS versions of skipped exons
+try:
+    SE_exons = pd.read_csv("0_Files/RMATS/SE_exons.csv", delimiter='\t')
+    SE_exons = list(set(SE_exons[SE_exons.dPSI > 0.2].exon_coord0.values.tolist()))
+    rmats = rmats[(~rmats['exonStart_0base'].isin(SE_exons)) & (~rmats['exonEnd'].isin(SE_exons))] # covers A3SS,A5SS versions of skipped exons
 
-print('True MXE:                        ', len(set(rmats.geneSymbol.values.tolist()))) # log
+    print('True MXE:                        ', len(set(rmats.geneSymbol.values.tolist()))) # log
+except:
+    print('No skipped exons available: All are considered True MXE')
 
 # FILTER 2: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
 rmats_AS = rmats[(pd.to_numeric(rmats['dPSI'] >= 0.2)) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
