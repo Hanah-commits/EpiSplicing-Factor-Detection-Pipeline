@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import json
+import sys
 
 
 with open('paths.json') as f:
@@ -10,8 +11,20 @@ ref = d['Reference genome']
 fasta = d['Reference fasta']
 ref_genome= fasta+".fai"
 
-SE = pd.read_csv(f'0_Files/RMATS/SE_exons.tsv', delimiter='\t', names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI" ], skiprows=1)
-MXE = pd.read_csv(f'0_Files/RMATS/MXE_exons.tsv', delimiter='\t',  names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"], skiprows=1)
+e = 0
+try:
+    SE = pd.read_csv(f'0_Files/RMATS/SE_exons.tsv', delimiter='\t', names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI" ], skiprows=1)
+except:
+    e +=1
+
+try:
+    MXE = pd.read_csv(f'0_Files/RMATS/MXE_exons.tsv', delimiter='\t',  names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"], skiprows=1)
+except:
+    e +=1
+
+if e == 2:
+    print('No RMATS exons available \n')
+    sys.exit()
 
 
 def A3SS_A5SS_filter(group, subset_column):
