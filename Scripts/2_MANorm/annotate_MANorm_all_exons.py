@@ -52,6 +52,8 @@ ref_genome= fasta+".fai"
 
 prefix = sys.argv[1]+ 'MANorm/'
 
+print('Annotating candidate exons with HM peaks from MANorm \n') #log
+
 for hm in hms:
     print(hm)
 

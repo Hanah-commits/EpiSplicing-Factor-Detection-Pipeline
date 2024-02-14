@@ -46,10 +46,16 @@ voila = pd.read_csv(file, delimiter='\t', skiprows=10)
 col_list = ['gene_id', 'lsv_id', 'seqid', 'mean_dpsi_per_lsv_junction', 'probability_changing', 'junctions_coords', 'num_exons', 'strand'] #, 'exons_coords']
 voila = voila[col_list]
 
+print('Processing MAJIQ output \n')
+print('# genes reported:                ', len(set(voila.gene_id.values.tolist()))) # log
+
 # FILTER 1: remove LSVs with 2 exons
 voila["num_exons"] = voila["num_exons"].replace('na' ,'0')
 voila["num_exons"] = pd.to_numeric(voila["num_exons"])
 voila = voila[voila['num_exons'] > 2]
+
+
+print('Filtered out LSV > 2 exons:      ', len(set(voila.gene_id.values.tolist()))) # log
 
 # split column values to multiple lines
 voila = voila.assign(junctions_coords=voila['junctions_coords'].str.split(';'), mean_dpsi_per_lsv_junction=voila['mean_dpsi_per_lsv_junction'].str.split(';'), probability_changing=voila['probability_changing'].str.split(';'))
@@ -65,6 +71,8 @@ voila = voila[~voila['junctions_coords'].str.contains("nan")]
 voila['pval'] = 1- pd.to_numeric(voila['probability_changing'])
 voila = adjust_pvalue(voila, col='pval')
 voila = voila[pd.to_numeric(voila['adj_pval']) <= 0.05]
+
+print('FDR-adj pvalue <= 0.05:          ', len(set(voila.gene_id.values.tolist()))) # log
 
 # STEP 3: Get the source and target indices of splice junctions
 voila[['source', 'target']] = voila['junctions_coords'].str.split('-', n=1, expand=True)
