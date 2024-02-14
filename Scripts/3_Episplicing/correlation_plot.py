@@ -8,6 +8,7 @@ from venn import venn
 import seaborn as sns
 import numpy as np
 from pathlib import Path
+from collections import Counter
 
 
 def pearsonr_pval(x, y):
@@ -59,16 +60,23 @@ def p_adjust_bh(p):
 def process_dataframe(df, hms):
     # Internal column filtering
     df = df.drop(['Unnamed: 1', 'dPSI'], axis=1)
-    
-    # Dropping p-values of hm-hm correlations
-    df = df.iloc[::5, :]
-    
+
+    # Dropping p-values/coeffs of hm-hm correlations
+    df = df.groupby('gene_name').last()
+
+    # Reset the index to ensure it starts from 0
+    df['gene_name'] = df.index
+    df.reset_index(drop=True, inplace=True)
+
     # Drop genes where no dPSI-HM correlations exist
     df.dropna(subset=hms, how='all', inplace=True)
     
     # Cleanup
     df.reset_index(drop=True, inplace=True)
-    
+
+    # rearrange columns
+    df = df[['gene_name'] + hms]
+
     return df
 
 def make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir):
@@ -188,10 +196,11 @@ def indiv_hms(dir):
 
     filtered_flanks.drop(columns=['feature', 'score', 'flank_start', 'flank_end'], inplace=True) #remove unnecessary cols
     coeff = filtered_flanks.groupby('gene_name').corr(method=pearsonr_coeff)
+    coeff = coeff.fillna(0)
 
     # internal column filtering
-    coeff.to_csv('0_Files/coeff.csv', sep='\t')
-    coeff = pd.read_csv('0_Files/coeff.csv', delimiter='\t')
+    coeff.to_csv(f'0_Files/{dir}/coeff.csv', sep='\t')
+    coeff = pd.read_csv(f'0_Files/{dir}/coeff.csv', delimiter='\t')
     coeff = process_dataframe(coeff, hms)
   
     ## STEP 1: Obtain p values of DEU-DHM correlations
@@ -199,8 +208,8 @@ def indiv_hms(dir):
     pval = filtered_flanks.groupby('gene_name').corr(method=pearsonr_pval)
 
     # internal column filtering
-    pval.to_csv('0_Files/pvals.csv', sep='\t')
-    pval = pd.read_csv('0_Files/pvals.csv', delimiter='\t')
+    pval.to_csv(f'0_Files/{dir}/pvals.csv', sep='\t')
+    pval = pd.read_csv(f'0_Files/{dir}/pvals.csv', delimiter='\t')
     pval = process_dataframe(pval, hms)
 
     ## STEP 2: Adjust the p values using Benjamini-Hochberg method
@@ -208,8 +217,9 @@ def indiv_hms(dir):
 
     # STEP 3: Find epigenes: genes where adjusted_pval <= 0.05, R  >= 0.5 
 
-    #rename columns
+    #rename and rearrange columns
     adj_pvals.columns = hms + ['gene_name']
+    adj_pvals = adj_pvals[['gene_name']+ hms]
 
     correlated_genes = list(set(adj_pvals.gene_name.values.tolist()))
     hm_epigenes_dict = {hm: [] for hm in hms}
@@ -220,11 +230,13 @@ def indiv_hms(dir):
                 hm_epigenes_dict[hm].append(gene)
 
     epigenes = list(set([item for sublist in hm_epigenes_dict.values() for item in sublist]))
-    print('PRE-FILTERING:  ', len(epigenes))
-    
-    with open(f'0_Files/{dir}/{file}_epigenes.txt', 'w') as f:
-        for line in list(set(epigenes)):
-            f.write("%s\n" % line)
+    print('PRE-FILTERING:  ', len(epigenes)) # temp comment
+
+    for gene in epigenes:
+
+        with open(f'0_Files/{dir}/{file}_epigenes.txt', 'w') as f:
+            for line in list(set(epigenes)):
+                f.write("%s\n" % line)
 
     ## STEP 4: Make corr plots of hm-specific epigenes:
     # get flanks of hm-specific epigenes
@@ -245,7 +257,7 @@ def indiv_hms(dir):
         i+=1
 
     epigenes = list(set([item for items in true_epigenes for item in items]))
-    print('Epigenes ', len(epigenes))
+    print('Epigenes     ', len(epigenes))
     print('Non-Epigenes ', len(non_epi))
     
     # get flanks of all epispliced genes
@@ -263,10 +275,6 @@ def indiv_hms(dir):
         for line in list(set(non_epi)):
             f.write("%s\n" % line)
 
-
-    # remove unwnated
-    os.remove('0_Files/pvals.csv')
-    os.remove('0_Files/coeff.csv')
 
 def plot_venn(dir):
 
@@ -298,6 +306,61 @@ def plot_venn(dir):
 
     plt.title(title)
     plt.savefig(f'0_Files/{dir}/hm_overlap_' + info + '.png')
+    plt.close()
+
+
+def common_genes():
+
+    with open('paths.json') as f:
+        d = json.load(f)
+
+    hms = d["Histone modifications"]
+
+    dirs = ['DEXSEQ', 'MAJIQ', 'RMATS']
+
+    # get overlap from 2/3 tools : epigenes
+    epigenes = {}
+    for dir in dirs:
+            hm_epigenes = []
+            for hm in hms:
+                with open(f'0_Files/{dir}/{hm}/{hm}_truepos_epigenes.txt') as file:
+                    genes = [line.rstrip() for line in file]
+                    hm_epigenes.extend(genes)
+
+            epigenes[dir] = list(set(hm_epigenes))        
+
+    # Count occurrences of genes across all three tools
+    epigenee_counts = Counter(value for sublist in epigenes.values() for value in sublist)
+
+    # Filter genes that appear in all three tools
+    overlap_epigenes = [gene for gene, count in epigenee_counts.items() if count >= 2]
+
+    with open(f'0_Files/common_epigenes.txt', 'w') as f:
+        for line in list(set(overlap_epigenes)):
+            f.write("%s\n" % line)
+
+
+    # get overlap from all three tools : nonepigenes
+    nonepigenes = {}
+    for dir in dirs:
+        file = dir.lower()
+        with open(f'0_Files/{dir}/{file}_nonepigenes.txt') as file:
+                    nonepigenes[dir]  = [line.rstrip() for line in file]
+                    
+    # Count occurrences of genes across all three tools
+    nonepigene_counts = Counter(value for sublist in nonepigenes.values() for value in sublist)
+
+    # Filter genes that appear in all three tools
+    overlap_nonepigenes = [gene for gene, count in nonepigene_counts.items() if count > 2]
+
+    with open(f'0_Files/common_nonepigenes.txt', 'w') as f:
+        for line in list(set(overlap_nonepigenes)):
+            f.write("%s\n" % line)
+
+    
+    # outputlog
+    print('# Epigenes in 2/3 tools:    ', len(overlap_epigenes))
+    print('# NonEpigenes in 3/3 tools: ', len(overlap_nonepigenes))
 
 
 
@@ -312,3 +375,5 @@ if __name__ == "__main__":
 
         # venn diagram of true epigenes
         plot_venn(tool)
+
+    common_genes()
