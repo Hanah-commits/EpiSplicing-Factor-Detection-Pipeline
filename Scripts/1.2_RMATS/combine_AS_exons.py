@@ -37,6 +37,8 @@ SE_MXE_exons = SE_MXE_exons.reset_index(drop=True)
 ## FILTER 2: Keep only AS exons
 SE_MXE_exons = SE_MXE_exons[SE_MXE_exons.dPSI > 0.2]
 
+print('# genes with SE and MXE exons:   ', len(set(SE_MXE_exons.geneSymbol.values.tolist()))) # log
+
 ## STEP 2: Get exon flanks
 
 SE_MXE_exons[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"]].to_csv('0_Files/RMATS/rmats_exons_coords.bed', index=False, sep='\t', header=False)

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 import os
 from pathlib import Path
+import sys
 
 
 # STEP 0: Create directories to store RMATS files
@@ -14,15 +15,19 @@ Path(output_dir).mkdir(parents=True, exist_ok=True)
 # STEP 1: Extract required columns and split individual dpsi values, their probabilities and junction coords
 
 # Keep relevant columns
-file = '/Users/hanah/EpiSplicing_RMATS/Output/neuro-H1/RMATS/SE.MATS.JC.txt'
+file = sys.argv[1] + 'RMATS/SE.MATS.JC.txt'
 rmats = pd.read_csv(file, delimiter='\t')
 col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd']
 rmats = rmats[col_list]
+
+print('Processing RMATS output: Skipped Exons \n')
+print('# genes reported:                ', len(set(rmats.geneSymbol.values.tolist()))) # log
 
 # use | dPSI | and only true values
 rmats['IncLevelDifference'] = rmats['IncLevelDifference'].abs()
 rmats = rmats[rmats['FDR'] <=0.05]
 
+print('FDR-adj pvalue <= 0.05:          ', len(set(rmats.geneSymbol.values.tolist()))) # log
 
 # FILTER 1: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
 rmats_AS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() >= 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
@@ -80,6 +85,7 @@ for i, df in enumerate([rmats_AS, rmats_CS]):
 rmats = pd.concat([rmats_AS, rmats_CS],axis=0,sort=False).reset_index()
 rmats = rmats.groupby('GeneID').filter(lambda x: (x['dPSI'] > 0.2).any())
 
+print('| IncLevelDifference | > 0.2:    ', len(set(rmats.geneSymbol.values.tolist()))) # log
 
 ## STEP 2: Prepare bedtools input
 

@@ -1,21 +1,26 @@
 import pandas as pd
 import numpy as np
-import os
+import sys
 
 
 
 # STEP 1: Extract required columns and split individual dpsi values, their probabilities and junction coords
 
 # Keep relevant columns
-file = '/Users/hanah/EpiSplicing_RMATS/Output/neuro-H1/RMATS/MXE.MATS.JC.txt'
+file = sys.argv[1]+ 'RMATS/MXE.MATS.JC.txt'
 rmats = pd.read_csv(file, delimiter='\t')
 
 col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', '1stExonStart_0base', '1stExonEnd', '2ndExonStart_0base', '2ndExonEnd']
 rmats = rmats[col_list]
 
+print('Processing RMATS output: Mutually Exclusive Exons \n')
+print('# genes reported:                ', len(set(rmats.geneSymbol.values.tolist()))) # log
+
 # use | dPSI | and only true values
 rmats['IncLevelDifference'] = rmats['IncLevelDifference'].abs()
 rmats = rmats[rmats['FDR'] <=0.05]
+
+print('FDR-adj pvalue <= 0.05:          ', len(set(rmats.geneSymbol.values.tolist()))) # log
 
 # STEP 2 : Split into multiple rows, keeping one exon coord in one row.
 
@@ -63,6 +68,7 @@ SE_exons = pd.read_csv("0_Files/RMATS/SE_exons.csv", delimiter='\t')
 SE_exons = list(set(SE_exons[SE_exons.dPSI > 0.2].exon_coord0.values.tolist()))
 rmats = rmats[(~rmats['exonStart_0base'].isin(SE_exons)) & (~rmats['exonEnd'].isin(SE_exons))] # covers A3SS,A5SS versions of skipped exons
 
+print('True MXE:                        ', len(set(rmats.geneSymbol.values.tolist()))) # log
 
 # FILTER 2: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
 rmats_AS = rmats[(pd.to_numeric(rmats['dPSI'] >= 0.2)) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
@@ -99,6 +105,8 @@ for i, df in enumerate([rmats_AS, rmats_CS]):
 # FILTER 5: Drop genes that only have exons with DEU scores < 0.2 (no alternate exons)
 rmats = pd.concat([rmats_AS, rmats_CS],axis=0,sort=False).reset_index()
 rmats = rmats.groupby('GeneID').filter(lambda x: (x['dPSI'] > 0.2).any())
+
+print('| IncLevelDifference | > 0.2:    ', len(set(rmats.geneSymbol.values.tolist()))) # log
 
 
 df = rmats.copy()
