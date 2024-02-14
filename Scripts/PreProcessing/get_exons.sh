@@ -13,8 +13,8 @@ fasta=$(jq -r ".[$field2]" "$json_file")
 #prepare genome file
 samtools faidx $fasta
 
-# get all transcripts of protein coding genes with TSL 1-3
-grep -E "transcript_support_level=[123]" $gff3 | 
+# get all transcripts of protein coding genes with TSL 1-5
+grep -E "transcript_support_level=[12345]" $gff3 | 
 awk -F'\t' -v OFS='\t' '$3 == "transcript" && $9 ~ /protein_coding/ {
     match($9, /gene_id=([^;]+)/, gene_id);
     match($9, /transcript_id=([^;]+)/, transcript_id);
