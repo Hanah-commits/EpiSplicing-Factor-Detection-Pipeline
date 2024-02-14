@@ -13,6 +13,9 @@ deu_flanks.drop_duplicates(inplace=True)
 
 dhm_flanks = pd.read_csv('0_Files/MANorm/DHM_peaks_annotation.tsv', delimiter='\t')
 
+print ('Annotating DEXSEQ exons with HM peaks \n')
+print('TSS Filtering:                   ', len(set(deu_flanks.geneSymbol.values.tolist()))) # log
+
 ## STEP 0: deal with flank have 1+ dpsi score (flanks of A3SS/A5SS exons -> duplicate flanks with dPSI scores of diff exons)
 
 deu_flanks['dPSI_abs'] = pd.to_numeric(deu_flanks['dPSI']).abs()
@@ -46,6 +49,8 @@ dhm_flanks.drop_duplicates(inplace=True)
 ## STEP 2: keep only genes where DEU scores are available
 deu_genes = list(set(deu_flanks.geneSymbol.values.tolist()))
 dhm_flanks = dhm_flanks[dhm_flanks.geneSymbol.isin(deu_genes)]
+
+print('TSL Filtering:                   ', len(set(deu_flanks.geneSymbol.values.tolist())), '\n \n') # log
 
 ## save
 dhm_flanks.to_csv('0_Files/DEXSEQ/DEU_DHM_dexseq_flanks.tsv', sep='\t', index=False)

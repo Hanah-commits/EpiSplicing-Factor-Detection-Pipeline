@@ -1,8 +1,8 @@
 import pandas as pd
-import numpy as np
 import os
 import json
 from pathlib import Path
+import sys
 
 
 with open('paths.json') as f:
@@ -14,36 +14,45 @@ ref = d['Reference genome']
 fasta = d['Reference fasta']
 ref_genome= fasta+".fai"
 
-# STEP 0: Create directories to store RMATS files
+# STEP 0: Create directories to store DEXSEQ files
 output_dir = str(Path(os.getcwd())) + "/0_Files/DEXSEQ/"
 Path(output_dir).mkdir(parents=True, exist_ok=True)
 
 # read dexseq output
-file = '/Users/hanah/EpiSplicing_RMATS/Output/neuro-H1/DEXSEQ/DEXSEQ.tsv'
+file = sys.argv[1] + f'DEXSEQ/DEXSEQ_{tissue1}_{tissue2}.tsv'
 log2FC = f"log2fold_{tissue1}_{tissue2}"
 dexseq = pd.read_csv(file, delimiter='\t')[['groupID', 'featureID', 'dispersion', 'stat', 'pvalue', 'padj', log2FC, 'genomicData.seqnames', 'genomicData.start', 'genomicData.end', 'genomicData.strand']]
 
-# dexseq = dexseq.assign(groupID=dexseq['groupID'].str.split('+')).explode('groupID')
-# print(len(set(dexseq.groupID.values.tolist())))
+print('Processing DEXSEQ output: \n')
 
 ### STEP 1: Get DEU exons
 
 # remove exons with nan
 dexseq = dexseq[~dexseq.padj.isna()]
 
-# all_genes = list(set([gene for group in dexseq['groupID'].str.split('+') for gene in group]))
-# print(len(all_genes))
-# adjust p-values
-#dexseq = adjust_pvalue(dexseq, col='pvalue')
+temp = dexseq.assign(groupID=dexseq['groupID'].str.split('+')).explode('groupID')
+print('# genes reported:                ', len(set(temp.groupID.values.tolist()))) # log
 
 # get significant exons
 dexseq = dexseq[dexseq.padj < 0.05]
 
+temp = dexseq.assign(groupID=dexseq['groupID'].str.split('+')).explode('groupID')
+print('FDR-adj pvalue <= 0.05:          ', len(set(temp.groupID.values.tolist()))) # log
+
 ## keep exons with | fold change | >= 2
 dexseq = dexseq[dexseq[log2FC].abs() >= 1]
 
-### STEP 2:  Get exons flanks
+temp = dexseq.assign(groupID=dexseq['groupID'].str.split('+')).explode('groupID')
+print('| log2FC | > 0.5:                ', len(set(temp.groupID.values.tolist()))) # log
+
+# genes with 2+ exons
 dexseq = dexseq.assign(groupID=dexseq['groupID'].str.split('+')).explode('groupID')
+dexseq = dexseq[dexseq.groupby('groupID').groupID.transform(len) > 2]
+
+temp = dexseq.assign(groupID=dexseq['groupID'].str.split('+')).explode('groupID')
+print('Filtered out genes < 3 exons:    ', len(set(temp.groupID.values.tolist()))) # log
+
+### STEP 2:  Get exons flanks
 dexseq['feature'] = 'dexseq_exon'
 dexseq['score'] = '.'
 
