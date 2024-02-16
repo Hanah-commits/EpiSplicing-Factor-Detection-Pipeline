@@ -180,6 +180,8 @@ def indiv_hms(dir):
     # FILTER 1: drop genes with less than 3 flanks
     flanks = flanks[flanks.groupby('gene_name').gene_name.transform(len) > 2]
 
+    print('# genes > 3 exon flanks:         ', len(set(flanks.gene_name.values.tolist()))) # log
+
     # # # FILTER 2: genes with dPSI values but no peak -> non-epigenes
     flanks_temp = flanks.copy() # Make a copy to avoid the SettingWithCopyWarning
     flanks_temp.replace(0, None, inplace=True) # to make comparison easier in next step
@@ -193,6 +195,8 @@ def indiv_hms(dir):
 
     filtered_flanks = flanks[~flanks['gene_name'].isin(non_epi)].copy()
     filtered_flanks.set_index('idx', inplace=True)
+
+    print('# correlation candidates: ', len(set(filtered_flanks.gene_name.values.tolist()))) # check num before and after noepi filtering
 
     # if one or more flanks of a gene have less than four peaks
     filtered_flanks.fillna(0, inplace=True)
@@ -362,12 +366,13 @@ def common_genes():
                         nonepigenes[dir]  = [line.rstrip() for line in file]
         except:
             print(f'No DEUs available for {dir}, and hence no epi/nonepigenes.')
+            continue
                     
     # Count occurrences of genes across all three tools
     nonepigene_counts = Counter(value for sublist in nonepigenes.values() for value in sublist)
 
     # Filter genes that appear in all three tools
-    overlap_nonepigenes = [gene for gene, count in nonepigene_counts.items() if count > 2]
+    overlap_nonepigenes = [gene for gene, count in nonepigene_counts.items() if count >= 2]
 
     with open(f'0_Files/common_nonepigenes.txt', 'w') as f:
         for line in list(set(overlap_nonepigenes)):
