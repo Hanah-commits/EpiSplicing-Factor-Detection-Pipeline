@@ -32,7 +32,7 @@ dhm_flanks['dPSI'] = dhm_flanks['dPSI'].fillna(0)
 deu_genes = list(set(deu_flanks.geneSymbol.values.tolist()))
 dhm_flanks = dhm_flanks[dhm_flanks.geneSymbol.isin(deu_genes)]
 
-print('TSL Filtering:                   ', len(set(deu_flanks.geneSymbol.values.tolist())), '\n \n') # log
+print('TSL Filtering:                   ', len(set(dhm_flanks.geneSymbol.values.tolist())), '\n \n') # log
 
 # # save
 dhm_flanks.to_csv('0_Files/RMATS/DEU_DHM_rmats_flanks.tsv', sep='\t', index=False)
