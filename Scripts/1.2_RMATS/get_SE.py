@@ -33,35 +33,31 @@ if len(rmats) == 0:
     print(' No skipped exons to process \n')
     sys.exit(0)
 
-# FILTER 1: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
+# FILTER 1: Get AS ( |dPSI| > 0.2, FDR < 0.05)
 rmats_AS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() >= 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
-rmats_CS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() < 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
+
+if len(rmats_AS) == 0:
+    print(' No skipped exons to process \n')
+    sys.exit(0)
 
 # FILTER 2: If skipped exon is reported many times,  pick single dPSI score (can happen if down/upstream exons vary)
 
 ## get the largest dPSI value for AS exons (most differentially used score)
-for i, df in enumerate([rmats_AS, rmats_CS]):
-    # Create 'dPSI' and 'dPSI' columns
-    df['dPSI'] = df.groupby('exonStart_0base')['IncLevelDifference'].transform(lambda x: ','.join(x.astype(str)))
-    df['dPSI'] = df['dPSI'].str.split(',').apply(lambda x: max(map(float, x)) if x[0] else None)
+df = rmats_AS.copy()
+# Create 'dPSI' and 'dPSI' columns
+df['dPSI'] = df.groupby('exonStart_0base')['IncLevelDifference'].transform(lambda x: ','.join(x.astype(str)))
+df['dPSI'] = df['dPSI'].str.split(',').apply(lambda x: max(map(float, x)) if x[0] else None)
 
-    # Keep only rows where 'IncLevelDifference' is equal to 'dPSI'
-    df = df[df['IncLevelDifference'] == df['dPSI']]
+# Keep only rows where 'IncLevelDifference' is equal to 'dPSI'
+df = df[df['IncLevelDifference'] == df['dPSI']]
 
-    # FILTER 3: Drop duplicate exon entries
-    df = df.drop_duplicates(subset=["GeneID", "strand", "exonStart_0base", "exonEnd"], keep='first')
+# FILTER 3: Drop duplicate exon entries
+df = df.drop_duplicates(subset=["GeneID", "strand", "exonStart_0base", "exonEnd"], keep='first')
 
-    # Assign the modified DataFrame back to the original variable
-    if i == 0:
-        rmats_AS = df
-    else:
-        rmats_CS = df
+# Assign the modified DataFrame back to the original variable
+rmats_AS = df
 
-# FILTER 4: Get only the exons from rmats_CS that are unique to it (not in rmats_AS)
-merged_df = pd.merge(rmats_CS, rmats_AS[["GeneID", "strand", "exonStart_0base", "exonEnd"]], on=["GeneID", "strand", "exonStart_0base", "exonEnd"], how='left', indicator=True)
-rmats_CS = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
-
-# FILTER 5: Keep coords of single version of exon if A3SS/A5SS events exist (to prevent 2+ flanks per exon)
+# FILTER 4: Keep coords of single version of exon if A3SS/A5SS events exist (to prevent 2+ flanks per exon)
 
 # #                   GeneID geneSymbol    chr strand  IncLevelDifference       FDR  exonStart_0base   exonEnd   dPSI
 # # 4634  ENSG00000126456.15       IRF3  chr19      -               0.449  0.000202         49664442  49664673  0.449
@@ -75,26 +71,15 @@ def A3SS_A5SS_filter(group, subset_column):
     group.drop_duplicates(subset=['exonEnd'], keep='first', inplace=True)
     return group
 
-for i, df in enumerate([rmats_AS, rmats_CS]):
-    df = df.groupby('GeneID').apply(lambda x: A3SS_A5SS_filter(x, 'dPSI'))
-    df = df.reset_index(drop=True)
+rmats_AS = rmats_AS.groupby('GeneID').apply(lambda x: A3SS_A5SS_filter(x, 'dPSI'))
+rmats_AS.reset_index(drop=True, inplace=True)
 
-    # Assign the modified DataFrame back to the original variable
-    if i == 0:
-        rmats_AS = df
-    else:
-        rmats_CS = df
-
-# FILTER 6: Drop genes that only have exons with DEU scores < 0.2 (no alternate exons)
-rmats = pd.concat([rmats_AS, rmats_CS],axis=0,sort=False).reset_index()
-rmats = rmats.groupby('GeneID').filter(lambda x: (x['dPSI'] > 0.2).any())
-
-print('| IncLevelDifference | > 0.2:    ', len(set(rmats.geneSymbol.values.tolist()))) # log
+print('| IncLevelDifference | > 0.2:    ', len(set(rmats_AS.geneSymbol.values.tolist()))) # log
 
 ## STEP 2: Prepare bedtools input
 
 # temp output fiilee
-df = rmats.copy()
+df = rmats_AS.copy()
 df['feature'] = "Exon"
 df['score'] = "."
 df['exonStart_0base'] = pd.to_numeric(df['exonStart_0base']) + 1
@@ -120,78 +105,3 @@ df_bed['score'] = "."
 df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
 df_bed.to_csv(f'0_Files/RMATS/SE.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
 df.to_csv(f'0_Files/RMATS/SE_exons.csv', index=False, sep='\t', header=True)
-
-    
-    
-
-
-
-
-
-
-
-
-
-
-def view_dpsi(type):
-
-    if type == "sub":
-        data1 = rmats_AS['IncLevelDifference'].abs().values.tolist()
-        data2 = rmats_CS['IncLevelDifference'].abs().values.tolist()
-
-        kde1 = gaussian_kde(data1)
-        kde2 = gaussian_kde(data2)
-
-        # Generate points on the x-axis for the KDE plots
-        x1 = np.linspace(min(data1), max(data1), 1000)
-        x2 = np.linspace(min(data2), max(data2), 1000)
-
-        # Calculate the KDE values for both data lists
-        kde_values1 = kde1(x1)
-        kde_values2 = kde2(x2)
-
-        # Create two subplots side by side
-        fig, axs = plt.subplots(1, 2, figsize=(12, 5))
-
-        # Plot the KDE for data1 on the first subplot
-        axs[0].plot(x1, kde_values1)
-        axs[0].set_xlabel('| dPSI | values of DJU events (Alternative)')
-        axs[0].set_ylabel('Density')
-
-
-        # Plot the KDE for data2 on the second subplot
-        axs[1].plot(x2, kde_values2)
-        axs[1].set_xlabel('| dPSI | values of non-DJU events (constitutive)')
-        axs[1].set_ylabel('Density')
-
-
-        # Adjust spacing between subplots
-        plt.tight_layout()
-
-        # Show the plots
-        plt.show()
-
-    elif type == "main":
-        data = rmats['IncLevelDifference'].abs().values.tolist()
-        kde = gaussian_kde(data)
-       
-
-        # Generate points on the x-axis for the KDE plots
-        x1 = np.linspace(min(data), max(data), 1000)
-
-        # Calculate the KDE values for both data lists
-        kde_values1 = kde(x1)
-
-        # Create two subplots side by side
-        fig, axs = plt.subplots(1, figsize=(12, 5))
-
-        # Plot the KDE for data1 on the first subplot
-        axs.plot(x1, kde_values1)
-        axs.set_xlabel('| dPSI | values of SE events')
-        axs.set_ylabel('Density')
-
-        # Adjust spacing between subplots
-        plt.tight_layout()
-
-        # Show the plots
-        plt.show()
