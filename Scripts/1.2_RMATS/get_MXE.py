@@ -80,13 +80,8 @@ except:
 
 # FILTER 2: Get AS ( |dPSI| > 0.2, FDR < 0.05) and CS exons ( |dPSI| < 0.2, FDR < 0.05)
 rmats_AS = rmats[(pd.to_numeric(rmats['dPSI'] >= 0.2)) & (pd.to_numeric(rmats['FDR']) <= 0.05)]
-rmats_CS = rmats[(pd.to_numeric(rmats['dPSI'] < 0.2))  & (pd.to_numeric(rmats['FDR']) <= 0.05)]
 
-# FILTER 3: Get only the exons from rmats_CS that are unique to it (not in rmats_AS)
-merged_df = pd.merge(rmats_CS, rmats_AS[["GeneID", "strand", "exonStart_0base", "exonEnd"]], on=["GeneID", "strand", "exonStart_0base", "exonEnd"], how='left', indicator=True)
-rmats_CS = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
-
-# FILTER 4: Keep coords of single version of exon if A3SS/A5SS events exist (to prevent 2+ flanks per exon)
+# FILTER 3: Keep coords of single version of exon if A3SS/A5SS events exist (to prevent 2+ flanks per exon)
 
 # #                   GeneID geneSymbol    chr strand  IncLevelDifference       FDR  exonStart_0base   exonEnd   dPSI
 # # 4634  ENSG00000126456.15       IRF3  chr19      -               0.449  0.000202         49664442  49664673  0.449
@@ -100,24 +95,12 @@ def A3SS_A5SS_filter(group, subset_column):
     group.drop_duplicates(subset=['exonEnd'], keep='first', inplace=True)
     return group
 
-for i, df in enumerate([rmats_AS, rmats_CS]):
-    df = df.groupby('GeneID').apply(lambda x: A3SS_A5SS_filter(x, 'dPSI'))
-    df = df.reset_index(drop=True)
+rmats_AS = rmats_AS.groupby('GeneID').apply(lambda x: A3SS_A5SS_filter(x, 'dPSI'))
+rmats_AS.reset_index(drop=True, inplace=True)
 
-    # Assign the modified DataFrame back to the original variable
-    if i == 0:
-        rmats_AS = df
-    else:
-        rmats_CS = df
+print('| IncLevelDifference | > 0.2:    ', len(set(rmats_AS.geneSymbol.values.tolist()))) # log
 
-# FILTER 5: Drop genes that only have exons with DEU scores < 0.2 (no alternate exons)
-rmats = pd.concat([rmats_AS, rmats_CS],axis=0,sort=False).reset_index()
-rmats = rmats.groupby('GeneID').filter(lambda x: (x['dPSI'] > 0.2).any())
-
-print('| IncLevelDifference | > 0.2:    ', len(set(rmats.geneSymbol.values.tolist()))) # log
-
-
-df = rmats.copy()
+df = rmats_AS.copy()
 # temp output fiilee
 df['feature'] = "Exon"
 df['score'] = "."
