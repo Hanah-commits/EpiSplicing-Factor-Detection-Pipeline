@@ -35,4 +35,5 @@ dhm_flanks = dhm_flanks[dhm_flanks.geneSymbol.isin(deu_genes)]
 print('TSL Filtering:                   ', len(set(dhm_flanks.geneSymbol.values.tolist())), '\n \n') # log
 
 # # save
-dhm_flanks.to_csv('0_Files/RMATS/DEU_DHM_rmats_flanks.tsv', sep='\t', index=False)
+if len(dhm_flanks) > 0:
+    dhm_flanks.to_csv('0_Files/RMATS/DEU_DHM_rmats_flanks.tsv', sep='\t', index=False)
