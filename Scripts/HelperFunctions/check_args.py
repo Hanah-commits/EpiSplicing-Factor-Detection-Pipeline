@@ -20,7 +20,8 @@ def check_args():
     "ChIPSeq files" : d["ChIPSeq files"],
     "MAJIQ config" : d["MAJIQ config"],
     "RBPmap directory" : d["RBPmap directory"],
-    "threads" : d['threads']
+    "threads" : d['threads'],
+    "Output directory" : d['Output directory']
     }
 
     #check histone modifications & tissue names
@@ -39,11 +40,11 @@ def check_args():
 
 
     # check path validity of directories
-    dirs = ["RNASeq files", "ChIPSeq files", "RBPmap directory"]
+    dirs = ["RNASeq files", "ChIPSeq files", "RBPmap directory", "Output directory"]
     dir_paths = []
     for dir in dirs:
 
-        if args[dir][-1] != '/':
+        if args[dir][-1] != '/' and len(args[dir]) > 0:
             args[dir] += '/'
 
         dir_paths.append(args[dir])
@@ -73,14 +74,15 @@ def check_args():
             #create temp dir
             Path(dir).mkdir(parents=True, exist_ok=True)
 
-
-    # create custome output directory tissue1_tissue2_timestamp
-    output_dir = str(Path(os.getcwd()).parent.absolute()) + "/Output/"+ args["tissue1"]+ "_" + args["tissue2"]+ "_CS_TSS/" #+ str(time.time()) +"/"
-    #Path(output_dir).mkdir(parents=True, exist_ok=True)
+    output_dir = args['Output directory']
+    if len(output_dir) == 0:
+        # create custome output directory tissue1_tissue2_timestamp
+        output_dir = str(Path(os.getcwd()).parent.absolute()) + "/Output/"+ args["tissue1"]+ "_" + args["tissue2"] + "/" + str(time.time()) +"/"
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
 
 
     with open('paths.json', 'w') as fp:
-        json.dump(args, fp)
+        json.dump(args, fp, indent=4)
 
     # copy input arguments (paths.json) to output_dir
     shutil.copyfile('paths.json', output_dir+'paths.json')
