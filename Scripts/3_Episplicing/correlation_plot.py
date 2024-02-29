@@ -341,7 +341,7 @@ def common_genes():
                         genes = [line.rstrip() for line in file]
                         hm_epigenes.extend(genes)
             except:
-                print(f'No epigenes available for {dir}. Cannot find common epigenes between tools.')
+                print(f'No epigenes available for {dir}. Cannot find common epigenes between this tool and the other two tools.')
                 continue
 
             epigenes[dir] = list(set(hm_epigenes))        
@@ -365,14 +365,14 @@ def common_genes():
             with open(f'0_Files/{dir}/{file}_nonepigenes.txt') as file:
                         nonepigenes[dir]  = [line.rstrip() for line in file]
         except:
-            print(f'No DEUs available for {dir}, and hence no epi/nonepigenes.')
+            print(f'No DEUs available for {dir}. Cannot find common non-epigenes between this tool and the other two tools.')
             continue
                     
     # Count occurrences of genes across all three tools
     nonepigene_counts = Counter(value for sublist in nonepigenes.values() for value in sublist)
 
     # Filter genes that appear in all three tools
-    overlap_nonepigenes = [gene for gene, count in nonepigene_counts.items() if count >= 2]
+    overlap_nonepigenes = [gene for gene, count in nonepigene_counts.items() if count > 2]
 
     with open(f'0_Files/common_nonepigenes.txt', 'w') as f:
         for line in list(set(overlap_nonepigenes)):
