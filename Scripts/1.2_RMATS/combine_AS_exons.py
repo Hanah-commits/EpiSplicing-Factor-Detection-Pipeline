@@ -15,11 +15,13 @@ e = 0
 try:
     SE = pd.read_csv(f'0_Files/RMATS/SE_exons.tsv', delimiter='\t', names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI" ], skiprows=1)
 except:
+    SE = pd.DataFrame()
     e +=1
 
 try:
     MXE = pd.read_csv(f'0_Files/RMATS/MXE_exons.tsv', delimiter='\t',  names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"], skiprows=1)
 except:
+    MXE = pd.DataFrame()
     e +=1
 
 if e == 2:
@@ -41,7 +43,13 @@ def A3SS_A5SS_filter(group, subset_column):
 
 
 ## STEP 1: get combined dPSI scores of AS exons
-SE_MXE_exons =  pd.concat([SE, MXE], ignore_index=True)
+
+if len(SE) > 0 and len(MXE) >0 : 
+    SE_MXE_exons =  pd.concat([SE, MXE], ignore_index=True)
+elif len(SE) > 0:
+    SE_MXE_exons = SE
+else:
+    SE_MXE_exons = MXE
 
 ## FILTER 1: A3SS/A5SS -  Avoid many A3SS/A5SS versions of AS exons
 SE_MXE_exons = SE_MXE_exons.groupby('geneSymbol').apply(lambda x: A3SS_A5SS_filter(x, 'dPSI'))
@@ -50,7 +58,7 @@ SE_MXE_exons = SE_MXE_exons.reset_index(drop=True)
 ## FILTER 2: Keep only AS exons
 SE_MXE_exons = SE_MXE_exons[SE_MXE_exons.dPSI > 0.2]
 
-print('# genes with SE and MXE exons:   ', len(set(SE_MXE_exons.geneSymbol.values.tolist()))) # log
+print('# genes with SE and/or MXE exons:   ', len(set(SE_MXE_exons.geneSymbol.values.tolist()))) # log
 
 ## STEP 2: Get exon flanks
 
