@@ -54,4 +54,4 @@ print('TSL Filtering:                   ', len(set(dhm_flanks.geneSymbol.values.
 
 ## save
 if len(dhm_flanks) > 0:
-    dhm_flanks.to_csv('0_Files/RMATS/DEU_DHM_rmats_flanks.tsv', sep='\t', index=False)
+    dhm_flanks.to_csv('0_Files/DEXSEQ/DEU_DHM_dexseq_flanks.tsv', sep='\t', index=False)
