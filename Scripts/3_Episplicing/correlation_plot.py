@@ -81,53 +81,64 @@ def process_dataframe(df, hms):
 
 def make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir):
 
-    file = dir.lower()
-
-    hm_flanks = hm_flanks.copy() # Make a copy to avoid the SettingWithCopyWarning
-    genes = list(set(hm_flanks['gene_name'].values.tolist()))
-    hm_flanks["type"] = hm_flanks.apply(lambda row: 'deu' if row['dPSI'] != 0 else 'non-deu', axis=1)
-
-    # impute missing data points
-    hm_flanks.fillna(0,inplace=True)
-
-    # get absolute DEU, DHM values
-    hm_flanks.loc[:, 'dPSI'] = hm_flanks['dPSI'].abs()
-    hm_flanks.loc[:, hm] = hm_flanks[hm].abs()
-    
-    # round off
-    hm_flanks.loc[:, 'dPSI'] = hm_flanks['dPSI'].round(2)
-    hm_flanks.loc[:, hm] = hm_flanks[hm].round(2)
-
     # create directory to save files
     Path(f'0_Files/{dir}/{hm}/plots/').mkdir(parents=True, exist_ok=True)
 
+    if len(hm_flanks) == 0:
+        true_genes = []
+        print(hm, '  ', len(true_genes))
 
-    filter_out = []
-    for gene in genes:
-        ## FILTER 1: remve genes whee CS exons also have DHM peakss
-        gene_df = hm_flanks[hm_flanks.gene_name == gene]
-        if ((gene_df[hm] != 0) & (gene_df['type'] == 'non-deu')).any():
-            filter_out.append(gene)
-
-    true_genes = [gene for gene in genes if gene not in filter_out]
-
-    with open(f'0_Files/{dir}/{hm}/{hm}_truepos_epigenes.txt', 'w') as f:
-        for line in true_genes:
-            f.write("%s\n" % line)
-
-    hm_flanks = hm_flanks[hm_flanks['gene_name'].isin(true_genes)]
-    hm_flanks.to_csv(f'0_Files/{dir}/{hm}/dPSI_Mval_epi_{hm}_{file}.csv', sep='\t', index=False)
-
-    print(hm, '  ', len(true_genes))
+        with open(f'0_Files/{dir}/{hm}/{hm}_truepos_epigenes.txt', 'w') as f:
+            for line in true_genes:
+                f.write("%s\n" % line)
 
 
-    # get correlation plot of true epigenes
-    for gene in true_genes:
-        r = hm_coeff[hm_coeff.gene_name == gene][hm].values.tolist()[0]
-        p = hm_pvals[hm_pvals.gene_name == gene][hm].values.tolist()[0]
-        gene_df = hm_flanks[hm_flanks['gene_name'] == gene]
-        corr_plot(gene_df, gene, hm, r, p, path=f'0_Files/{dir}/{hm}/plots/')
-    
+    else:
+
+        file = dir.lower()
+
+        hm_flanks = hm_flanks.copy() # Make a copy to avoid the SettingWithCopyWarning
+        genes = list(set(hm_flanks['gene_name'].values.tolist()))
+        hm_flanks["type"] = hm_flanks.apply(lambda row: 'deu' if row['dPSI'] != 0 else 'non-deu', axis=1)
+
+        # impute missing data points
+        hm_flanks.fillna(0,inplace=True)
+
+        # get absolute DEU, DHM values
+        hm_flanks.loc[:, 'dPSI'] = hm_flanks['dPSI'].abs()
+        hm_flanks.loc[:, hm] = hm_flanks[hm].abs()
+        
+        # round off
+        hm_flanks.loc[:, 'dPSI'] = hm_flanks['dPSI'].round(2)
+        hm_flanks.loc[:, hm] = hm_flanks[hm].round(2)
+
+
+        filter_out = []
+        for gene in genes:
+            ## FILTER 1: remve genes whee CS exons also have DHM peakss
+            gene_df = hm_flanks[hm_flanks.gene_name == gene]
+            if ((gene_df[hm] != 0) & (gene_df['type'] == 'non-deu')).any():
+                filter_out.append(gene)
+
+        true_genes = [gene for gene in genes if gene not in filter_out]
+
+        with open(f'0_Files/{dir}/{hm}/{hm}_truepos_epigenes.txt', 'w') as f:
+            for line in true_genes:
+                f.write("%s\n" % line)
+
+        hm_flanks = hm_flanks[hm_flanks['gene_name'].isin(true_genes)]
+        hm_flanks.to_csv(f'0_Files/{dir}/{hm}/dPSI_Mval_epi_{hm}_{file}.csv', sep='\t', index=False)
+
+        print(hm, '  ', len(true_genes))
+
+
+        # get correlation plot of true epigenes
+        for gene in true_genes:
+            r = hm_coeff[hm_coeff.gene_name == gene][hm].values.tolist()[0]
+            p = hm_pvals[hm_pvals.gene_name == gene][hm].values.tolist()[0]
+            gene_df = hm_flanks[hm_flanks['gene_name'] == gene]
+            corr_plot(gene_df, gene, hm, r, p, path=f'0_Files/{dir}/{hm}/plots/')
+        
     return true_genes
  
 
