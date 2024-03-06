@@ -82,8 +82,8 @@ flank_jns_group = flank_jns_group.iloc[:, [-1, -2, 3]]
 flank_jns_group.columns = ['gene_id', 'flanks', 'mean_dpsi_per_lsv_junction']
 
 # FILTER 3: if flank has 1+ junctions, keep junction with highest dPSI value
-flank_jns_group['max_dPSI'] = flank_jns_group['mean_dpsi_per_lsv_junction'].str.split(',')\
-        .apply(lambda x: min(map(float, x)))  # string -> list of strings -> list of floats -> max float
+flank_jns_group['max_dPSI'] = flank_jns_group['mean_dpsi_per_lsv_junction']\
+        .apply(lambda x: min(map(float, x.split(','))) if isinstance(x, str) else x) # string -> list of strings -> list of floats -> max float
 
 # # get the corresponding junction for each flank's max dPSI value
 flank_jns_group = pd.merge(flank_jns_group[['flanks', 'max_dPSI', 'gene_id']], flank_jns, on=['flanks', 'gene_id'], how='inner')
