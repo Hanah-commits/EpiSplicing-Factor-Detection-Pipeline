@@ -155,7 +155,11 @@ for hm in hms:
     ## STEP 6: Assign peaks to flanks of exons
 
     ## STEP 6.1: make flanks of filtered exons
-    
+
+    ## Avoid non-integer start/end coords
+    ## chr1    10295086.0      10295165.0      flank   0.0     +       ENSG00000054523.17 -> chr1    10295086      10295165      flank   0.0     +       ENSG00000054523.17
+    exons[['exon_start', 'exon_end', 'peak_start', 'peak_end']] = exons[['exon_start', 'exon_end', 'peak_start', 'peak_end']].astype(int)
+
     # get non-TSS exons + peaks
     exons = exons[(exons.TSS_exon == False) & (exons.chr_2 != 0)]
     # save exons
