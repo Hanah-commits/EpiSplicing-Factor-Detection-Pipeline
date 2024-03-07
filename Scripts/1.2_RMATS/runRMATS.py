@@ -14,7 +14,7 @@ if __name__ == "__main__":
     ref = d['Reference genome']
     tissue1 = d["tissue1"]
     tissue2 = d["tissue2"]
-    rmats_dir = d['RMATS_dir']
+    rmats_dir = d['RMATS directory']
     read_len = d['read_length']
 
 
