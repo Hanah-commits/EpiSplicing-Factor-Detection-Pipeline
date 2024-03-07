@@ -21,9 +21,10 @@ def check_args():
     "MAJIQ config" : d["MAJIQ config"],
     "RBPmap directory" : d["RBPmap directory"],
     "threads" : d['threads'],
-    "Output directory" : d['Output directory'],
     "read_length":  d['read_length'],
-    "RMATS_dir": d['RMATS_dir'],
+    "Output directory" : d['Output directory'],
+    "DEXSEQ directory": d['DEXSEQ directory'],
+    "RMATS directory": d['RMATS directory'],
     }
 
     #check histone modifications & tissue names
@@ -43,7 +44,7 @@ def check_args():
 
 
     # check path validity of directories
-    dirs = ["RNASeq files", "ChIPSeq files", "RBPmap directory", "Output directory", "RMATS_dir"]
+    dirs = ["RNASeq files", "ChIPSeq files", "RBPmap directory", "Output directory", "DEXSEQ directory", "RMATS directory"]
     dir_paths = []
     for dir in dirs:
 
@@ -76,6 +77,13 @@ def check_args():
         else: 
             #create temp dir
             Path(dir).mkdir(parents=True, exist_ok=True)
+
+    # check if log files already exist
+    log_file_name = 'output.log'
+    try:
+        f = open(log_file_name, 'x')
+    except FileExistsError:
+        raise ValueError('Delete or move the log file to another location ' + log_file_name)
 
     output_dir = args['Output directory']
     if len(output_dir) == 0:
