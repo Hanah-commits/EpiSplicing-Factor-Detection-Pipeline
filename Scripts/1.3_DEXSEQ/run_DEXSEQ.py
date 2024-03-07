@@ -18,8 +18,10 @@ odir = sys.argv[1] + 'DEXSEQ/'
 Path(odir).mkdir(parents=True, exist_ok=True)
 
 # prepare flattened annotation file
-os.system(f"python {dexseq_scripts}/python_scripts/dexseq_prepare_annotation.py {ref} {odir}/gencode.v24.DEXSEQ.gff")
+os.system(f"python {dexseq_scripts}python_scripts/dexseq_prepare_annotation.py {ref} {odir}DEXSEQ_reference.gtf")
 
 # count exons
-os.system(f'bash HelperFunction/count_all.sh {bam_files}{tissue1}_*.bam ')
-os.system(f'bash HelperFunction/count_all.sh {bam_files}{tissue2}_*.bam ')
+os.system(f'bash HelperFunction/count_all.sh {tissue1} {tissue2} {bam_files}')
+
+# rundexseq
+os.system(f'Rscript run_dexseq {bam_files} {tissue1} {tissue2}')

@@ -12,5 +12,6 @@
 "RBPmap directory" : "",
 "Output directory":"",
 "read_length":"",
-"RMATS_dir":""
+"RMATS_dir":"",
+"DEXSEQ_dir":""
 }
