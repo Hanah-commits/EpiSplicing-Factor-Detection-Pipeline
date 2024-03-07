@@ -21,7 +21,9 @@ def check_args():
     "MAJIQ config" : d["MAJIQ config"],
     "RBPmap directory" : d["RBPmap directory"],
     "threads" : d['threads'],
-    "Output directory" : d['Output directory']
+    "Output directory" : d['Output directory'],
+    "read_length":  d['read_length'],
+    "RMATS_dir": d['RMATS_dir'],
     }
 
     #check histone modifications & tissue names
@@ -33,14 +35,15 @@ def check_args():
         raise ValueError('No Tissue Name(s)')
         
     #check datatypes
-    try:
-        int(args["threads"])
-    except:
-        raise ValueError('Invalid Input ' + args["threads"])
+    for val in ['threads', 'read_length']:
+        try:
+            int(args[val])
+        except:
+            raise ValueError('Invalid Input ' + args[val])
 
 
     # check path validity of directories
-    dirs = ["RNASeq files", "ChIPSeq files", "RBPmap directory", "Output directory"]
+    dirs = ["RNASeq files", "ChIPSeq files", "RBPmap directory", "Output directory", "RMATS_dir"]
     dir_paths = []
     for dir in dirs:
 

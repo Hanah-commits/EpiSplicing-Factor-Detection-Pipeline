@@ -10,5 +10,7 @@
 "threads":"",
 "MAJIQ config":"",
 "RBPmap directory" : "",
-"Pipeline output":""
+"Output directory":"",
+"read_length":"",
+"RMATS_dir":""
 }
