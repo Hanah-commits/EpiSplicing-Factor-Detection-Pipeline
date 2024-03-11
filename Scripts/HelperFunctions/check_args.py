@@ -44,7 +44,9 @@ def check_args():
 
 
     # check path validity of directories
-    dirs = ["RNASeq files", "ChIPSeq files", "RBPmap directory", "Output directory", "DEXSEQ directory", "RMATS directory"]
+    dirs = ["RNASeq files", "ChIPSeq files", "RBPmap directory", "DEXSEQ directory", "RMATS directory"]
+    if len(args['Output directory']) != 0:
+        dirs.append('Output directory')
     dir_paths = []
     for dir in dirs:
 
