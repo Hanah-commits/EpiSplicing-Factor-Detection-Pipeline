@@ -90,7 +90,7 @@ def check_args():
     output_dir = args['Output directory']
     if len(output_dir) == 0:
         # create custome output directory tissue1_tissue2_timestamp
-        output_dir = str(Path(os.getcwd()).parent.absolute()) + "/Output/"+ args["tissue1"]+ "_" + args["tissue2"] + "/" + str(time.time()) +"/"
+        output_dir = str(Path(os.getcwd()).parent.absolute()) + "/Output/"+ args["tissue1"]+ "_" + args["tissue2"] + str(time.time()) +"/"
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
 
