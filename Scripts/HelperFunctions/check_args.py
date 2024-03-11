@@ -106,3 +106,4 @@ def check_args():
 def move_dirs(output_dir):
     shutil.move('0_Files/', output_dir)
     shutil.move('../RBPmap/', output_dir)
+    shutil.move('output.log', output_dir)
