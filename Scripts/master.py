@@ -96,7 +96,7 @@ except Exception as ex:
 
 ## 4.1 Process majiq output
 try:
-    os.system(f"python 1_MAJIQ/post-MAJIQ.py {output_dir}   >> {log_file_name} 2>&1")
+    os.system(f"python 1.1_MAJIQ/post-MAJIQ.py {output_dir}   >> {log_file_name} 2>&1")
 except Exception as ex:
     print(ex)
     move_dirs(output_dir)
