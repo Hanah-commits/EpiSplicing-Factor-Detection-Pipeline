@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
         # write to input file
         with open(f'{output_dir}/{tissue}.txt', 'a') as file:
-            file.write(', '.join(map(str, tissue_files)))
+            file.write(','.join(map(str, tissue_files)))
 
     # run rmats
     os.system(f'python {rmats_dir}rmats.py --b1 {output_dir}{tissue1}.txt --b2 {output_dir}{tissue2}.txt --gtf {ref} -t paired --readLength {read_len} --variable-read-length --libType fr-secondstrand --novelSS --nthread 4 --od {output_dir} --tmp tmp/ --task both')
