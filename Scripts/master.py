@@ -36,7 +36,7 @@ except Exception as ex:
 
 ## 1.1 Execute MAJIQ 
 try:
-    os.system(f"python 1_MAJIQ/runMAJIQ.py {output_dir}   >> {log_file_name} 2>&1")
+    os.system(f"python 1.1_MAJIQ/runMAJIQ.py {output_dir}   >> {log_file_name} 2>&1")
 except Exception as ex:
     print(ex)
     move_dirs(output_dir)
@@ -104,7 +104,7 @@ except Exception as ex:
 
 ## 4.2 BEDTools - Annotate exon flanks with MAJIQ junctions
 try:
-    os.system(f"python 1_MAJIQ/annotate-MAJIQ.py   >> {log_file_name} 2>&1")
+    os.system(f"python 1.1_MAJIQ/annotate-MAJIQ.py   >> {log_file_name} 2>&1")
 except Exception as ex:
     print(ex)
     move_dirs(output_dir)
@@ -112,7 +112,7 @@ except Exception as ex:
 
 ## 4.3 Process BEDTools output
 try:
-    os.system(f"python 1_MAJIQ/post-bedtools.py   >> {log_file_name} 2>&1")
+    os.system(f"python 1.1_MAJIQ/post-bedtools.py   >> {log_file_name} 2>&1")
 except Exception as ex:
     print(ex)
     move_dirs(output_dir)
