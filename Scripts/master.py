@@ -120,7 +120,7 @@ except Exception as ex:
 
 ## 4.4 Process annotated flanks (TSS-filtering)
 try:
-    exec(open(f"1.1_MAJIQ/combine_AS_CS_flanks.py   >> {log_file_name} 2>&1").read())
+    exec(open(f"python 1.1_MAJIQ/combine_AS_CS_flanks.py   >> {log_file_name} 2>&1").read())
 except Exception as ex:
     print(ex)
     move_dirs(output_dir)
