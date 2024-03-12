@@ -7,7 +7,6 @@ import sys
 with open('paths.json') as f:
     d = json.load(f)
 
-ref = d['Reference genome']
 fasta = d['Reference fasta']
 ref_genome= fasta+".fai"
 
