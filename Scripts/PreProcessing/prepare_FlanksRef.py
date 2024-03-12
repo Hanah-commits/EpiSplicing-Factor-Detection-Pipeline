@@ -5,7 +5,7 @@ import os
 with open('paths.json') as f:
     d = json.load(f)
 
-ref = d['Reference genome']
+ref = d['Reference GFF3']
 fasta = d['Reference fasta']
 
 # exon coordinates

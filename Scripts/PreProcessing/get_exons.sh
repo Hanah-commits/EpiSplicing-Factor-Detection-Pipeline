@@ -3,7 +3,7 @@
 
 json_file="paths.json"
 
-field1="\"Reference genome\""
+field1="\"Reference GFF3\""
 field2="\"Reference fasta\""
 
 # Get the paths to reference files
