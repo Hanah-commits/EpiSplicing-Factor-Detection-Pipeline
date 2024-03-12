@@ -19,7 +19,7 @@ Path(output_dir).mkdir(parents=True, exist_ok=True)
 
 # read dexseq output
 file = sys.argv[1] + f'DEXSEQ/DEXSEQ_{tissue1}_{tissue2}.tsv'
-log2FC = f"log2fold_{tissue1}_{tissue2}"
+log2FC = f"log2fold_{tissue2}_{tissue1}"
 dexseq = pd.read_csv(file, delimiter='\t')[['groupID', 'featureID', 'dispersion', 'stat', 'pvalue', 'padj', log2FC, 'genomicData.seqnames', 'genomicData.start', 'genomicData.end', 'genomicData.strand']]
 
 print('Processing DEXSEQ output: \n')
