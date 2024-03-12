@@ -3,6 +3,7 @@ import os
 import json
 from pathlib import Path
 import shutil
+import sys
 
 
 def check_args():
@@ -105,6 +106,7 @@ def check_args():
 
 
 def move_dirs(output_dir):
+    sys.stdout.close()
     shutil.move('0_Files/', output_dir)
     shutil.move('../RBPmap/', output_dir)
     shutil.move('output.log', output_dir)
