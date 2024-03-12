@@ -8,7 +8,7 @@ with open('paths.json') as f:
     d = json.load(f)
 
 bam_files = d['RNASeq files']
-ref = d['Reference genome']
+ref = d['Reference GTF']
 tissue1 = d["tissue1"]
 tissue2 = d["tissue2"]
 dexseq_scripts = d['DEXSEQ directory']

@@ -10,7 +10,6 @@ with open('paths.json') as f:
 
 tissue1 = d["tissue1"]
 tissue2 = d["tissue2"]
-ref = d['Reference genome']
 fasta = d['Reference fasta']
 ref_genome= fasta+".fai"
 

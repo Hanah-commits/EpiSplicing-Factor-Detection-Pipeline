@@ -11,7 +11,7 @@ if __name__ == "__main__":
         d = json.load(f)
 
     rna_files_dir = d['RNASeq files']
-    ref = d['Reference genome']
+    ref = d['Reference GTF']
     tissue1 = d["tissue1"]
     tissue2 = d["tissue2"]
     rmats_dir = d['RMATS directory']

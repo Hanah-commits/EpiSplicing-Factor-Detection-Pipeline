@@ -10,7 +10,7 @@ if __name__ == "__main__":
             d = json.load(f)
 
       majiq_files = d['RNASeq files']
-      ref = d['Reference genome']
+      ref = d['Reference GFF3']
       config = d["MAJIQ config"]
       threads = d["threads"]
       tissue1 = d["tissue1"]
