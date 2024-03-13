@@ -199,6 +199,7 @@ def indiv_hms(dir):
     
     cols = ['gene_name'] + hms
     grouped = flanks_temp[cols].groupby('gene_name')
+    epigenes = []
     non_epi = []
     for gene, group in grouped:
         if group[hms].isnull().all().all():
@@ -209,76 +210,78 @@ def indiv_hms(dir):
 
     print('# correlation candidates: ', len(set(filtered_flanks.gene_name.values.tolist()))) # check num before and after noepi filtering
 
-    # if one or more flanks of a gene have less than four peaks
-    filtered_flanks.fillna(0, inplace=True)
-    
-    ## STEP 0: Find genes with strong DEU-DHM correlations
+    if len(set(filtered_flanks.gene_name.values.tolist())) > 0:
 
-    filtered_flanks.drop(columns=['feature', 'score', 'flank_start', 'flank_end'], inplace=True) #remove unnecessary cols
-    coeff = filtered_flanks.groupby('gene_name').corr(method=pearsonr_coeff)
-    coeff = coeff.fillna(0)
-
-    # internal column filtering
-    coeff.to_csv(f'0_Files/{dir}/coeff.csv', sep='\t')
-    coeff = pd.read_csv(f'0_Files/{dir}/coeff.csv', delimiter='\t')
-    coeff = process_dataframe(coeff, hms)
-  
-    ## STEP 1: Obtain p values of DEU-DHM correlations
-
-    pval = filtered_flanks.groupby('gene_name').corr(method=pearsonr_pval)
-
-    # internal column filtering
-    pval.to_csv(f'0_Files/{dir}/pvals.csv', sep='\t')
-    pval = pd.read_csv(f'0_Files/{dir}/pvals.csv', delimiter='\t')
-    pval = process_dataframe(pval, hms)
-
-    ## STEP 2: Adjust the p values using Benjamini-Hochberg method
-    adj_pvals = adjust_pvalue(pval)
-
-    # STEP 3: Find epigenes: genes where adjusted_pval <= 0.05, R  >= 0.5 
-
-    #rename and rearrange columns
-    adj_pvals.columns = hms + ['gene_name']
-    adj_pvals = adj_pvals[['gene_name']+ hms]
-
-    correlated_genes = list(set(adj_pvals.gene_name.values.tolist()))
-    hm_epigenes_dict = {hm: [] for hm in hms}
-    for gene in correlated_genes:
-        for hm in hms:
-            condition = (adj_pvals.gene_name == gene) & (adj_pvals[hm] <= 0.05) & (coeff.gene_name == gene) & (coeff[hm] >= 0.5)
-            if condition.any():
-                hm_epigenes_dict[hm].append(gene)
-
-    epigenes = list(set([item for sublist in hm_epigenes_dict.values() for item in sublist]))
-    print('PRE-FILTERING:  ', len(epigenes)) # temp comment
-
-    for gene in epigenes:
-
-        with open(f'0_Files/{dir}/{file}_epigenes.txt', 'w') as f:
-            for line in list(set(epigenes)):
-                f.write("%s\n" % line)
-
-    ## STEP 4: Make corr plots of hm-specific epigenes:
-                
-    if len(epigenes) > 0:            
-        # get flanks of hm-specific epigenes
-        i = 0
-        true_epigenes = []
-        for hm in hms:
-
-            hm_epigenes = hm_epigenes_dict[hm]
+        # if one or more flanks of a gene have less than four peaks
+        filtered_flanks.fillna(0, inplace=True)
         
-            # get flanks, pvals and coeffs of hm-specific epispliced genes
-            hm_flanks = flanks_meta[flanks_meta['gene_name'].isin(hm_epigenes)]
-            hm_coeff = coeff[coeff['gene_name'].isin(hm_epigenes)]
-            hm_pvals = adj_pvals[adj_pvals['gene_name'].isin(hm_epigenes)]
+        ## STEP 0: Find genes with strong DEU-DHM correlations
 
-            # hm-specific corrplot
-            true_epigenes.append(make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir))
+        filtered_flanks.drop(columns=['feature', 'score', 'flank_start', 'flank_end'], inplace=True) #remove unnecessary cols
+        coeff = filtered_flanks.groupby('gene_name').corr(method=pearsonr_coeff)
+        coeff = coeff.fillna(0)
 
-            i+=1
+        # internal column filtering
+        coeff.to_csv(f'0_Files/{dir}/coeff.csv', sep='\t')
+        coeff = pd.read_csv(f'0_Files/{dir}/coeff.csv', delimiter='\t')
+        coeff = process_dataframe(coeff, hms)
+    
+        ## STEP 1: Obtain p values of DEU-DHM correlations
 
-        epigenes = list(set([item for items in true_epigenes for item in items]))
+        pval = filtered_flanks.groupby('gene_name').corr(method=pearsonr_pval)
+
+        # internal column filtering
+        pval.to_csv(f'0_Files/{dir}/pvals.csv', sep='\t')
+        pval = pd.read_csv(f'0_Files/{dir}/pvals.csv', delimiter='\t')
+        pval = process_dataframe(pval, hms)
+
+        ## STEP 2: Adjust the p values using Benjamini-Hochberg method
+        adj_pvals = adjust_pvalue(pval)
+
+        # STEP 3: Find epigenes: genes where adjusted_pval <= 0.05, R  >= 0.5 
+
+        #rename and rearrange columns
+        adj_pvals.columns = hms + ['gene_name']
+        adj_pvals = adj_pvals[['gene_name']+ hms]
+
+        correlated_genes = list(set(adj_pvals.gene_name.values.tolist()))
+        hm_epigenes_dict = {hm: [] for hm in hms}
+        for gene in correlated_genes:
+            for hm in hms:
+                condition = (adj_pvals.gene_name == gene) & (adj_pvals[hm] <= 0.05) & (coeff.gene_name == gene) & (coeff[hm] >= 0.5)
+                if condition.any():
+                    hm_epigenes_dict[hm].append(gene)
+
+        epigenes = list(set([item for sublist in hm_epigenes_dict.values() for item in sublist]))
+        print('PRE-FILTERING:  ', len(epigenes)) # temp comment
+
+        for gene in epigenes:
+
+            with open(f'0_Files/{dir}/{file}_epigenes.txt', 'w') as f:
+                for line in list(set(epigenes)):
+                    f.write("%s\n" % line)
+
+        ## STEP 4: Make corr plots of hm-specific epigenes:
+                    
+        if len(epigenes) > 0:            
+            # get flanks of hm-specific epigenes
+            i = 0
+            true_epigenes = []
+            for hm in hms:
+
+                hm_epigenes = hm_epigenes_dict[hm]
+            
+                # get flanks, pvals and coeffs of hm-specific epispliced genes
+                hm_flanks = flanks_meta[flanks_meta['gene_name'].isin(hm_epigenes)]
+                hm_coeff = coeff[coeff['gene_name'].isin(hm_epigenes)]
+                hm_pvals = adj_pvals[adj_pvals['gene_name'].isin(hm_epigenes)]
+
+                # hm-specific corrplot
+                true_epigenes.append(make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir))
+
+                i+=1
+
+            epigenes = list(set([item for items in true_epigenes for item in items]))
     
     print('Epigenes     ', len(epigenes))
     print('Non-Epigenes ', len(non_epi))
