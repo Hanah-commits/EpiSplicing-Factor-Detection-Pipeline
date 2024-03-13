@@ -259,24 +259,27 @@ def indiv_hms(dir):
                 f.write("%s\n" % line)
 
     ## STEP 4: Make corr plots of hm-specific epigenes:
-    # get flanks of hm-specific epigenes
-    i = 0
-    true_epigenes = []
-    for hm in hms:
+                
+    if len(epigenes) > 0:            
+        # get flanks of hm-specific epigenes
+        i = 0
+        true_epigenes = []
+        for hm in hms:
 
-        hm_epigenes = hm_epigenes_dict[hm]
-      
-        # get flanks, pvals and coeffs of hm-specific epispliced genes
-        hm_flanks = flanks_meta[flanks_meta['gene_name'].isin(hm_epigenes)]
-        hm_coeff = coeff[coeff['gene_name'].isin(hm_epigenes)]
-        hm_pvals = adj_pvals[adj_pvals['gene_name'].isin(hm_epigenes)]
+            hm_epigenes = hm_epigenes_dict[hm]
+        
+            # get flanks, pvals and coeffs of hm-specific epispliced genes
+            hm_flanks = flanks_meta[flanks_meta['gene_name'].isin(hm_epigenes)]
+            hm_coeff = coeff[coeff['gene_name'].isin(hm_epigenes)]
+            hm_pvals = adj_pvals[adj_pvals['gene_name'].isin(hm_epigenes)]
 
-        # hm-specific corrplot
-        true_epigenes.append(make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir))
+            # hm-specific corrplot
+            true_epigenes.append(make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir))
 
-        i+=1
+            i+=1
 
-    epigenes = list(set([item for items in true_epigenes for item in items]))
+        epigenes = list(set([item for items in true_epigenes for item in items]))
+    
     print('Epigenes     ', len(epigenes))
     print('Non-Epigenes ', len(non_epi))
     
