@@ -34,4 +34,5 @@ if __name__ == "__main__":
             file.write(','.join(map(str, tissue_files)))
 
     # run rmats
-    os.system(f'python {rmats_dir}rmats.py --b1 {output_dir}{tissue1}.txt --b2 {output_dir}{tissue2}.txt --gtf {ref} -t paired --readLength {read_len} --variable-read-length --libType fr-unstranded --allow-clipping --novelSS --nthread 4 --od {output_dir} --tmp {output_dir}tmp/ --task both')
+    ## -t single (to include paired reads and those without a proper pair), --libType fr-firststrand (reverse-stranded), --allow-clipping
+    os.system(f'python {rmats_dir}rmats.py --b1 {output_dir}{tissue1}.txt --b2 {output_dir}{tissue2}.txt --gtf {ref} -t single --readLength {read_len} --variable-read-length --libType fr-firststrand --allow-clipping --novelSS --nthread 4 --od {output_dir} --tmp {output_dir}tmp/ --task both')
