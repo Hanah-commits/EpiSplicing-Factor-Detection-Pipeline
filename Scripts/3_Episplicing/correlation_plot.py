@@ -9,6 +9,7 @@ import seaborn as sns
 import numpy as np
 from pathlib import Path
 from collections import Counter
+import warnings
 
 
 def pearsonr_pval(x, y):
@@ -208,7 +209,7 @@ def indiv_hms(dir):
     filtered_flanks = flanks[~flanks['gene_name'].isin(non_epi)].copy()
     filtered_flanks.set_index('idx', inplace=True)
 
-    print('# correlation candidates: ', len(set(filtered_flanks.gene_name.values.tolist()))) # check num before and after noepi filtering
+    print('# correlation candidates:        ', len(set(filtered_flanks.gene_name.values.tolist()))) # check num before and after noepi filtering
 
     if len(set(filtered_flanks.gene_name.values.tolist())) > 0:
 
@@ -218,6 +219,7 @@ def indiv_hms(dir):
         ## STEP 0: Find genes with strong DEU-DHM correlations
 
         filtered_flanks.drop(columns=['feature', 'score', 'flank_start', 'flank_end'], inplace=True) #remove unnecessary cols
+        warnings.filterwarnings("ignore", message="An input array is constant; the correlation coefficient is not defined.") # Suppress warning when corr is NaN
         coeff = filtered_flanks.groupby('gene_name').corr(method=pearsonr_coeff)
         coeff = coeff.fillna(0)
 
@@ -253,7 +255,7 @@ def indiv_hms(dir):
                     hm_epigenes_dict[hm].append(gene)
 
         epigenes = list(set([item for sublist in hm_epigenes_dict.values() for item in sublist]))
-        print('PRE-FILTERING:  ', len(epigenes)) # temp comment
+        print('PRE-FILTERING:                   ', len(epigenes)) # temp comment
 
         for gene in epigenes:
 
@@ -283,8 +285,8 @@ def indiv_hms(dir):
 
             epigenes = list(set([item for items in true_epigenes for item in items]))
     
-    print('Epigenes     ', len(epigenes))
-    print('Non-Epigenes ', len(non_epi))
+    print('Epigenes                         ', len(epigenes))
+    print('Non-Epigenes                     ', len(non_epi), '\n\n')
     
     # get flanks of all epispliced genes
     flanks_meta[flanks_meta['gene_name'].isin(epigenes)].to_csv(f'0_Files/{dir}/dPSI_Mval_epi_{file}.csv', sep='\t', index=False)
