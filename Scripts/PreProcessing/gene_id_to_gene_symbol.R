@@ -1,5 +1,22 @@
 library(biomaRt)
 
+# Function to acquire a lock
+acquire_lock <- function() {
+  lockfile <- "biomart.lock"
+  while (file.exists(lockfile)) {
+    Sys.sleep(1)  # Wait for the lock file to be removed
+  }
+  file.create(lockfile)
+}
+
+# Function to release the lock
+release_lock <- function() {
+  lockfile <- "biomart.lock"
+  if (file.exists(lockfile)) {
+    file.remove(lockfile)
+  }
+}
+
 # Read the TSV file into a DataFrame
 data <- read.table('0_Files/MANorm/DHM_peaks_annotation.tsv', header = TRUE, sep = "\t", stringsAsFactors = FALSE)
 
@@ -7,7 +24,9 @@ data <- read.table('0_Files/MANorm/DHM_peaks_annotation.tsv', header = TRUE, sep
 data$ensembl_ids = sub("\\..*$", "", data$geneSymbol) # ENSG00000183878.15 -> ENSG00000183878
 ensembl_ids <- unique(data$ensembl_ids)
 
+acquire_lock()
 ensembl <- useMart("ensembl","hsapiens_gene_ensembl")
+release_lock()
 
 # Get gene symbols using BioMart
 gene_symbols <- getBM(attributes = c("ensembl_gene_id", "external_gene_name"),
