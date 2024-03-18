@@ -8,6 +8,7 @@ with open('paths_multi.json') as f:
         data = json.load(f)
 
 # STEP 1: Get the list of histone modifications available in the study
+all_epigenes = []
 all_hms = set()
 for process in data['list_of_processes']:
     all_hms.update(data[process]['Histone modifications'])
@@ -46,6 +47,30 @@ for hm in list(all_hms):
     
 
     print(overlap_epigenes)
+    all_epigenes.append(overlap_epigenes)
 
-        
-            
+## STEP 4: Get DHM-DEU values for all epigenes:
+opdirs = []
+for process in data['list_of_processes']:
+    opdirs.append(data[process]['Output directory'])  
+
+DHM_vals = []
+for dir in list(opdirs):
+
+    for tool in ['DEXSEQ', 'MAJIQ', 'RMATS']:
+        try:
+            file = tool.lower()
+            file_path = glob.glob(f'{dir}*0_Files/{tool}/dPSI_Mval_epi_{file}.csv')
+            DHM_vals.append(pd.read_csv(file_path[0],delimiter='\t'))
+        except:
+            continue
+
+all_epigenes = list(set([item for sublist in all_epigenes for item in sublist]))
+
+df = pd.concat(DHM_vals,axis=0,sort=False)
+df = df[df['gene_name'].isin(all_epigenes)].reset_index(drop=True)
+df = df.drop_duplicates(subset=['idx', 'dPSI'], keep='first').reset_index(drop=True)
+df.fillna(0, inplace=True)
+df.to_csv('final_Epigenes.tsv', sep='\t', index=False)
+
+
