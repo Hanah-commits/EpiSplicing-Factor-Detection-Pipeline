@@ -35,8 +35,8 @@ awk 'BEGIN {OFS="\t"} {
 #get TSS coordinates as bed file
 awk 'BEGIN {OFS="\t"} {print $1,$7, $7+1, "TSS", ".", $6}' 0_Files/TSS.tsv | sort | uniq > 0_Files/TSS.bed
 
-# Get all exons of transcripts with TSL 1-3
-grep -E "transcript_support_level=[123]" $gff3 | grep "protein_coding" | awk -F'\t' -v OFS='\t' '$3 == "exon" {match($9, /gene_id=([^;]+)/, gene_id); print $1, $4, $5, "Exon", ".", $7, gene_id[1];}' | sort | uniq > 0_Files/all_exons.bed
+# Get all exons of transcripts with TSL 1-5
+grep -E "transcript_support_level=[12345]" $gff3 | grep "protein_coding" | awk -F'\t' -v OFS='\t' '$3 == "exon" {match($9, /gene_id=([^;]+)/, gene_id); print $1, $4, $5, "Exon", ".", $7, gene_id[1];}' | sort | uniq > 0_Files/all_exons.bed
 
 #extend exon body by 200bp
 bedtools slop -i 0_Files/all_exons.bed -g $fasta.fai  -b 200 > 0_Files/exons_flanked.bed
@@ -53,8 +53,17 @@ grep -vFf 0_Files/exon_coords.bed 0_Files/all_exons.bed > 0_Files/TSS_exons.bed
 # drop exons that overlap with TSS exons (longer/shorter version of TSS exons)
 bedtools intersect -v -a 0_Files/exon_coords.bed -b 0_Files/TSS_exons.bed > 0_Files/exon_coords_temp.bed && mv 0_Files/exon_coords_temp.bed 0_Files/exon_coords.bed 
 
+## For transcripts with TSL 1-3:
+
+# get all exons
+grep -E "transcript_support_level=[123]" $gff3 | grep "protein_coding" | awk -F'\t' -v OFS='\t' '$3 == "exon" {match($9, /gene_id=([^;]+)/, gene_id); print $1, $4, $5, "Exon", ".", $7, gene_id[1];}' | sort | uniq > 0_Files/all_exons.bed
+
+# get non-TSS exons
+grep -Ff 0_Files/exon_coords.bed 0_Files/all_exons.bed > 0_Files/exon_coords_temp.bed && mv 0_Files/exon_coords_temp.bed 0_Files/exon_coords.bed
+
 # get updated TSS exons
 grep -vFf 0_Files/exon_coords.bed 0_Files/all_exons.bed > 0_Files/TSS_exons.bed
+
 
 #cleanup
 rm 0_Files/*flanked*.bed
