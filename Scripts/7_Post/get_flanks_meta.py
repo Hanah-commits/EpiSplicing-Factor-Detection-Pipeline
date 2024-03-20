@@ -30,3 +30,6 @@ os.system("rm 0_Files/start*.bed")
 os.system("rm  0_Files/stop*.bed")
 os.system("rm 0_Files/flanks.bed")
 os.system("rm 0_Files/exons_meta.bed")
+
+# get genesymbol
+os.system('Rscript 7_Post/geneid_to_genesymbol.R')
