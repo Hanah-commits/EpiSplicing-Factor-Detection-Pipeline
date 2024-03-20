@@ -11,7 +11,7 @@ ref_genome = d['Reference fasta'] + ".fai"
 os.system('awk \'BEGIN{OFS="\t"} {print $1, $2, $3, $4, $2"-"$3, $6,$7}\' 0_Files/exon_coords.bed > 0_Files/exons_meta.bed')
 
 # exon boundary external flanks
-os.system("bedtools flank -i 0_Files/exon_coords.bed -g " + ref_genome + " -b 200 > 0_Files/flanks.bed" )
+os.system("bedtools flank -i 0_Files/exons_meta.bed -g " + ref_genome + " -b 200 > 0_Files/flanks.bed" )
 
 # separate start,stop flank coords
 os.system("sed -n 'n;p' 0_Files/flanks.bed > 0_Files/stop.bed")
