@@ -42,6 +42,8 @@ for i in range(2):
     merged_df = merged_df[~merged_df['drop']]
     flanks_df = merged_df[['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name', 'type']].drop_duplicates()
     flanks_df.to_csv(output,sep='\t', header=False, index=False)
+
+    merged_df['score'] = merged_df['type']
     merged_df[['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name']].drop_duplicates()[['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name']].to_csv(f'{op_dir}/{name}_exons.bed', sep='\t', header=False, index=False)
 
     print('# flanks with exon coords', len(flanks_df))
