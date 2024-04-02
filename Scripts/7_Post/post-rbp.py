@@ -133,11 +133,11 @@ def process_results(result_dirs, proteins, type):
     zscore_collection.insert(0, col_names)
     pval_collection.insert(0,  col_names)
 
-    with open("0_Files/FilteredZscores_" + type + ".csv", "w", newline="") as f:
+    with open("0_Files/Post-processing/FilteredZscores_" + type + ".csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(zscore_collection)
 
-    with open("0_Files/FilteredPvalues_" + type + ".csv", "w", newline="") as f:
+    with open("0_Files/Post-processing/FilteredPvalues_" + type + ".csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(pval_collection)
 
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     proteins = [line.strip() for line in lines]
 
     process_results(epi_dirs, proteins, 'epi')
-    process_results(nonepi_dirs, 'nonepi')
+    process_results(nonepi_dirs, proteins, 'nonepi')
 
     print('processed')
 
