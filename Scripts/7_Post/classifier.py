@@ -13,7 +13,7 @@ from functools import reduce
 def stratified_classifier(output_dir):
 
     features = pd.read_csv('0_Files/Post-processing/features_all.csv', delimiter='\t')
-    features.fillna(inplace=True)
+    features.fillna(0,inplace=True)
 
 
     sf = [val for val in features.columns if val != 'label']
