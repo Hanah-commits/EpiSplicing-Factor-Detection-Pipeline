@@ -40,8 +40,7 @@ if __name__ == "__main__":
         raise ValueError('Wrong value for paramter "mode".')
 
     Zscore_files = ['0_Files/Post-processing/FilteredZscores_epi.csv', '0_Files/Post-processing/FilteredZscores_nonepi.csv']
-    query_files = ['0_Files/Post-processing/query_flanks_epi.csv', '0_Files/Post-processing/query_flanks_nonepi.csv']
 
-    for i in range(len(query_files)):
+    for i in range(2):
         feature_matrix(exons_files[i], Zscore_files[i], mode)
 
