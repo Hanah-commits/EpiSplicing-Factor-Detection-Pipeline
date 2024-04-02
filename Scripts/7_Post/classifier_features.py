@@ -11,7 +11,12 @@ epi_features['label'] = 'epigene'
 nonepi_features['label'] = 'non-epigene'
 
 all_features = pd.concat([epi_features, nonepi_features], axis=0)
-all_features.drop(['chr', 'exon_start', 'exon_end', 'feature', 'type', 'strand', 'gene_name'], axis=1, inplace=True)
+
+try:
+    all_features.drop(['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name', 'type'], axis=1, inplace=True)
+except:
+    all_features.drop(['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name'], axis=1, inplace=True)
+
 col = all_features.pop("label")
 all_features.insert(0, col.name, col)
 
