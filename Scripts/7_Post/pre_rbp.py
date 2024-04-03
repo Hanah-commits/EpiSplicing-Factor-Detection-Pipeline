@@ -19,7 +19,7 @@ def flanked_exons():
         # extend exon boundary 
         os.system(f"bedtools slop -i {op_dir}/{name}_exons.bed -g  {fasta}.fai  -b 200 | sort | uniq > {op_dir}/{name}_flanked_exons.bed" )
 
-        flanked_exons = pd.read_csv(f'{op_dir}/{name}_flanked_exons.bed', delimiter='\t')
+        flanked_exons = pd.read_csv(f'{op_dir}/{name}_flanked_exons.bed', delimiter='\t', header=None)
         flanked_exons.columns = ['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name']
         flanked_exons['flanks'] = flanked_exons[['exon_start', 'exon_end']].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
 
@@ -55,7 +55,7 @@ def exon_body():
     for i in range(2):
         name = 'epi' if i == 0 else 'nonepi'
 
-        exons = pd.read_csv(f'{op_dir}/{name}_exons.bed', delimiter='\t')
+        exons = pd.read_csv(f'{op_dir}/{name}_exons.bed', delimiter='\t', header=None)
         exons.columns = ['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name']
         exons['flanks'] = exons[['exon_start', 'exon_end']].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
   
@@ -92,7 +92,7 @@ def exon_flanks():
         
         name = 'epi' if i == 0 else 'nonepi'
 
-        flanks = pd.read_csv(f'{op_dir}/{name}_flanks.bed', delimiter='\t')
+        flanks = pd.read_csv(f'{op_dir}/{name}_flanks.bed', delimiter='\t', header=None)
         flanks.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name', 'type']
         flanks['flanks'] = flanks[['flank_start', 'flank_end']].apply(lambda row: '-'.join(row.values.astype(str)), axis=1)
         
