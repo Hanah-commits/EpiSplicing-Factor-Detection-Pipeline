@@ -135,3 +135,7 @@ def get_nonepigenes():
     df = df[['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name', 'type']]
     df = df.groupby(['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name'])['type'].apply(','.join).reset_index()
     df.to_csv(f'{output_dir}nonepi_flanks.bed', sep='\t', index=False, header = False)
+
+
+get_epigenes()
+get_nonepigenes()
