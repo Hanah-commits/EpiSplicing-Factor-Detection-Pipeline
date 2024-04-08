@@ -94,7 +94,7 @@ def stratified_hms_classifier(output_dir, hm):
     # extract features for hm
     print(len(features))
     features = features[features['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
-    features.fillna(0,inplace=True)
+    features = features.drop('type', axis=1) # drop hm info
     print(len(features))
 
 
@@ -178,4 +178,4 @@ if __name__ == "__main__":
     hms = d["Histone modifications"]
 
     for hm in hms:
-        stratified_hms_classifier(output_dir=sys.arv[1], hm=hm)
+        stratified_hms_classifier(output_dir=sys.argv[1], hm=hm)
