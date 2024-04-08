@@ -34,7 +34,7 @@ def p_adjust_bh(p):
     return q[by_orig]
 
 
-def process_results(result_dirs, proteins, type):
+def process_results(result_dirs, proteins, type, opdir):
 
     result_dirs = natsorted(result_dirs)
     
@@ -134,11 +134,11 @@ def process_results(result_dirs, proteins, type):
     zscore_collection.insert(0, col_names)
     pval_collection.insert(0,  col_names)
 
-    with open("Post-processing/FilteredZscores_" + type + ".csv", "w", newline="") as f:
+    with open(f"{opdir}/FilteredZscores_" + type + ".csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(zscore_collection)
 
-    with open("Post-processing/FilteredPvalues_" + type + ".csv", "w", newline="") as f:
+    with open(f"{opdir}/FilteredPvalues_" + type + ".csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(pval_collection)
 
@@ -146,6 +146,7 @@ def process_results(result_dirs, proteins, type):
 if __name__ == "__main__":
 
     name = 'epi' if sys.argv[1] == '0' else 'nonepi'
+    opdir = '0_Files/Post-processing' if sys.argv[1] == '0' else 'Post-processing'
 
     path = '../RBPmap'
     results_dirs = [x[0] for x in os.walk(path)]
@@ -155,5 +156,5 @@ if __name__ == "__main__":
         lines = file.readlines()
     proteins = [line.strip() for line in lines]
 
-    process_results(dirs, proteins, name)
+    process_results(dirs, proteins, name, opdir)
     print('processed')
