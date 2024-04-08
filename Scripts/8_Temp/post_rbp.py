@@ -145,7 +145,7 @@ def process_results(result_dirs, proteins, type):
 
 if __name__ == "__main__":
 
-    name = 'epi' if sys.arv[1] == 0 else 'nonepi'
+    name = 'epi' if sys.argv[1] == '0' else 'nonepi'
 
     path = '../RBPmap'
     results_dirs = [x[0] for x in os.walk(path)]
