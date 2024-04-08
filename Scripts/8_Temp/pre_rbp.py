@@ -7,8 +7,8 @@ def exon_flanks(i):
 
     input_files = []
 
-    name = 'epi' if i == 0 else 'nonepi'
-    op_dir = "0_Files/Post-processing" if i ==0 else "Post-processing"
+    name = 'epi' if i == '0' else 'nonepi'
+    op_dir = "0_Files/Post-processing" if i =='0' else "Post-processing"
 
     flanks = pd.read_csv(f'{op_dir}/{name}_flanks.bed', delimiter='\t', header=None)
     flanks.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name', 'type']
