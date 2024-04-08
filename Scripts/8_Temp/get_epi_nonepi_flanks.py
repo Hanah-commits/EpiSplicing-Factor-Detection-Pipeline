@@ -58,20 +58,20 @@ def get_epigenes():
 
 def get_nonepigenes():
 
-    output_dir = str(Path(os.getcwd())) + "/0_Files/Post-processing/"
+    output_dir = str(Path(os.getcwd())) + "/Post-processing/"
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     with open('paths_multi.json') as f:
         data = json.load(f)
 
     # STEP 1: Get the HMs available for current comparison
-    with open('paths.json') as f:
-            d = json.load(f)
-
-    hms = d["Histone modifications"]
+    hms = set()
+    for process in data['list_of_processes']:
+        hms.update(data[process]['Histone modifications'])
 
     # STEP 2: Get the nonepigenes detected by the RMATS for all the HMs
     nonepigenes = {}
-    for hm in hms:
+    for hm in list(hms):
         print('\n', hm)
         # Get the list of output directories for the current hm
         processes = [process for process in data['list_of_processes'] if hm in data[process]['Histone modifications']]
@@ -138,4 +138,4 @@ def get_nonepigenes():
 
 
 get_epigenes()
-get_nonepigenes()
+# get_nonepigenes()
