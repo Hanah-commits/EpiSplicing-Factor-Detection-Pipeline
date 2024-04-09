@@ -22,6 +22,11 @@ nonepi_features['label'] = 'non-epigene'
 
 all_features = pd.concat([epi_features, nonepi_features], axis=0)
 
+# remove genes with both labels
+common_genes = list(set(epi_features.gene_name.values.tolist()) & set(nonepi_features.gene_name.values.tolist()))
+all_features = all_features[~((all_features.gene_name.isin(common_genes)) & (all_features.label == 'non-epigene'))]
+all_features = all_features[~((all_features.gene_name.isin(common_genes)) & (all_features.label == 'epigene'))]
+
 all_features.drop(['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name'], axis=1, inplace=True)
 
 
