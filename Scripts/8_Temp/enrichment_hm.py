@@ -11,6 +11,11 @@ def prep():
     epi["label"] = "epi"
     nonepi["label"] = "nonepi"
 
+    # remove genes with both labels
+    common_genes = list(set(epi.gene_name.values.tolist()) & set(nonepi.gene_name.values.tolist()))
+    epi = epi[~(epi.gene_name.isin(common_genes))]
+    nonepi = nonepi[~(nonepi.gene_name.isin(common_genes))]
+
     sfs = pd.read_csv('0_Files/Post-processing/impt_features.csv', delimiter='\t')['Unnamed: 0'].values.tolist()
 
     # RBPs with no binding site in any flank
@@ -25,7 +30,7 @@ def prep():
 
     sfs = [sf for sf in sfs if sf not in all_zero]
 
-    return epi, nonepi
+    return epi, nonepi, sfs
 
 def adjust_pvalue(df):
     pval_cols = df.columns.tolist()
@@ -74,7 +79,7 @@ def significane_hms(hm):
     enriched_epi = []
     enriched_nonepi = []
 
-    epi, nonepi = prep()
+    epi, nonepi, sfs = prep()
 
     epi = epi[epi['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
     nonepi = nonepi[nonepi['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
