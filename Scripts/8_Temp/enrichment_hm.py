@@ -18,6 +18,10 @@ def prep():
 
     sfs = pd.read_csv('0_Files/Post-processing/impt_features.csv', delimiter='\t')['Unnamed: 0'].values.tolist()
 
+    # keep only strong binding events
+    for df in [epi, nonepi]:
+        df.loc[:, sfs] = df.loc[:, sfs].applymap(lambda val: 0 if val < 2 else val)
+
     # RBPs with no binding site in any flank
     all_zero = []
     for column in epi:  # iterates by-name
