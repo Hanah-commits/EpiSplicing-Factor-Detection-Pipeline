@@ -17,7 +17,7 @@ os.system('python 8_Temp/pre_rbp.py 0')
 os.system('python 7_Post/run_rbpmap.py')
 
 # post-rbpmap
-os.system('python 8_Temp/post-rbp.py 0')
+os.system('python 8_Temp/post_rbp.py 0')
 
 # get nonepi flanks
 os.system(f'cp ./Post-processing/nonepi_flanks.bed ./0_Files/Post-processing/')

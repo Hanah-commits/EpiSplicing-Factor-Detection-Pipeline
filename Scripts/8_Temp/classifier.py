@@ -96,6 +96,9 @@ def stratified_hms_classifier(output_dir, hm):
     features = features[features['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
     features = features.drop('type', axis=1) # drop hm info
 
+    if len(features) == 0:
+        return
+
     sf = [val for val in features.columns if val != 'label']
 
     sf_data = features[sf]
