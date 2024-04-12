@@ -60,8 +60,8 @@ def stratified_classifier(output_dir):
     gini_scores = reduce(lambda r, d: foo(r, d) or r, gini_scores, defaultdict(list))
     gini_scores = pd.DataFrame(gini_scores)
     mean_gini = gini_scores.mean(axis=0).sort_values(ascending=False)
-    print('Gini Scores: ')
-    print(mean_gini)
+    # print('Gini Scores: ')
+    # print(mean_gini)
     mean_gini.to_csv(f'0_Files/Post-processing/impt_features.csv', sep='\t')
     
 
@@ -70,6 +70,7 @@ def stratified_classifier(output_dir):
     std = tprs.std(axis=0)
     aucs = np.array(aucs)
     mean_auc = aucs.mean(axis=0)
+    print('EPI vs NONEPI ', mean_auc)
 
     tprs_upper = np.minimum(mean_tprs + std, 1)
     tprs_lower = mean_tprs - std
@@ -92,11 +93,8 @@ def stratified_hms_classifier(output_dir, hm):
     features.fillna(0,inplace=True)
 
     # extract features for hm
-    print(len(features))
     features = features[features['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
     features = features.drop('type', axis=1) # drop hm info
-    print(len(features))
-
 
     sf = [val for val in features.columns if val != 'label']
 
@@ -140,8 +138,8 @@ def stratified_hms_classifier(output_dir, hm):
     gini_scores = reduce(lambda r, d: foo(r, d) or r, gini_scores, defaultdict(list))
     gini_scores = pd.DataFrame(gini_scores)
     mean_gini = gini_scores.mean(axis=0).sort_values(ascending=False)
-    print('Gini Scores: ')
-    print(mean_gini)
+    # print('Gini Scores: ')
+    # print(mean_gini)
     mean_gini.to_csv(f'0_Files/Post-processing/{hm}_impt_features.csv', sep='\t')
     
 
@@ -150,6 +148,8 @@ def stratified_hms_classifier(output_dir, hm):
     std = tprs.std(axis=0)
     aucs = np.array(aucs)
     mean_auc = aucs.mean(axis=0)
+
+    print(f'EPI vs NONEPI - {hm} ', mean_auc)
 
     tprs_upper = np.minimum(mean_tprs + std, 1)
     tprs_lower = mean_tprs - std
