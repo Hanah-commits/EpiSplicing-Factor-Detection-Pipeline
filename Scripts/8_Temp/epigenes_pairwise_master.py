@@ -18,7 +18,7 @@ for process in data['list_of_processes']:
         json.dump(data[process], out, indent=4)
 
     # get epigenes for current analysis
-    os.system('python 8_Temp/get_epi_nonepi_flanks.py')
+    os.system('python 8_Temp/get_epi_nonepi_flanks.py RMATS epi')
 
     # pre-rbp
     os.system('mkdir ../RBPmap')
@@ -35,7 +35,11 @@ for process in data['list_of_processes']:
     os.system(f'cp ./Post-processing/FilteredZscores_nonepi.csv ./0_Files/Post-processing/')
 
     # features
+    os.system('python 7_Post/features.py flanks')
+    os.system('python 8_Temp/classifier_features.py')
 
-    # classifier
+    # # classifier
+    os.system('python 8_Temp/classifier.py ./')
 
-    #DEA
+    # #DEA
+    os.system('python 8_Temp/enrichment_hm.py')
