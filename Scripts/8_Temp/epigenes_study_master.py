@@ -4,7 +4,7 @@ import os
 mode = 'flanks' #sys.argv[1]
 
 
-# get epigenes for current analysis
+# get epigenes for study
 os.system('python 8_Temp/get_epi_nonepi_flanks.py RMATS epi')
 
 # pre-rbp
