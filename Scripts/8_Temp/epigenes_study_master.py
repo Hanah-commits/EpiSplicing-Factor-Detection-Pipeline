@@ -1,7 +1,5 @@
 import pandas as pd
 import os
-import sys
-import json
 
 mode = 'flanks' #sys.argv[1]
 
