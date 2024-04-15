@@ -48,7 +48,7 @@ def get_epigenes_pairwise(tool):
         df = df[df.dPSI != 0]
         # df.to_csv(f'{output_dir}{hm}_epigenes.tsv', sep='\t', index=False)
         
-        df['type'] = hm
+        df.loc[:, 'type'] = hm
         epi_dfs.append(df)
 
     ## STEP 6: Prepare RBPmap input : Get AS exons of hm-specific epigenes and non-epigenes
@@ -132,7 +132,7 @@ def get_epigenes_study(tool):
         df = df[df.dPSI != 0]
         df.to_csv(f'{output_dir}{hm}_epigenes.tsv', sep='\t', index=False)
         
-        df['type'] = hm
+        df.loc[:, 'type'] = hm
         epi_dfs.append(df)
 
     ## STEP 6: Prepare RBPmap input : Get AS exons of hm-specific epigenes and non-epigenes
@@ -215,7 +215,7 @@ def get_nonepigenes(tool):
         df = df[df.dPSI != 0]
         # df.to_csv(f'{output_dir}{hm}_nonepigenes.tsv', sep='\t', index=False)
 
-        df['type'] = hm
+        df.loc[:, 'type'] = hm
         nonepi_dfs.append(df)
 
     ## STEP 6: Prepare RBPmap input : Get AS exons of hm-specific epigenes and non-epigenes

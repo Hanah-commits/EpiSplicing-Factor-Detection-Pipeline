@@ -65,7 +65,7 @@ def get_epigenes_study(tool):
     for hm in list(all_hms):
         df = df_epi[df_epi.gene_name.isin(epigenes[hm])]
         
-        df['type'] = hm
+        df.loc[:, 'type'] = hm
         epi_dfs.append(df)
 
     ## STEP 6: Prepare RBPmap input : Get AS exons of hm-specific epigenes and non-epigenes
@@ -135,7 +135,7 @@ def get_nonepigenes(tool):
     for hm in list(hms):
         df = df_nonepi[df_nonepi.gene_name.isin(nonepigenes[hm])]
         
-        df['type'] = hm
+        df.loc[:, 'type'] = hm
         nonepi_dfs.append(df)
 
     ## STEP 6: Prepare RBPmap input : Get AS exons of hm-specific epigenes and non-epigenes
