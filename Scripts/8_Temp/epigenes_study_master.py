@@ -1,11 +1,13 @@
 import pandas as pd
 import os
+import sys
 
-mode = 'flanks' #sys.argv[1]
+tool = sys.argv[1]
+mode = sys.argv[2]
 
 
 # get epigenes for study
-os.system('python 8_Temp/get_epi_nonepi_flanks.py RMATS epi')
+os.system(f'python 8_Temp/get_epi_nonepi_flanks.py {tool} {mode}')
 
 # pre-rbp
 os.system('mkdir ../RBPmap')

@@ -4,10 +4,13 @@ import sys
 import json
 from get_epi_nonepi_flanks import get_nonepigenes
 
+tool = sys.argv[1]
+mode = sys.argv[2]
+
 # STEP 1: Process nonepigenes
 
 ## STEP 1a: Get common nonepigene set
-os.system('python 8_Temp/get_epi_nonepi_flanks.py RMATS epi')
+os.system(f'python 8_Temp/get_epi_nonepi_flanks.py {tool} {mode}')
 
 # pre-rbp
 os.system('mkdir ../RBPmap')
