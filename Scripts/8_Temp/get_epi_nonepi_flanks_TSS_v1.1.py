@@ -86,7 +86,7 @@ def get_TSS_exons(tool):
     os.system(f'cat {output_dir}AS_flanks200_pr*.bed | sort | uniq > {output_dir}AS_flanks200.bed')
 
     # keep only flanks overlapping with TSS exon flanks
-    os.system(f'bedtools intersect -wb -a {output_dir}AS_flanks200.bed -b {output_dir}TSS_flanks200.bed -s | sort | uniq > {output_dir}{tool}TSS_flanks200.bed ')
+    os.system(f'bedtools intersect -wb -a {output_dir}AS_flanks200.bed -b {output_dir}TSS_flanks200.bed -s | sort | uniq | cut -f1,2,3,4,5,6,8,16 > {output_dir}{tool}TSS_flanks200.bed ')
 
     os.system(f'rm {output_dir}AS_flanks200*.bed')
 
@@ -138,7 +138,7 @@ def get_epigenes_study(tool):
     ## STEP 3: Get Alternative TSS_exons of all epigenes:
 
     df_epi = pd.read_csv(f'0_Files/Post-processing/{tool}TSS_flanks200.bed', delimiter='\t', header=None)
-    df_epi.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_id', 'gene_name']
+    df_epi.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'dPSI', 'gene_name']
 
     epi_dfs = []
 
@@ -207,7 +207,7 @@ def get_nonepigenes(tool):
     ## STEP 4: Get alternative TSS_exons of all non-epigenes:
 
     df_nonepi = pd.read_csv(f'0_Files/Post-processing/{tool}TSS_flanks200.bed', delimiter='\t')
-    df_nonepi.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_id', 'gene_name']
+    df_nonepi.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'dPSI', 'gene_name']
 
     nonepi_dfs = []
 
