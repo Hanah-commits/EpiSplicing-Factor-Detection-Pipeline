@@ -83,7 +83,7 @@ def get_TSS_exons(tool):
 
 
     # combine AS flanks from all pairwise analyses into one
-    os.system(f'find {output_dir} -type f -name "AS_flanks200_pr*.bed" -exec grep -H "" {{}} + | cat | sort | uniq > {output_dir}AS_flanks200.bed')
+    os.system(f'cat {output_dir}AS_flanks200_pr*.bed | sort | uniq > {output_dir}AS_flanks200.bed')
 
     # keep only flanks overlapping with TSS exon flanks
     os.system(f'bedtools intersect -wa -a {output_dir}AS_flanks200.bed -b {output_dir}TSS_flanks200.bed -s | sort | uniq > {output_dir}{tool}TSS_flanks200.bed ')
