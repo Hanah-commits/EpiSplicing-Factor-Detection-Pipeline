@@ -86,7 +86,7 @@ def get_TSS_exons(tool):
     os.system(f'cat {output_dir}AS_flanks200_pr*.bed | sort | uniq > {output_dir}AS_flanks200.bed')
 
     # keep only flanks overlapping with TSS exon flanks
-    os.system(f'bedtools intersect -wa -a {output_dir}AS_flanks200.bed -b {output_dir}TSS_flanks200.bed -s | sort | uniq > {output_dir}{tool}TSS_flanks200.bed ')
+    os.system(f'bedtools intersect -wb -a {output_dir}AS_flanks200.bed -b {output_dir}TSS_flanks200.bed -s | sort | uniq > {output_dir}{tool}TSS_flanks200.bed ')
 
     os.system(f'rm {output_dir}AS_flanks200*.bed')
 
