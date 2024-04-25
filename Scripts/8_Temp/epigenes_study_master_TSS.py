@@ -5,6 +5,10 @@ import sys
 tool = sys.argv[1]
 mode = sys.argv[2]
 
+# Rscript 8_Temp/geneid_to_genesymbol_TSS.R
+# python 8_Temp/get_TSS_flanks.py
+
+
 # get flanks of TSS exons of epigenes for current analysis
 os.system(f'python 8_Temp/get_epi_nonepi_flanks_TSS.py {tool} {mode}')
 

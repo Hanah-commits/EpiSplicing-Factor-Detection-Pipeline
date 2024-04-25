@@ -13,7 +13,7 @@ ref_genome= fasta+".fai"
 
 
 # exon boundary external flanks
-os.system("bedtools flank -i 0_Files/TSS.bed -g " + ref_genome + " -b "+ "200" + " > 0_Files/flanks.bed" )
+os.system("bedtools flank -i 0_Files/Post-processing/TSS.bed -g " + ref_genome + " -b "+ "200" + " > 0_Files/flanks.bed" )
 
 # separate start,stop flank coords
 os.system("sed -n 'n;p' 0_Files/flanks.bed > 0_Files/stop.bed")
