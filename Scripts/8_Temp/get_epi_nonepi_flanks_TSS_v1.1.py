@@ -16,7 +16,7 @@ def get_TSS_exons(tool):
 
 
     output_directories = [data[process]['Output directory'] for process in data['list_of_processes']]
-    fasta = set([data[process]['Reference fasta'] for process in data['list_of_processes']])[0]
+    fasta = list(set([data[process]['Reference fasta'] for process in data['list_of_processes']]))[0]
     ref_genome= fasta+".fai"
 
     i = 0
@@ -64,32 +64,31 @@ def get_TSS_exons(tool):
             os.system(f"bedtools flank -i {dir}0_Files/DEXSEQ/dexseq_exons_coords.bed -g {ref_genome} -b 200 >{output_dir}flanks.bed" )
 
             # separate start,stop flank coords
-            os.system(f"sed -n 'n;p'{output_dir}flanks.bed >{output_dir}stop.bed")
-            os.system(f"sed -n 'p;n'{output_dir}flanks.bed >{output_dir}start.bed")
+            os.system(f"sed -n 'n;p' {output_dir}flanks.bed > {output_dir}stop.bed")
+            os.system(f"sed -n 'p;n' {output_dir}flanks.bed > {output_dir}start.bed")
 
             # exon boundary internal flanks
-            os.system(f"bedtools slop -i{output_dir}start.bed -g {ref_genome} -l 0 -r 200 >{output_dir}start_flanks.bed")
-            os.system(f"bedtools slop -i{output_dir}stop.bed -g {ref_genome} -l 200 -r 0 >{output_dir}stop_flanks.bed")
+            os.system(f"bedtools slop -i {output_dir}start.bed -g {ref_genome} -l 0 -r 200 > {output_dir}start_flanks.bed")
+            os.system(f"bedtools slop -i {output_dir}stop.bed -g {ref_genome} -l 200 -r 0 > {output_dir}stop_flanks.bed")
 
             # combine start,stop flank coords
-            os.system(f"paste -d'\n'{output_dir}start_flanks.bed{output_dir}stop_flanks.bed | sort -k1,1 -k2,2n >{output_dir}AS_flanks200_pr{i}.bed")
+            os.system(f"paste -d'\n' {output_dir}start_flanks.bed {output_dir}stop_flanks.bed | sort -k1,1 -k2,2n > {output_dir}AS_flanks200_pr{i}.bed")
 
             # remove intermediate files
-            os.system(f"rm{output_dir}start*.bed")
+            os.system(f"rm {output_dir}start*.bed")
             os.system(f"rm {output_dir}stop*.bed")
-            os.system(f"rm{output_dir}flanks.bed")
+            os.system(f"rm {output_dir}flanks.bed")
 
         i += 1
 
 
     # combine AS flanks from all pairwise analyses into one
-    os.system(f'{output_dir} -type f -name "AS_flanks200_pr*.bed" -exec grep -H "" {{}} + | cat | sort | uniq > {output_dir}AS_flanks200.bed')
+    os.system(f'find {output_dir} -type f -name "AS_flanks200_pr*.bed" -exec grep -H "" {{}} + | cat | sort | uniq > {output_dir}AS_flanks200.bed')
 
     # keep only flanks overlapping with TSS exon flanks
     os.system(f'bedtools intersect -wa -a {output_dir}AS_flanks200.bed -b {output_dir}TSS_flanks200.bed -s | sort | uniq > {output_dir}{tool}TSS_flanks200.bed ')
 
     os.system(f'rm {output_dir}AS_flanks200*.bed')
-
 
 
 def get_epigenes_study(tool):
