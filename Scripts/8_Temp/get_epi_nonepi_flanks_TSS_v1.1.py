@@ -86,7 +86,7 @@ def get_TSS_exons(tool):
     os.system(f'cat {output_dir}AS_flanks200_pr*.bed | sort | uniq > {output_dir}AS_flanks200.bed')
 
     # keep only flanks overlapping with TSS exon flanks
-    os.system(f'bedtools intersect -wb -a {output_dir}AS_flanks200.bed -b {output_dir}TSS_flanks200.bed -s | sort | uniq | cut -f1,2,3,4,5,6,8,16 > {output_dir}{tool}TSS_flanks200.bed ')
+    os.system(f'bedtools intersect -wb -a {output_dir}AS_flanks200.bed -b {output_dir}TSS_flanks200.bed -s | cut -f1,2,3,4,5,6,8,16 | sort | uniq > {output_dir}{tool}TSS_flanks200.bed ')
 
     os.system(f'rm {output_dir}AS_flanks200*.bed')
 
@@ -156,6 +156,7 @@ def get_epigenes_study(tool):
 
     df = pd.concat(epi_dfs,axis=0,sort=False)
     df = df[['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name', 'type']]
+    df = df.drop_duplicates()
     df = df.groupby(['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name'])['type'].apply(','.join).reset_index()
     df.to_csv(f'{output_dir}epi_flanks.bed', sep='\t', index=False, header=False)
 
@@ -224,6 +225,7 @@ def get_nonepigenes(tool):
     # epi and nonepi AS flanks separately into bed files
     df = pd.concat(nonepi_dfs,axis=0,sort=False)
     df = df[['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name', 'type']]
+    df = df.drop_duplicates()
     df = df.groupby(['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name'])['type'].apply(','.join).reset_index()
     df.to_csv(f'{output_dir}nonepi_flanks.bed', sep='\t', index=False, header = False)
 
