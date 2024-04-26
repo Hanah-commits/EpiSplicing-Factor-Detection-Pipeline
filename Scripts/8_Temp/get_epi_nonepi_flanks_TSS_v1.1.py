@@ -86,10 +86,9 @@ def get_TSS_exons(tool):
     os.system(f'cat {output_dir}AS_flanks200_pr*.bed | sort | uniq > {output_dir}AS_flanks200.bed')
 
     # keep only flanks overlapping with TSS exon flanks
-    os.system(f'bedtools intersect -wb -a {output_dir}AS_flanks200.bed -b {output_dir}TSS_flanks200.bed -s | cut -f1,2,3,4,5,6,8,16 | sort | uniq > {output_dir}{tool}TSS_flanks200.bed ')
-
+    os.system(f'bedtools intersect -wao -a {output_dir}TSS_flanks200.bed -b {output_dir}AS_flanks200.bed -s | cut -f1,2,3,4,5,6,8,17 | sort | uniq > {output_dir}{tool}TSS_flanks200.bed')
+    
     os.system(f'rm {output_dir}AS_flanks200*.bed')
-
 
 def get_epigenes_study(tool):
 
@@ -138,7 +137,11 @@ def get_epigenes_study(tool):
     ## STEP 3: Get Alternative TSS_exons of all epigenes:
 
     df_epi = pd.read_csv(f'0_Files/Post-processing/{tool}TSS_flanks200.bed', delimiter='\t', header=None)
-    df_epi.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'dPSI', 'gene_name']
+    df_epi.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name', "overlap_bp"]
+
+    # drop small overlaps
+    df_epi['flank_bp'] = df_epi['flank_end'] - df_epi['flank_start'] # not all flanks are +-200bp long (shorter if near chromosome bounds)
+    df_epi = df_epi[df_epi.overlap_bp == df_epi.flank_bp.abs()]
 
     epi_dfs = []
 
@@ -208,8 +211,11 @@ def get_nonepigenes(tool):
     ## STEP 4: Get alternative TSS_exons of all non-epigenes:
 
     df_nonepi = pd.read_csv(f'0_Files/Post-processing/{tool}TSS_flanks200.bed', delimiter='\t')
-    df_nonepi.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'dPSI', 'gene_name']
+    df_nonepi.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name', "overlap_bp"]
 
+    # drop small overlaps
+    df_nonepi['flank_bp'] = df_nonepi['flank_end'] - df_nonepi['flank_start'] # not all flanks are +-200bp long (shorter if near chromosome bounds)
+    df_nonepi = df_nonepi[df_nonepi.overlap_bp == df_nonepi.flank_bp.abs()]
     nonepi_dfs = []
 
 
