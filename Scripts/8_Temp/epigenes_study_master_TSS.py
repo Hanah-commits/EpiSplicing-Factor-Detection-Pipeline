@@ -10,7 +10,7 @@ mode = sys.argv[2]
 
 
 # get flanks of TSS exons of epigenes for current analysis
-os.system(f'python 8_Temp/get_epi_nonepi_flanks_TSS.py {tool} {mode}')
+os.system(f'python 8_Temp/get_epi_nonepi_flanks_TSS_v1.1.py {tool} {mode}')
 
 # pre-rbp
 os.system('mkdir ../RBPmap')

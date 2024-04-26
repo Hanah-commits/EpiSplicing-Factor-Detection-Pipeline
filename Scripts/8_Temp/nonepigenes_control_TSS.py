@@ -16,7 +16,7 @@ os.system('python 8_Temp/get_TSS_flanks.py')
 # STEP 1: Process nonepigenes
 
 ## STEP 1a: Get common nonepigene set
-os.system(f'python 8_Temp/get_epi_nonepi_flanks_TSS.py {tool} {mode}')
+os.system(f'python 8_Temp/get_epi_nonepi_flanks_TSS_v1.1.py {tool} {mode}')
 
 # pre-rbp
 os.system('mkdir ../RBPmap')
