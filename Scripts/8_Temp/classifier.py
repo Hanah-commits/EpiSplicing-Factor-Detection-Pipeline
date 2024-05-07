@@ -3,6 +3,7 @@ import numpy as np
 import sys
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import metrics
+from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_curve
@@ -16,6 +17,7 @@ def stratified_classifier(output_dir):
     features = pd.read_csv('0_Files/Post-processing/features_all.csv', delimiter='\t')
     features = features.drop('type', axis=1) # drop hm info
     features.fillna(0,inplace=True)
+    features = shuffle(features, random_state=42)
 
 
     sf = [val for val in features.columns if val != 'label']
