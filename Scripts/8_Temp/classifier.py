@@ -93,6 +93,7 @@ def stratified_hms_classifier(output_dir, hm):
 
     features = pd.read_csv('0_Files/Post-processing/features_all.csv', delimiter='\t')
     features.fillna(0,inplace=True)
+    features = shuffle(features, random_state=42)
 
     # extract features for hm
     features = features[features['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
