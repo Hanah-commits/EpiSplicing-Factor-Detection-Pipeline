@@ -27,7 +27,7 @@ def stratified_classifier(output_dir):
     X, y = sf_data.values, features['label'].values
 
     # Initialize classifier and cross-validation
-    clf = RandomForestClassifier(n_estimators=100, criterion='gini')
+    clf = RandomForestClassifier(n_estimators=100, max_features= "sqrt", n_jobs = -1, random_state=0)
     kf = StratifiedKFold(n_splits=10)
 
     # Initialize arrays to store PR-AUC values
