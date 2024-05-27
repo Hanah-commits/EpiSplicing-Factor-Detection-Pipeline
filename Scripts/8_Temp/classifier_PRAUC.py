@@ -27,7 +27,7 @@ def stratified_classifier(output_dir):
     X, y = sf_data.values, features['label'].values
 
     # Initialize classifier and cross-validation
-    clf = RandomForestClassifier(n_estimators=100, max_features= "sqrt", n_jobs = -1, random_state=0)
+    clf = RandomForestClassifier(n_estimators=100, max_features= "sqrt", class_weight='balanced', n_jobs = -1, random_state=0)
     kf = StratifiedKFold(n_splits=10)
 
     # Initialize arrays to store PR-AUC values
@@ -91,7 +91,7 @@ def stratified_hms_classifier(output_dir, hm):
     X, y = sf_data.values, features['label'].values
 
     # Initialize classifier and cross-validation
-    clf = RandomForestClassifier(n_estimators=100, criterion='gini')
+    clf = RandomForestClassifier(n_estimators=100, max_features= "sqrt", class_weight='balanced', n_jobs = -1, random_state=0)
     kf = StratifiedKFold(n_splits=10)
 
     # Initialize arrays to store PR-AUC values
@@ -195,12 +195,8 @@ def stratified_classifier_2(output_dir):
 if __name__ == "__main__":
     # epi vs nonepi (all marks)
     stratified_classifier(output_dir=sys.argv[1])
-
-    # HM-specific epi vs nonepi
-    with open('paths.json') as f:
-            d = json.load(f)
-
-    hms = d["Histone modifications"]
+    
+    hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3', 'H3K4me1']
 
     for hm in hms:
         stratified_hms_classifier(output_dir=sys.argv[1], hm=hm)

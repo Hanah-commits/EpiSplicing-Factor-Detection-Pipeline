@@ -23,7 +23,7 @@ def stratified_classifier(output_dir, rbp_classes):
     features['label'] = features['label'].map({'epigene': 1, 'non-epigene': 0}).astype(int)
     X, y = sf_data.values, features['label'].values
 
-    clf = RandomForestClassifier(n_estimators=100, max_features= "sqrt", oob_score=True, n_jobs = -1, random_state=0) 
+    clf = RandomForestClassifier(n_estimators=100, max_features= "sqrt", class_weight='balanced', bootstrap=True, oob_score=True, n_jobs = -1, random_state=0) 
     kf = StratifiedKFold(n_splits=10)
 
     impt_scores = []
@@ -105,7 +105,7 @@ def stratified_hms_classifier(output_dir, hm, rbp_classes):
     features['label'] = features['label'].map({'epigene': 1, 'non-epigene': 0}).astype(int)
     X, y = sf_data.values, features['label'].values
 
-    clf = RandomForestClassifier(n_estimators=100, max_features= "sqrt", oob_score=True, n_jobs = -1, random_state=0) 
+    clf = RandomForestClassifier(n_estimators=100, max_features= "sqrt", class_weight='balanced', bootstrap=True, oob_score=True, n_jobs = -1, random_state=0) 
     kf = StratifiedKFold(n_splits=10)
 
     impt_scores = []
