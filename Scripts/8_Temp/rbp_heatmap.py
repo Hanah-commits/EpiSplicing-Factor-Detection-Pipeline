@@ -33,14 +33,14 @@ for hm in hms:
 
 #     # sfs = [ val for val in list(features.columns) if val not in ['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name', 'type']]
 
-    features.loc[:, sfs] = features.loc[:, sfs].applymap(lambda val: 0 if val < 4 else val)
+    # features.loc[:, sfs] = features.loc[:, sfs].applymap(lambda val: 0 if val < 3 else val)
 
     plt.close('all')
     plt.figure(figsize=(10, 8))
 
     label_colors = dict(zip(['epigene', 'non-epigene'], [color_dict[hm], "grey"]))
     row_colors = features.index.map(label_colors)
-    cluster = sns.clustermap(features[sfs], annot=False, linewidth=0, row_cluster=False, col_cluster=False, row_colors=row_colors, cmap='mako',  cbar_pos=(0.9, .2, .03, .4))
+    cluster = sns.clustermap(features[sfs], annot=False, linewidth=0, row_cluster=False, col_cluster=False, row_colors=row_colors, cmap='viridis',  cbar_pos=(0.9, .2, .03, .4))
     heatmap = cluster.ax_heatmap
     cbar = heatmap.collections[0].colorbar # custom y tick colorbar
 
@@ -50,7 +50,7 @@ for hm in hms:
 
     # Set x-axis tick labels
     heatmap.set_xticks(range(len(sfs)))
-    heatmap.set_xticklabels(sfs, size=5, rotation=90)
+    heatmap.set_xticklabels(sfs, size=6, rotation=90)
 
     # add title and axes labels
     heatmap.set_title(f'{hm} : Epi-enriched RBPs')
@@ -69,7 +69,7 @@ for hm in hms:
 
     label_colors = dict(zip(['epigene', 'non-epigene'], [color_dict[hm], "grey"]))
     row_colors = features.index.map(label_colors)
-    cluster = sns.clustermap(features[sfs], annot=False, linewidth=0, row_cluster=False, col_cluster=False, row_colors=row_colors, cmap='mako',  cbar_pos=(0.9, .2, .03, .4))
+    cluster = sns.clustermap(features[sfs], annot=False, linewidth=0, row_cluster=False, col_cluster=False, row_colors=row_colors, cmap='viridis',  cbar_pos=(0.9, .2, .03, .4))
     heatmap = cluster.ax_heatmap
     cbar = heatmap.collections[0].colorbar # custom y tick colorbar
 
@@ -79,7 +79,7 @@ for hm in hms:
 
     # Set x-axis tick labels
     heatmap.set_xticks(range(len(sfs)))
-    heatmap.set_xticklabels(sfs, size=5, rotation=90)
+    heatmap.set_xticklabels(sfs, size=6, rotation=90)
 
     # add title and axes labels
     heatmap.set_title(f'{hm} : Nonepi-enriched RBPs')
