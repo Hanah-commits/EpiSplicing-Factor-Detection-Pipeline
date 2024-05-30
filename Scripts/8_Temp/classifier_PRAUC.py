@@ -92,7 +92,7 @@ def stratified_hms_classifier(output_dir, hm):
 
     # Initialize classifier and cross-validation
     clf = RandomForestClassifier(n_estimators=100, max_features= "sqrt", class_weight='balanced', n_jobs = -1, random_state=0)
-    kf = StratifiedKFold(n_splits=10)
+    kf = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
 
     # Initialize arrays to store PR-AUC values
     pr_aucs = []
@@ -194,7 +194,7 @@ def stratified_classifier_2(output_dir):
 
 if __name__ == "__main__":
     # epi vs nonepi (all marks)
-    stratified_classifier(output_dir=sys.argv[1])
+    # stratified_classifier(output_dir=sys.argv[1])
     
     hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3', 'H3K4me1']
 
