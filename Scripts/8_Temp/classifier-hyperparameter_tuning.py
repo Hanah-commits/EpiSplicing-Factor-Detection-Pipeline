@@ -50,7 +50,7 @@ def hms_hyperparamter_tuning(output_dir,hm):
 
     # set color palette
     hms = [  "H3K27ac","H3K27me3","H3K4me3","H3K9me3", "H3K36me3", "H3K4me1"]
-    color_dict = dict(zip(hms,["darkorchid", "red", "magenta", "darkorange", "green", "blue"]))
+    color_dict = dict(zip(hms,["#AS50D3", "#FA5557", "#FA55BA", "#FCB10C", "#91C820", "#33ABCC"]))
     alphas = [0.05, 0.25, 0.50, 0.75, 1.0]
 
     for i, threshold in enumerate(thresholds):
