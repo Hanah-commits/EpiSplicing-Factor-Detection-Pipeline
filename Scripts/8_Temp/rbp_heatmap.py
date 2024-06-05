@@ -34,29 +34,29 @@ for hm in hms:
 #     # sfs = [ val for val in list(features.columns) if val not in ['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name', 'type']]
 
     # features.loc[:, sfs] = features.loc[:, sfs].applymap(lambda val: 0 if val < 3 else val)
+    if len(sfs) > 0:
+        plt.close('all')
+        plt.figure(figsize=(10, 8))
 
-    plt.close('all')
-    plt.figure(figsize=(10, 8))
+        label_colors = dict(zip(['epigene', 'non-epigene'], [color_dict[hm], "grey"]))
+        row_colors = features.index.map(label_colors)
+        cluster = sns.clustermap(features[sfs], annot=False, linewidth=0, row_cluster=False, col_cluster=False, row_colors=row_colors, cmap='viridis',  cbar_pos=(0.9, .2, .03, .4))
+        heatmap = cluster.ax_heatmap
+        cbar = heatmap.collections[0].colorbar # custom y tick colorbar
 
-    label_colors = dict(zip(['epigene', 'non-epigene'], [color_dict[hm], "grey"]))
-    row_colors = features.index.map(label_colors)
-    cluster = sns.clustermap(features[sfs], annot=False, linewidth=0, row_cluster=False, col_cluster=False, row_colors=row_colors, cmap='viridis',  cbar_pos=(0.9, .2, .03, .4))
-    heatmap = cluster.ax_heatmap
-    cbar = heatmap.collections[0].colorbar # custom y tick colorbar
+        # Remove y-axis ticks and tick labels
+        heatmap.set_yticks([])
+        heatmap.set_yticklabels([])
 
-    # Remove y-axis ticks and tick labels
-    heatmap.set_yticks([])
-    heatmap.set_yticklabels([])
+        # Set x-axis tick labels
+        heatmap.set_xticks(range(len(sfs)))
+        heatmap.set_xticklabels(sfs, size=6, rotation=90)
 
-    # Set x-axis tick labels
-    heatmap.set_xticks(range(len(sfs)))
-    heatmap.set_xticklabels(sfs, size=6, rotation=90)
+        # add title and axes labels
+        heatmap.set_title(f'{hm} : Epi-enriched RBPs')
+        heatmap.set_ylabel('')
 
-    # add title and axes labels
-    heatmap.set_title(f'{hm} : Epi-enriched RBPs')
-    heatmap.set_ylabel('')
-
-    # Position the legend next to the plot
+        # Position the legend next to the plot
     plt.savefig(f'{op_dir}/{hm}_epi.png')
 
 
@@ -64,26 +64,27 @@ for hm in hms:
     with open(f'{op_dir}/enriched_nonepi_{hm}.txt', 'r') as file:
         sfs = [line.strip() for line in file.readlines()]
 
-    plt.close('all')
-    plt.figure(figsize=(10, 8))
+    if len(sfs) > 0:
+        plt.close('all')
+        plt.figure(figsize=(10, 8))
 
-    label_colors = dict(zip(['epigene', 'non-epigene'], [color_dict[hm], "grey"]))
-    row_colors = features.index.map(label_colors)
-    cluster = sns.clustermap(features[sfs], annot=False, linewidth=0, row_cluster=False, col_cluster=False, row_colors=row_colors, cmap='viridis',  cbar_pos=(0.9, .2, .03, .4))
-    heatmap = cluster.ax_heatmap
-    cbar = heatmap.collections[0].colorbar # custom y tick colorbar
+        label_colors = dict(zip(['epigene', 'non-epigene'], [color_dict[hm], "grey"]))
+        row_colors = features.index.map(label_colors)
+        cluster = sns.clustermap(features[sfs], annot=False, linewidth=0, row_cluster=False, col_cluster=False, row_colors=row_colors, cmap='viridis',  cbar_pos=(0.9, .2, .03, .4))
+        heatmap = cluster.ax_heatmap
+        cbar = heatmap.collections[0].colorbar # custom y tick colorbar
 
-    # Remove y-axis ticks and tick labels
-    heatmap.set_yticks([])
-    heatmap.set_yticklabels([])
+        # Remove y-axis ticks and tick labels
+        heatmap.set_yticks([])
+        heatmap.set_yticklabels([])
 
-    # Set x-axis tick labels
-    heatmap.set_xticks(range(len(sfs)))
-    heatmap.set_xticklabels(sfs, size=6, rotation=90)
+        # Set x-axis tick labels
+        heatmap.set_xticks(range(len(sfs)))
+        heatmap.set_xticklabels(sfs, size=6, rotation=90)
 
-    # add title and axes labels
-    heatmap.set_title(f'{hm} : Nonepi-enriched RBPs')
-    heatmap.set_ylabel('')
+        # add title and axes labels
+        heatmap.set_title(f'{hm} : Nonepi-enriched RBPs')
+        heatmap.set_ylabel('')
 
-    # Position the legend next to the plot
-    plt.savefig(f'{op_dir}/{hm}_nonepi.png')
+        # Position the legend next to the plot
+        plt.savefig(f'{op_dir}/{hm}_nonepi.png')
