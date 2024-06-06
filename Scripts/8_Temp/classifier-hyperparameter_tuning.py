@@ -102,7 +102,7 @@ def hms_hyperparamter_tuning(output_dir,hm):
 
     plt.xlabel('Number of Features')
     plt.ylabel('Mean PR AUC Score')
-    plt.title(f'Feature Selection for {hm}')
+    plt.title(f'Recursive Feature Elimination CV - {hm}')
     plt.grid(True)
     plt.legend(loc='lower right')
     plt.tight_layout()
