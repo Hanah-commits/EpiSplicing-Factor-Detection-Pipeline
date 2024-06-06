@@ -73,6 +73,9 @@ def stratified_classifier(output_dir):
     
 def stratified_hms_classifier(output_dir, hm):
 
+    hms = [  "H3K27ac","H3K27me3","H3K4me3","H3K9me3", "H3K36me3", "H3K4me1"]
+    color_dict = dict(zip(hms,["#AD50D3", "#FA5557", "#FA55BA", "#FCB10C", "#91C820", "#33ABCC"]))
+
     features = pd.read_csv('0_Files/Post-processing/features_all.csv', delimiter='\t')
     features.fillna(0,inplace=True)
     features = shuffle(features, random_state=42)
@@ -107,7 +110,7 @@ def stratified_hms_classifier(output_dir, hm):
         precision, recall, _ = precision_recall_curve(y[test], y_score[:, 1])
         pr_auc = auc(recall, precision)
         pr_aucs.append(pr_auc)
-        plt.plot(recall, precision, 'b', alpha=0.15)
+        plt.plot(recall, precision, color_dict[hm])
 
     # Calculate mean PR-AUC and confidence interval
     pr_auc_range = np.percentile(pr_aucs, (2.5, 97.5))
@@ -121,7 +124,7 @@ def stratified_hms_classifier(output_dir, hm):
     ci = pr_auc_std / 2
 
     # Plot single point for mean PR-AUC
-    plt.plot(1, pr_auc_mean, 'bo', label='Mean PR-AUC = {:.2f} $\pm$ {:.2f}'.format(pr_auc_mean, ci))
+    plt.plot(1, pr_auc_mean, 'o', color=color_dict[hm], label='Mean PR-AUC = {:.2f} $\pm$ {:.2f}'.format(pr_auc_mean, ci))
 
     # Set plot properties
     plt.xlabel('Recall')
