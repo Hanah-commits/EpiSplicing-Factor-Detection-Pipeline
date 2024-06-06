@@ -3,6 +3,8 @@ import math
 import json
 import numpy as np
 from scipy import stats
+from statsmodels.stats.multitest import multipletests
+
 
 def prep():
     epi = pd.read_csv('0_Files/Post-processing/features_epi.csv', delimiter='\t')
@@ -36,44 +38,6 @@ def prep():
 
     return epi, nonepi, sfs
 
-def adjust_pvalue(df):
-    pval_cols = df.columns.tolist()
-    new_cols = []
-    col_names = []
-    for col in pval_cols:
-
-        # get indices of null values
-        na_idx = df[df[col].isnull()].index.tolist()
-
-        # adjust non-null p values
-        pvals = df[col].values.tolist()
-        pvals = [x for x in pvals if not math.isnan(x)]
-        adj_pval = p_adjust_bh(pvals).tolist()
-
-        # insert null at original indices
-        for idx in na_idx:
-            adj_pval.insert(idx, None)
-
-        new_cols.append(adj_pval)
-        col_names.append(col)
-
-    # adjusted p values as new df
-    df1 = pd.DataFrame(columns=col_names)
-    for i in range(len(new_cols)):
-        df1[col_names[i]] = new_cols[i]
-
-    return df1
-
-
-def p_adjust_bh(p):
-    """Benjamini-Hochberg p-value correction for multiple hypothesis testing."""
-    p = np.asfarray(p)
-    by_descend = p.argsort()[::-1]
-    by_orig = by_descend.argsort()
-    steps = float(len(p)) / np.arange(len(p), 0, -1)
-    q = np.minimum(1, np.minimum.accumulate(steps * p[by_descend]))
-    return q[by_orig]
-
 
 def significane_hms(hm):
 
@@ -89,15 +53,28 @@ def significane_hms(hm):
     nonepi = nonepi[nonepi['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
 
     for sf in sfs:
-        prob = stats.ttest_ind(epi[sf], nonepi[sf], equal_var = False, alternative='greater')
+        prob = stats.mannwhitneyu(epi[sf], nonepi[sf], alternative='greater')
         prob_dict[sf] = prob[1]
-        if prob[1] < 0.05 :
+    
+    # adjust pvalues
+    adjusted_pvalues = multipletests(list(prob_dict.values()), method='fdr_bh')[1]
+
+    # Filter features based on adjusted p-values
+    for sf, adj_pval in zip(prob_dict.keys(), adjusted_pvalues):
+        if adj_pval < 0.05:
             enriched_epi.append(sf)
 
+    prob_dict = {}
     for sf in sfs:
-        prob = stats.ttest_ind(nonepi[sf], epi[sf], equal_var = False, alternative='greater')
+        prob = stats.mannwhitneyu(nonepi[sf], epi[sf], alternative='greater')
         prob_dict[sf] = prob[1]
-        if prob[1] < 0.05 :
+
+    # adjust pvalues
+    adjusted_pvalues = multipletests(list(prob_dict.values()), method='fdr_bh')[1]
+
+    # Filter features based on adjusted p-values
+    for sf, adj_pval in zip(prob_dict.keys(), adjusted_pvalues):
+        if adj_pval < 0.05:
             enriched_nonepi.append(sf)
 
 
