@@ -25,17 +25,41 @@ def hms_hyperparamter_tuning(output_dir,hm):
 
     ## STEP 2: Handling Multicollinear Features
     def cluster_corr_features(X, threshold):
-        corr = spearmanr(X).correlation
-        corr = (corr + corr.T) / 2
-        np.fill_diagonal(corr, 1)
-        distance_matrix = 1 - np.abs(corr)
-        dist_linkage = hierarchy.ward(squareform(distance_matrix))
-        cluster_ids = hierarchy.fcluster(dist_linkage, threshold, criterion="distance")
-        cluster_id_to_feature_ids = defaultdict(list)
-        for idx, cluster_id in enumerate(cluster_ids):
-            cluster_id_to_feature_ids[cluster_id].append(idx)
-        clustered_features = [v[0] for v in cluster_id_to_feature_ids.values()]
-        return X.columns[clustered_features]
+
+        if threshold == 0:
+            return X
+        else:
+
+            corr = spearmanr(X).correlation
+            corr = (corr + corr.T) / 2
+            np.fill_diagonal(corr, 1)
+            distance_matrix = 1 - np.abs(corr)
+            dist_linkage = hierarchy.ward(squareform(distance_matrix))
+            cluster_ids = hierarchy.fcluster(dist_linkage, threshold, criterion="distance")
+            cluster_id_to_feature_ids = defaultdict(list)
+            for idx, cluster_id in enumerate(cluster_ids):
+                cluster_id_to_feature_ids[cluster_id].append(idx)
+            
+            ## Extract clusters
+            clusters = hierarchy.fcluster(dist_linkage, t=threshold, criterion='distance')
+            labels = X.columns.to_list() # Get the cluster labels
+
+            # Create a dictionary to hold the clusters
+            cluster_dict = {}
+            for label, cluster_id in zip(labels, clusters):
+                if cluster_id not in cluster_dict:
+                    cluster_dict[cluster_id] = []
+                cluster_dict[cluster_id].append(label)
+
+            ## Get mean of cluster as cluster representative
+            keys = list(cluster_dict.keys())
+            keys.sort()
+            cluster_dict = {i: cluster_dict[i] for i in keys}
+            for key in cluster_dict.keys():
+                X['cluster_' +str(key)] = X[cluster_dict[key]].mean(axis=1)
+            clustered_features = ['cluster_'+ str(key) for key in list(cluster_dict.keys())]
+
+            return X[clustered_features]
 
 
     ## STEP 3: Build Model, intialize CV
@@ -56,7 +80,7 @@ def hms_hyperparamter_tuning(output_dir,hm):
     for i, threshold in enumerate(thresholds):
         sf = [val for val in features.columns if val != 'label']
         clustered_features = cluster_corr_features(X=features[sf], threshold=threshold)
-        X, y = features[clustered_features].values, features['label'].values
+        X, y = clustered_features.values, features['label'].values
 
         # RFECV implementation
         rfecv = RFECV(estimator=clf, step=1, cv=kf, scoring='average_precision', n_jobs=-1)
@@ -71,11 +95,10 @@ def hms_hyperparamter_tuning(output_dir,hm):
         # Find the index of the maximum score
         max_index = np.argmax(cv_scores)
         max_num_features = feature_scores[max_index, 0]
-        max_score = feature_scores[max_index, 1]
 
         # Plot the scores
-        plt.plot(feature_scores[:, 0], feature_scores[:, 1], marker='o', alpha = alphas[i],color=color_dict[hm], label=f'Threshold {threshold} : {len(clustered_features)} Features')
-        plt.axvline(x=max_num_features, color='gray', linestyle='--', label=f'Optimal Features (Threshold {threshold}): {int(max_num_features)}')
+        plt.plot(feature_scores[:, 0], feature_scores[:, 1], marker='o', alpha = alphas[i],color=color_dict[hm], label=f'Threshold {threshold} ')
+        plt.axvline(x=max_num_features, color='gray', linestyle='--', label=f'Optimal # Features : {int(max_num_features)} / {len(clustered_features.columns)}')
 
     plt.xlabel('Number of Features')
     plt.ylabel('Mean PR AUC Score')
