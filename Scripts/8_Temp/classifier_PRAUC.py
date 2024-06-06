@@ -89,7 +89,10 @@ def stratified_hms_classifier(output_dir, hm):
 
     sf = [val for val in features.columns if val != 'label']
 
+    # keep only strong binding events
     sf_data = features[sf]
+    sf_data = sf_data.applymap(lambda val: 0 if val < 2 else val)
+
     features['label'] = features['label'].map({'epigene': 1, 'non-epigene': 0}).astype(int)
     X, y = sf_data.values, features['label'].values
 

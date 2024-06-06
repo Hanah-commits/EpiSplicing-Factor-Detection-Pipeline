@@ -13,7 +13,6 @@ def prep():
     epi["label"] = "epi"
     nonepi["label"] = "nonepi"
 
-
     # remove genes with both labels
     common_genes = list(set(epi.gene_name.values.tolist()) & set(nonepi.gene_name.values.tolist()))
     epi = epi[~(epi.gene_name.isin(common_genes))]
@@ -21,9 +20,9 @@ def prep():
 
     sfs = ['A1CF', 'ANKHD1', 'BOLL', 'BRUNOL4', 'BRUNOL5', 'BRUNOL6', 'CELF1', 'CNOT4', 'CPEB1', 'CPEB2', 'CPEB4', 'DAZ3', 'DAZAP1', 'EIF4G2', 'ELAVL4', 'ENOX1', 'ESRP1', 'ESRP2', 'EWSR1', 'FMR1', 'FUBP1', 'FUBP3', 'FUS', 'FXR1', 'FXR2', 'G3BP2', 'HNRNPA0', 'HNRNPA1', 'HNRNPA1L2', 'HNRNPA2B1', 'HNRNPC', 'HNRNPCL1', 'HNRNPD', 'HNRNPDL', 'HNRNPF', 'HNRNPH1', 'HNRNPH2', 'HNRNPK', 'HNRNPL', 'HNRNPM', 'HNRNPU', 'HNRPLL', 'HuR', 'IGF2BP1', 'IGF2BP2', 'IGF2BP3', 'ILF2', 'KHDRBS1', 'KHDRBS2', 'KHDRBS3', 'KHSRP', 'LIN28A', 'MATR3', 'MBNL1', 'MSI1', 'NOVA1', 'NUPL2', 'PABPC1', 'PABPC3', 'PABPC4', 'PABPC5', 'PABPN1', 'PABPN1L', 'PCBP1', 'PCBP2', 'PCBP3', 'PCBP4', 'PPRC1', 'PRR3', 'PTB3', 'PTBP3', 'PUF60', 'PUM1', 'PUM2', 'QKI', 'RALY', 'RBFOX1', 'RBFOX2', 'RBFOX3', 'RBM15B', 'RBM22', 'RBM23', 'RBM24', 'RBM25', 'RBM28', 'RBM3', 'RBM38', 'RBM4', 'RBM41', 'RBM42', 'RBM45', 'RBM46', 'RBM47', 'RBM4B', 'RBM5', 'RBM6', 'RBM8A', 'RBMS1', 'RBMS2', 'RBMS3', 'RC3H1', 'SAMD4A', 'SART3', 'SF1', 'SFPQ', 'SNRNP70', 'SNRPA', 'SRSF1', 'SRSF10', 'SRSF11', 'SRSF2', 'SRSF4', 'SRSF5', 'SRSF7', 'SRSF8', 'SRSF9', 'TAF15', 'TARDBP', 'TIA1', 'TRA2A', 'TRNAU1AP', 'TUT1', 'U2AF2', 'UNK', 'YBX1', 'YBX2', 'ZC3H10', 'ZC3H14', 'ZCRB1', 'ZFP36', 'ZNF326', 'ZNF638']
 
-    # # keep only strong binding events
-    # for df in [epi, nonepi]:
-    #     df.loc[:, sfs] = df.loc[:, sfs].applymap(lambda val: 0 if val < 2 else val)
+    # keep only strong binding events
+    for df in [epi, nonepi]:
+        df.loc[:, sfs] = df.loc[:, sfs].applymap(lambda val: 0 if val < 2 else val)
 
     # RBPs with no binding site in any flank
     all_zero = []

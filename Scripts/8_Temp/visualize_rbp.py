@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import os
 
 def violinplot(data, hm, type):
 
@@ -36,6 +37,87 @@ def violinplot(data, hm, type):
     plt.tick_params(axis='x', labelsize=7, labelrotation=90)
     plt.savefig(f'{op_dir}/{hm}_violinplot_{type}.png')
 
+
+def rideplot(data, hm, type):
+
+    op_dir = '0_Files/Post-processing'
+
+    type = type.upper()
+    df = pd.DataFrame(data)
+    cols = [col for col in df.columns if col != 'label']
+    df['label'] = df['label'].replace('epigene', 'Epi Exon Flanks')
+    df['label'] = df['label'].replace('non-epigene', 'NonEpi Exon Flanks')
+    df = df.rename(columns={'label': 'Sequence Class'})
+
+
+    # set color palette
+    hms = [  "H3K27ac","H3K27me3","H3K4me3","H3K9me3", "H3K36me3", "H3K4me1"]
+    color_dict = dict(zip(hms,["#AD50D3", "#FA5557", "#FA55BA", "#FCB10C", "#91C820", "#33ABCC"]))
+    custom_palette = { 'NonEpi Exon Flanks': 'lightgray'}
+    custom_palette['Epi Exon Flanks'] = color_dict[hm]
+
+    # Melt the DataFrame to long format
+    df_melted = df.melt(id_vars='Sequence Class', value_vars=cols, 
+                        var_name='Variable', value_name='Value')
+
+    # Create a FacetGrid for the ridge plot
+    g = sns.FacetGrid(df_melted, row='Variable', hue='Sequence Class', aspect=4, height=1.5, palette=custom_palette)
+
+    # Map the kdeplot to each subplot
+    g.map(sns.kdeplot, 'Value', fill=True, alpha=0.6, bw_adjust=0.6)
+
+    # Add titles and adjust layout
+    g.set_titles('')
+    g.set_xlabels('')
+    g.set_ylabels('')
+    g.despine(left=True)
+    plt.subplots_adjust(hspace=0.5)
+    g.fig.suptitle(f'Binding Affinities of {type} RBPs - {hm}', fontsize=16)
+    g.fig.subplots_adjust(top=0.9)  # Adjust title position
+
+    plt.savefig(f'{op_dir}/{hm}_ridgeplot_{type}.png')
+
+
+def rideplot_indiv(data, hm, type):
+
+    op_dir = '0_Files/Post-processing'
+
+    # Create a directory specific to the hm value
+    hm_dir = os.path.join(op_dir, hm, type)
+    os.makedirs(hm_dir, exist_ok=True)  # Create the directory if it doesn't exist
+
+    type = type.upper()
+    df = pd.DataFrame(data)
+    cols = [col for col in df.columns if col != 'label']
+    df['label'] = df['label'].replace('epigene', 'Epi Exon Flanks')
+    df['label'] = df['label'].replace('non-epigene', 'NonEpi Exon Flanks')
+    df = df.rename(columns={'label': 'Sequence Class'})
+
+
+    # set color palette
+    hms = [  "H3K27ac","H3K27me3","H3K4me3","H3K9me3", "H3K36me3", "H3K4me1"]
+    color_dict = dict(zip(hms,["#AD50D3", "#FA5557", "#FA55BA", "#FCB10C", "#91C820", "#33ABCC"]))
+    custom_palette = { 'Epi Exon Flanks': color_dict[hm]}
+    custom_palette['NonEpi Exon Flanks'] = 'lightgray'
+
+    # Melt the DataFrame to long format
+    df_melted = df.melt(id_vars='Sequence Class', value_vars=cols, 
+                        var_name='Variable', value_name='Value')
+
+    # Create a ridge plot for each variable
+    for variable in cols:
+            plt.figure(figsize=(8, 4))
+            sns.kdeplot(data=df_melted[df_melted['Variable'] == variable], x='Value', hue='Sequence Class',
+                        fill=True, alpha=0.6, palette=custom_palette)
+            plt.title(f'Ridge Plot for {variable}')
+            plt.xlabel('Value')
+            plt.ylabel('Density')
+
+            plt.tight_layout()
+            plt.savefig(f'{hm_dir}/{hm}_ridgeplot_{variable}_{type}.png')
+            plt.close()
+
+
 def enriched_epi_nonepi():
     op_dir = '0_Files/Post-processing'
 
@@ -68,7 +150,8 @@ def enriched_epi_nonepi():
         cols = sfs + ['label']
         df = features[cols]
         if len(sfs) > 0:
-            violinplot(df, hm, 'epi')
+            df.loc[:, sfs] = df.loc[:, sfs].applymap(lambda val: 0 if val < 2 else val)
+            rideplot_indiv(df, hm, 'epi')
 
 
         ## NONEPI ENRICHED RBPS
@@ -78,6 +161,7 @@ def enriched_epi_nonepi():
         cols = sfs + ['label']
         df = features[cols]
         if len(sfs) >0:
-            violinplot(df, hm, 'nonepi')
-  
+            df.loc[:, sfs] = df.loc[:, sfs].applymap(lambda val: 0 if val < 2 else val)
+            rideplot_indiv(df, hm, 'nonepi')
+
 enriched_epi_nonepi()
