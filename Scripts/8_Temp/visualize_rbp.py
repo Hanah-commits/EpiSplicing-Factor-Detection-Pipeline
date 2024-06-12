@@ -7,6 +7,10 @@ def violinplot(data, hm, type):
 
     op_dir = '0_Files/Post-processing'
 
+    # Create a directory specific to the hm value
+    hm_dir = os.path.join(op_dir, hm, type)
+    os.makedirs(hm_dir, exist_ok=True)  # Create the directory if it doesn't exist
+
     type = type.upper()
     df = pd.DataFrame(data)
     cols = [col for col in df.columns if col != 'label']
@@ -35,7 +39,7 @@ def violinplot(data, hm, type):
     plt.ylabel('Binding Scores')
     plt.xlabel('')
     plt.tick_params(axis='x', labelsize=7, labelrotation=90)
-    plt.savefig(f'{op_dir}/{hm}_violinplot_{type}.png')
+    plt.savefig(f'{hm_dir}/{hm}_violinplot_{type}.png')
 
 
 def rideplot(data, hm, type):
@@ -98,7 +102,7 @@ def rideplot_indiv(data, hm, type):
     hms = [  "H3K27ac","H3K27me3","H3K4me3","H3K9me3", "H3K36me3", "H3K4me1"]
     color_dict = dict(zip(hms,["#AD50D3", "#FA5557", "#FA55BA", "#FCB10C", "#91C820", "#33ABCC"]))
     custom_palette = { 'Epi Exon Flanks': color_dict[hm]}
-    custom_palette['NonEpi Exon Flanks'] = 'lightgray'
+    custom_palette['NonEpi Exon Flanks'] = 'gray'
 
     # Melt the DataFrame to long format
     df_melted = df.melt(id_vars='Sequence Class', value_vars=cols, 
@@ -108,7 +112,12 @@ def rideplot_indiv(data, hm, type):
     for variable in cols:
             plt.figure(figsize=(8, 4))
             sns.kdeplot(data=df_melted[df_melted['Variable'] == variable], x='Value', hue='Sequence Class',
-                        fill=True, alpha=0.6, palette=custom_palette)
+                        fill=True, alpha=0.6, palette=custom_palette, 
+                        hue_order=['NonEpi Exon Flanks', 'Epi Exon Flanks'], 
+                        common_norm=False,
+                        bw_adjust=0.4)
+ 
+
             plt.title(f'Ridge Plot for {variable}')
             plt.xlabel('Value')
             plt.ylabel('Density')
@@ -137,7 +146,7 @@ def enriched_epi_nonepi():
     hms = [  "H3K27ac","H3K4me3","H3K9me3", "H3K36me3", "H3K4me1", "H3K27me3"]
 
     for hm in hms:
-        print(hm)
+        print(hm) 
         features = all_features[all_features['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
         # features = features.set_index('label')
         
