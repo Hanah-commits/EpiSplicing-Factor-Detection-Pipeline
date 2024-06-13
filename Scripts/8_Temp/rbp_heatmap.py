@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from collections import Counter
+import numpy as np
 
 def binding_sites():
         
@@ -102,8 +102,7 @@ def expression_levels():
 
 
     hms = [  "H3K27ac","H3K27me3","H3K4me3","H3K9me3", "H3K4me1", "H3K36me3"]
-    color_dict = dict(zip(hms,["purple", "red", "magenta", "orange", "green", "blue"]))
-
+    
     for hm in hms:
         print(hm)
 
@@ -131,9 +130,28 @@ def expression_levels():
                 vmax = counts_hm.loc[sfs_index].values.max()
                 max_abs = max(abs(vmin), abs(vmax))
 
-                cluster = sns.clustermap(counts_hm.loc[sfs_index], annot=False, linewidth=0.3, row_cluster=False, col_cluster=False, cmap='seismic', center=0, vmin=-max_abs, vmax=max_abs, cbar_pos=(0.91, .33, .03, .4))
-                heatmap = cluster.ax_heatmap
-                cbar = heatmap.collections[0].colorbar # custom y tick colorbar
+                # Create the heatmap
+                fig, heatmap = plt.subplots(figsize=(10, 10))
+                sns.heatmap(
+                    counts_hm.loc[sfs_index],
+                    annot=False,
+                    linewidths=0.3,
+                    cmap='coolwarm',
+                    center=0,
+                    vmin=-max_abs,
+                    vmax=max_abs,
+                    ax=heatmap,
+                    cbar_kws={'shrink': 0.5}  # Adjusts the colorbar size
+                )
+
+                # Customize the colorbar
+                cbar = heatmap.collections[0].colorbar
+                cbar.set_ticks(np.linspace(-max_abs, max_abs, num=5))  # Customize the number of ticks
+                cbar.set_ticklabels([f'{i:.2f}' for i in np.linspace(-max_abs, max_abs, num=5)])  # Customize tick labels format
+                cbar.ax.yaxis.set_ticks_position('right')  # Position the colorbar ticks to the left
+
+                # Add a title to the colorbar
+                cbar.set_label('log2(RPKM+1)')
 
                 # Set y-axis tick labels
                 heatmap.set_yticks(range(len(sfs_index)))
@@ -149,9 +167,8 @@ def expression_levels():
                 heatmap.set_title(f'{hm} : {substr}splicing RBPs')
                 heatmap.set_ylabel('')
 
-                # Set Legend Titile
-                cbar = cluster.cax
-                cbar.set_title('Log2 (RPKM)', size=8)
+                # adjust layout for better appearance
+                plt.tight_layout()
 
                 plt.savefig(f'0_Files/Post-processing/{hm}/{type}/log2_RPKM.png')
         
