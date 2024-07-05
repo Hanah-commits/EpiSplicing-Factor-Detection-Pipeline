@@ -94,6 +94,7 @@ def check_args():
         # create custome output directory tissue1_tissue2_timestamp
         output_dir = str(Path(os.getcwd()).parent.absolute()) + "/Output/"+ args["tissue1"]+ "_" + args["tissue2"] + "_" + str(time.time()) +"/"
         Path(output_dir).mkdir(parents=True, exist_ok=True)
+        args['Output directory'] = output_dir
 
 
     with open('paths.json', 'w') as fp:
