@@ -119,7 +119,7 @@ def rideplot_indiv(data, hm, type):
  
 
             plt.title(f'Ridge Plot for {variable}')
-            plt.xlabel('Value')
+            plt.xlabel('Binding Affinity (ZScore)')
             plt.ylabel('Density')
 
             plt.tight_layout()
