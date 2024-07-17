@@ -32,6 +32,10 @@ def stratified_hms_classifier_indiv(hm):
     ## method 3: use all rbps: one at a time
     features['pseudo_feature'] = 0 # add fake feature
     sfs = [val for val in features.columns if val != 'label' and val != 'pseudo_feature']
+
+    # keep only strong binding events
+    features[sfs] = features[sfs].applymap(lambda val: 0 if val < 2 else val)
+
     features['label'] = features['label'].map({'epigene': 1, 'non-epigene': 0}).astype(int)
     auc_sf = {}
     for sf in sfs:
