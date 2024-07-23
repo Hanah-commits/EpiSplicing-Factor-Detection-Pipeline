@@ -8,6 +8,13 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from sklearn.model_selection import StratifiedKFold
 from sklearn.inspection import permutation_importance
+from sklearn.metrics import make_scorer, average_precision_score
+
+
+# Define a custom scoring function for Average Precision Score
+def average_precision_scorer(estimator, X, y):
+    y_pred_proba = estimator.predict_proba(X)[:, 1]  # Get probabilities for the positive class
+    return average_precision_score(y, y_pred_proba)
 
 
 def stratified_classifier(output_dir, rbp_classes):
@@ -32,7 +39,7 @@ def stratified_classifier(output_dir, rbp_classes):
     for i, (train, test) in enumerate(kf.split(X, y)):
         
         model = clf.fit(X[train], y[train])
-        result = permutation_importance(model, X[test], y[test], n_repeats=10, n_jobs=-1, random_state=42)  # Calculate permutation importance
+        result = permutation_importance(model, X[test], y[test], n_repeats=10, n_jobs=-1, random_state=42, scoring=average_precision_scorer)  # Calculate permutation importance
         importance = result.importances_mean
         impt_scores.append(importance)
 
@@ -115,7 +122,7 @@ def stratified_hms_classifier(output_dir, hm, rbp_classes):
     for i, (train, test) in enumerate(kf.split(X, y)):
         
         model = clf.fit(X[train], y[train])
-        result = permutation_importance(model, X[test], y[test], n_repeats=10, n_jobs=-1, random_state=42)  # Calculate permutation importance
+        result = permutation_importance(model, X[test], y[test], n_repeats=10, n_jobs=-1, random_state=42,scoring=average_precision_scorer)  # Calculate permutation importance
         importance = result.importances_mean
         impt_scores.append(importance)
 
