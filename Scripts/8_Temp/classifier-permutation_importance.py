@@ -20,6 +20,7 @@ def stratified_classifier(output_dir, rbp_classes):
     sf = [val for val in features.columns if val != 'label']
     
     sf_data = features[sf]
+    sf_data = sf_data.applymap(lambda val: 0 if val < 2 else val)
     features['label'] = features['label'].map({'epigene': 1, 'non-epigene': 0}).astype(int)
     X, y = sf_data.values, features['label'].values
 
@@ -102,6 +103,7 @@ def stratified_hms_classifier(output_dir, hm, rbp_classes):
 
 
     sf_data = features[sf]
+    sf_data = sf_data.applymap(lambda val: 0 if val < 2 else val)
     features['label'] = features['label'].map({'epigene': 1, 'non-epigene': 0}).astype(int)
     X, y = sf_data.values, features['label'].values
 
