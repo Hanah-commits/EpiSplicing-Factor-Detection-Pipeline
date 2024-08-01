@@ -27,6 +27,12 @@ common_genes = list(set(epi_features.gene_name.values.tolist()) & set(nonepi_fea
 all_features = all_features[~((all_features.gene_name.isin(common_genes)) & (all_features.label == 'non-epigene'))]
 all_features = all_features[~((all_features.gene_name.isin(common_genes)) & (all_features.label == 'epigene'))]
 
+for hm in hms:
+    print('\n',hm)
+    temp_features = all_features[all_features['type'].apply(lambda x: hm in x.split(','))]
+    print('Genes:', len(set(temp_features[temp_features.label=='epigene'].gene_name.values)), 'Flanks:', len(temp_features[temp_features.label=='epigene']))
+    print('Genes:', len(set(temp_features[temp_features.label=='non-epigene'].gene_name.values)), 'Flanks:', len(temp_features[temp_features.label=='non-epigene']))
+
 all_features.drop(['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name'], axis=1, inplace=True)
 
 
