@@ -6,11 +6,8 @@ import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
 import shap
 import os
-from sklearn.ensemble import RandomForestClassifier
-import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import average_precision_score
-from sklearn.utils import shuffle
 
 
 
@@ -198,6 +195,6 @@ if __name__ == "__main__":
     
     hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3', 'H3K4me1']
 
-    for hm in ['H3K27me3', 'H3K36me3']:
+    for hm in hms:
         print(hm)
         stratified_hms_classifier_cv(hm=hm)
