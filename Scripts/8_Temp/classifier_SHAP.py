@@ -143,8 +143,13 @@ def stratified_hms_classifier_cv( hm):
     plt.close()
 
     mean_abs_shap_values = np.abs(combined_shap_values).mean(axis=0)
-    top_feature_indices = np.argsort(mean_abs_shap_values)[-30:]
+    top_feature_indices = np.argsort(mean_abs_shap_values)[-20:]
     top_features = sf_data.columns[top_feature_indices]
+
+    # write top 20 features into json file
+    with open(f"{output_dir}/top_{hm}.txt", 'w') as f:
+        for line in list(reversed(list(top_features))):
+            f.write(f"{line}\n")
 
     validate_rf(top_features, hm)
 
