@@ -129,7 +129,7 @@ def get_epigenes_study(tool):
     for hm in list(all_hms):
         df = df_epi[df_epi.gene_name.isin(epigenes[hm])]
         df = df.drop_duplicates(subset=['idx'], keep='first').reset_index(drop=True)
-        df = df[df.dPSI != 0]
+        df = df[(df.dPSI != 0) & (df[hm] !=0)]
         df.to_csv(f'{output_dir}{hm}_epigenes.tsv', sep='\t', index=False)
         
         df[ 'type'] = hm
