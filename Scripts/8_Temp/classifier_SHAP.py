@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
 import shap
 import os
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, RepeatedStratifiedKFold
 from sklearn.metrics import average_precision_score
 
 
@@ -110,7 +110,7 @@ def stratified_hms_classifier_cv( hm):
 
     # Initialize classifier and cross-validation
     clf = RandomForestClassifier(n_estimators=100, max_features= "sqrt", class_weight='balanced', n_jobs = -1, random_state=0)
-    kf = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+    kf = RepeatedStratifiedKFold(n_splits=5, random_state=42, n_repeats=3) 
 
     # Initialize list to store SHAP values
     shap_values_list = []
@@ -133,7 +133,7 @@ def stratified_hms_classifier_cv( hm):
     combined_X_test = np.concatenate([set for set in test_set_list], axis=0)
 
     # Plot summary plot for combined SHAP values
-    shap.summary_plot(combined_shap_values, combined_X_test, feature_names=sf_data.columns, show=False, max_display=20)
+    shap.summary_plot(combined_shap_values, combined_X_test, feature_names=sf_data.columns, show=False, max_display=50)
 
     # Use matplotlib to add a title
     plt.title(f'SHAP Summary Plot for {hm}', fontsize=12)
@@ -143,7 +143,7 @@ def stratified_hms_classifier_cv( hm):
     plt.close()
 
     mean_abs_shap_values = np.abs(combined_shap_values).mean(axis=0)
-    top_feature_indices = np.argsort(mean_abs_shap_values)[-20:]
+    top_feature_indices = np.argsort(mean_abs_shap_values)[-10:]
     top_features = sf_data.columns[top_feature_indices]
 
     # write top 20 features into json file
@@ -151,7 +151,21 @@ def stratified_hms_classifier_cv( hm):
         for line in list(reversed(list(top_features))):
             f.write(f"{line}\n")
 
-    validate_rf(top_features, hm)
+    # # validate_rf(top_features, hm)
+
+    # # Plot SHAP dependence plots of all features
+    for feature in features:
+        if feature == 'label':
+            continue
+        shap.dependence_plot(feature, combined_shap_values, combined_X_test, feature_names=sf, show=False, interaction_index=None)
+        plt.title(f'{feature} Binding in {hm} Flanks', fontsize=10)
+        plt.xlabel(f'Binding Scores of {feature}')
+        plt.tight_layout()
+        plt.subplots_adjust(left=0.2, right=0.8, top=0.9, bottom=0.2)
+
+        #Display the plot
+        plt.savefig(f'{hm_dir}/{feature}.png')
+        plt.close()
 
 
 def validate_rf(impt_rbps, hm):
