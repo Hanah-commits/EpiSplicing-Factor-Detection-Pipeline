@@ -17,7 +17,7 @@ Path(output_dir).mkdir(parents=True, exist_ok=True)
 # Keep relevant columns
 file = sys.argv[1] + 'RMATS/SE.MATS.JC.txt'
 rmats = pd.read_csv(file, delimiter='\t')
-col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd']
+col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd', 'IncLevel1', 'IncLevel2']
 rmats = rmats[col_list]
 
 print('Processing RMATS output: Skipped Exons \n')
@@ -32,6 +32,14 @@ print('FDR-adj pvalue <= 0.05:          ', len(set(rmats.geneSymbol.values.tolis
 if len(rmats) == 0:
     print(' No skipped exons to process \n')
     sys.exit(0)
+
+# Exon inclusion status
+# Average of comma-separated inclusion values
+calculate_average = lambda col_value: sum([float(val) for val in col_value.split(',')]) / len(col_value.split(','))
+
+# Difference between averages 
+rmats['InclusionStatus'] = rmats.apply(lambda row: calculate_average(row['IncLevel1']) - calculate_average(row['IncLevel2']), axis=1)
+rmats['InclusionStatus'] = rmats['InclusionStatus'].apply(lambda x: 'K562' if x > 0 else 'HepG2')
 
 # FILTER 1: Get AS ( |dPSI| > 0.2, FDR < 0.05)
 rmats_AS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() >= 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]

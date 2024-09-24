@@ -10,7 +10,7 @@ import sys
 file = sys.argv[1]+ 'RMATS/MXE.MATS.JC.txt'
 rmats = pd.read_csv(file, delimiter='\t')
 
-col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', '1stExonStart_0base', '1stExonEnd', '2ndExonStart_0base', '2ndExonEnd']
+col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', '1stExonStart_0base', '1stExonEnd', '2ndExonStart_0base', '2ndExonEnd', 'IncLevel1', 'IncLevel2']
 rmats = rmats[col_list]
 
 print('Processing RMATS output: Mutually Exclusive Exons \n')
@@ -26,16 +26,23 @@ if len(rmats) == 0:
     print(' No mutually exclusive exons to process \n')
     sys.exit(0)
 
+# Exon inclusion status
+# Average of comma-separated inclusion values
+calculate_average = lambda col_value: sum([float(val) for val in col_value.split(',')]) / len(col_value.split(','))
+
+# Difference between averages 
+rmats['InclusionStatus'] = rmats.apply(lambda row: calculate_average(row['IncLevel1']) - calculate_average(row['IncLevel2']), axis=1)
+rmats['InclusionStatus'] = rmats['InclusionStatus'].apply(lambda x: 'K562' if x > 0 else 'HepG2')
 
 # STEP 2 : Split into multiple rows, keeping one exon coord in one row.
 
 # Create two DataFrames, one for each row
-row1 = rmats[['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', '1stExonStart_0base', '1stExonEnd']]
-row2 = rmats[['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', '2ndExonStart_0base', '2ndExonEnd']]
+row1 = rmats[['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', '1stExonStart_0base', '1stExonEnd', 'InclusionStatus']]
+row2 = rmats[['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', '2ndExonStart_0base', '2ndExonEnd', 'InclusionStatus']]
 
 # Rename columns 
-row1.columns = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd']
-row2.columns = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd']
+row1.columns = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd', 'InclusionStatus']
+row2.columns = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd', 'InclusionStatus']
 
 # mark exon order
 row1['exon_order'] = 1
