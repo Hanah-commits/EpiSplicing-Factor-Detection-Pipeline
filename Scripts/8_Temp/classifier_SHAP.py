@@ -167,6 +167,16 @@ def stratified_hms_classifier_cv( hm):
         plt.savefig(f'{hm_dir}/{feature}.png')
         plt.close()
 
+    # Create a DataFrame for feature importance
+    feature_importance_df = pd.DataFrame({
+        'Feature': sf_data.columns, 
+        'Mean Absolute SHAP Value': mean_abs_shap_values
+    })
+
+    # Sort the features by importance
+    feature_importance_df = feature_importance_df.sort_values(by='Mean Absolute SHAP Value', ascending=False)
+    feature_importance_df.to_csv(output_dir + f'/{hm}_shap_feature_importance.csv', sep='\t', index=False)
+
 
 def validate_rf(impt_rbps, hm):
 
