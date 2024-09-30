@@ -57,13 +57,17 @@ for hm in hms:
     print(hm)
 
     input = prefix + hm + '_' + tissue1 + '_peak_vs_' + hm + '_' + tissue2 +  '_peak_all_MAvalues.xls'
+    filtered_peaks = f'{prefix}{hm}_{tissue1}_vs_{tissue2}_DHM.bed'
     output1 = output_dir+ hm + '_all_exons.bed'
     output2 = output_dir+ hm + '_exons.bed'
 
+    # STEP 0: Filter out common peaks
+    os.system(f"grep -v 'merged_common' {input} > {filtered_peaks}")
+
     # STEP 1: annotate all exons
-    os.system('bedtools intersect -loj -a 0_Files/all_exons.bed -b ' + input + ' | sort | uniq > ' + output1)
+    os.system('bedtools intersect -loj -a 0_Files/all_exons.bed -b ' + filtered_peaks + ' | sort | uniq > ' + output1)
     ## STEP 2: annotate non-tss-overlap-exons
-    os.system('bedtools intersect -loj -a 0_Files/exon_coords.bed -b ' + input + ' | sort | uniq > ' + output2)
+    os.system('bedtools intersect -loj -a 0_Files/exon_coords.bed -b ' + filtered_peaks + ' | sort | uniq > ' + output2)
 
     ## STEP 3.a: mark exons overlapping with TSS
 
