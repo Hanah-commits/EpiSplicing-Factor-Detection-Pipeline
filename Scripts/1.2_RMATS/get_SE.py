@@ -4,8 +4,14 @@ import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 import os
 from pathlib import Path
-import sys
+import sys, json
 
+
+with open('paths.json') as f:
+    d = json.load(f)
+
+tissue1 = d["tissue1"]
+tissue2 = d["tissue2"]
 
 # STEP 0: Create directories to store RMATS files
 output_dir = str(Path(os.getcwd())) + "/0_Files/RMATS/"
@@ -39,7 +45,7 @@ calculate_average = lambda col_value: sum([float(val) for val in col_value.split
 
 # Difference between averages 
 rmats['InclusionStatus'] = rmats.apply(lambda row: calculate_average(row['IncLevel1']) - calculate_average(row['IncLevel2']), axis=1)
-rmats['InclusionStatus'] = rmats['InclusionStatus'].apply(lambda x: 'K562' if x > 0 else 'HepG2')
+rmats['InclusionStatus'] = rmats['InclusionStatus'].apply(lambda x: tissue1 if x > 0 else tissue2)
 
 # FILTER 1: Get AS ( |dPSI| > 0.2, FDR < 0.05)
 rmats_AS = rmats[(pd.to_numeric(rmats['IncLevelDifference']).abs() >= 0.2) & (pd.to_numeric(rmats['FDR']) <= 0.05)]

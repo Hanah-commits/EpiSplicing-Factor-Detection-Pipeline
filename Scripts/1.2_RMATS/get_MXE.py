@@ -1,8 +1,13 @@
 import pandas as pd
 import numpy as np
-import sys
+import sys,json
 
 
+with open('paths.json') as f:
+    d = json.load(f)
+
+tissue1 = d["tissue1"]
+tissue2 = d["tissue2"]
 
 # STEP 1: Extract required columns and split individual dpsi values, their probabilities and junction coords
 
@@ -32,7 +37,7 @@ calculate_average = lambda col_value: sum([float(val) for val in col_value.split
 
 # Difference between averages 
 rmats['InclusionStatus'] = rmats.apply(lambda row: calculate_average(row['IncLevel1']) - calculate_average(row['IncLevel2']), axis=1)
-rmats['InclusionStatus'] = rmats['InclusionStatus'].apply(lambda x: 'K562' if x > 0 else 'HepG2')
+rmats['InclusionStatus'] = rmats['InclusionStatus'].apply(lambda x: tissue1 if x > 0 else tissue2)
 
 # STEP 2 : Split into multiple rows, keeping one exon coord in one row.
 
