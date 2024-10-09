@@ -12,7 +12,7 @@ from sklearn.utils import shuffle
 def stratified_hms_classifier(output_dir, hm):
 
     hms = [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
-    color_dict = dict(zip(hms,["#9A71F8", "#69D4EC", "#FF9900", "#B0D212", "#ED588A"]))
+    color_dict = dict(zip(hms,["#9A71F8", "#69D4EC", "#B0D212", "#FF9900", "#ED588A"]))
 
     features = pd.read_csv('0_Files/Post-processing/features_all.csv', delimiter='\t')
     features.fillna(0,inplace=True)

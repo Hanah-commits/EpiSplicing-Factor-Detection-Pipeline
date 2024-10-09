@@ -83,6 +83,9 @@ def stratified_hms_classifier( hm):
 
 def stratified_hms_classifier_cv( hm):
 
+    hms = [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
+    color_dict = dict(zip(hms,["#9A71F8", "#69D4EC", "#B0D212", "#FF9900", "#ED588A"]))
+
     output_dir = '0_Files/Post-processing/SHAP'
     # Create a directory specific to the hm value
     hm_dir = os.path.join(output_dir, hm)
@@ -154,17 +157,26 @@ def stratified_hms_classifier_cv( hm):
     # # validate_rf(top_features, hm)
 
     # # Plot SHAP dependence plots of all features
-    for feature in features:
-        if feature == 'label':
-            continue
-        shap.dependence_plot(feature, combined_shap_values, combined_X_test, feature_names=sf, show=False, interaction_index=None)
+    for feature in sf:
+        feature_index = sf.index(feature)
+        shap.dependence_plot(feature_index, combined_shap_values, combined_X_test, feature_names=sf, show=False, interaction_index=None)
+
+        # to use custom color 
+        ax = plt.gca()
+        for artist in ax.collections: # remove default scatter plots
+            artist.remove()
+        plt.scatter(combined_X_test[:,feature_index], combined_shap_values[:, feature_index], s=3, color=color_dict[hm])
+
         plt.title(f'{feature} Binding in {hm} Flanks', fontsize=10)
-        plt.xlabel(f'Binding Scores of {feature}')
+        plt.xlabel(f'Binding Scores of {feature}', fontsize=10)
+        plt.ylabel(f'SHAP Values for {feature}', fontsize=10)
+        plt.xticks(fontsize=10)
+        plt.yticks(fontsize=10)
         plt.tight_layout()
         plt.subplots_adjust(left=0.2, right=0.8, top=0.9, bottom=0.2)
 
         #Display the plot
-        plt.savefig(f'{hm_dir}/{feature}.png')
+        plt.savefig(f'{hm_dir}/{feature}_{hm}.png')
         plt.close()
 
     # Create a DataFrame for feature importance
@@ -222,7 +234,7 @@ def validate_rf(impt_rbps, hm):
 
 if __name__ == "__main__":
     
-    hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3', 'H3K4me1']
+    hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3']
 
     for hm in hms:
         print(hm)
