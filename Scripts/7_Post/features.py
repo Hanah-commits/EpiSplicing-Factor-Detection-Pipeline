@@ -10,7 +10,7 @@ def feature_matrix(filename1, filename2, mode):
     elif mode == 'exon' or mode == 'flanked':
         exons.columns = ['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name']
 
-    rbp = pd.read_csv(filename2, delimiter=',')
+    rbp = pd.read_csv(filename2, delimiter='\t')
 
     features = pd.concat([exons, rbp], axis=1)
 
