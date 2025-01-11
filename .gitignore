@@ -1,7 +1,7 @@
 /venv/
 /env/
 /Output/
-0_Files/
+0_Files*/
 /RBPmap*/
 
 Scripts/7_PostPipeline/
