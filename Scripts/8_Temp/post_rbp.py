@@ -12,7 +12,7 @@ def post_rbp(rbp_num):
     for type in ['epi', 'nonepi']:
         opdir = '0_Files/Post-processing'
                     
-        rbps = open(f'../RBPmap_{str(rbp_num)}/rbps.txt', 'r')
+        rbps = open(f'../RBPmap_{str(rbp_num)}/rbps.txt', 'r') #'HelperFunctions/rbps_{rbp_num}.txt'
         proteins = list(set([rbp for rbp in rbps.read().split('\n') if len(rbp)]))
 
         # # proteins = ['RBM15'] #if single rbp
