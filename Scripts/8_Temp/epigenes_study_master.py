@@ -2,33 +2,33 @@ import pandas as pd
 import os
 import sys
 
-tool = sys.argv[1]
-mode = sys.argv[2]
+
+def pool_flanks(tool):
+
+    # STEP 1: Get control flanks (nonepispliced exon flanks)
+    os.system(f'python 8_Temp/get_epi_nonepi_flanks.py {tool} nonepi')
+
+    # STEP 2: Get epi flanks
+    os.system(f'python 8_Temp/get_epi_nonepi_flanks.py {tool} epi')
+
+def preprocess_run_rbpmap():
+
+    os.system('mkdir ../RBPmap')
+    os.system('python 8_Temp/pre_rbp.py')
+    os.system('python 8_Temp/run_rbpmap.py') # 132 internal RBPs
 
 
-# get epigenes for study
-os.system(f'python 8_Temp/get_epi_nonepi_flanks.py {tool} {mode}')
+if __name__ == "__main__":
 
-# pre-rbp
-os.system('mkdir ../RBPmap')
-os.system('python 8_Temp/pre_rbp.py 0')
+    tool = sys.argv[1]
 
-# run rbpmap
-os.system('python 7_Post/run_rbpmap.py')
+    # STEP 1: Get control flanks (nonepispliced exon flanks)
+    pool_flanks(tool)
 
-# post-rbpmap
-os.system('python 8_Temp/post_rbp.py 0')
+    # STEP 2: Run RBPmap
+    preprocess_run_rbpmap()
 
-# get nonepi flanks
-os.system(f'cp ./Post-processing/nonepi_flanks.bed ./0_Files/Post-processing/')
-os.system(f'cp ./Post-processing/FilteredZscores_nonepi.csv ./0_Files/Post-processing/')
-
-# features
-os.system('python 7_Post/features.py flanks')
-os.system('python 8_Temp/classifier_features.py')
-
-# # classifier
-os.system('python 8_Temp/classifier.py ./')
-
-# #DEA
-os.system('python 8_Temp/enrichment_hm.py')
+    # STEP 3: Get RBPmap predictions
+    ## 132 RBPs from internal db, 47 RBPs (user input) using webserver 
+    ## rename output directories accordingly
+    os.system('python 8_Temp/post_rbp.py')
