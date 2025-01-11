@@ -13,6 +13,6 @@ currdir = os.getcwd()
 file = os.getcwd() + '/../RBPmap/input.txt'
 os.chdir(rbp_path)
 
-os.system("parallel --joblog parallel_log -a " + file + " perl RBPmap_EpiSplicing.pl -input {1} -genome 'human' -db 'hg38' -db_motifs all_human")
+os.system("parallel --joblog parallel_log -a " + file + " perl RBPmap_EpiSplicing.pl -input {1} -genome 'human' -db 'hg38' -db_motifs all_human -stringency high -conservation on")
 
 os.chdir(currdir)
