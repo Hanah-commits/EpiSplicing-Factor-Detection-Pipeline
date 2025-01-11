@@ -148,7 +148,7 @@ def get_nonepigenes(tool):
 
     prefix = tool.lower()
 
-    output_dir = str(Path(os.getcwd())) + "/Post-processing/"
+    output_dir = str(Path(os.getcwd())) + "/0_Files/Post-processing/"
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     with open('paths_multi.json') as f:
