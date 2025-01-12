@@ -2,23 +2,34 @@ import pandas as pd
 import os
 import json
 import sys
+from argparse import ArgumentParser
 
+# Get the process name, use it in the output directory
+
+p = ArgumentParser()
+p.add_argument("--process", "-p",
+    help="The name of the process")
+args = p.parse_args()
+proc = args.process
+
+tmp_out_dir = proc + '_0_Files'
 
 with open('paths.json') as f:
-    d = json.load(f)
+    data = json.load(f)
+d = data[proc]
 
 fasta = d['Reference fasta']
 ref_genome= fasta+".fai"
 
 e = 0
 try:
-    SE = pd.read_csv(f'0_Files/RMATS/SE_exons.tsv', delimiter='\t', names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI" ], skiprows=1)
+    SE = pd.read_csv(f'{tmp_out_dir}/RMATS/SE_exons.tsv', delimiter='\t', names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI" ], skiprows=1)
 except:
     SE = pd.DataFrame()
     e +=1
 
 try:
-    MXE = pd.read_csv(f'0_Files/RMATS/MXE_exons.tsv', delimiter='\t',  names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"], skiprows=1)
+    MXE = pd.read_csv(f'{tmp_out_dir}/RMATS/MXE_exons.tsv', delimiter='\t',  names=['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"], skiprows=1)
 except:
     MXE = pd.DataFrame()
     e +=1
@@ -59,32 +70,42 @@ SE_MXE_exons = SE_MXE_exons[SE_MXE_exons.dPSI > 0.2]
 
 print('# genes with SE and/or MXE exons:   ', len(set(SE_MXE_exons.geneSymbol.values.tolist()))) # log
 
+print(SE_MXE_exons[SE_MXE_exons.geneSymbol == 'ENSG00000105219.8'])
+
 ## STEP 2: Get exon flanks
 
-SE_MXE_exons[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"]].to_csv('0_Files/RMATS/rmats_exons_coords.bed', index=False, sep='\t', header=False)
-
- # exon boundary external flanks
-os.system("bedtools flank -i 0_Files/RMATS/rmats_exons_coords.bed -g " + ref_genome + " -b 200 > 0_Files/flanks.bed" )
-
-# separate start,stop flank coords
-os.system("sed -n 'n;p' 0_Files/flanks.bed > 0_Files/stop.bed")
-os.system("sed -n 'p;n' 0_Files/flanks.bed > 0_Files/start.bed")
-
-# exon boundary internal flanks
-os.system("bedtools slop -i 0_Files/start.bed -g " + ref_genome + " -l 0 -r 200 > 0_Files/start_flanks.bed")
-os.system("bedtools slop -i 0_Files/stop.bed -g " + ref_genome +" -l 200 -r 0 > 0_Files/stop_flanks.bed")
-
-# combine start,stop flank coords
-os.system("paste -d'\n' 0_Files/start_flanks.bed 0_Files/stop_flanks.bed | sort -k1,1 -k2,2n > 0_Files/RMATS/rmats_flanks200.bed")
-
-# remove intermediate files
-os.system("rm 0_Files/start*.bed")
-os.system("rm  0_Files/stop*.bed")
-os.system("rm 0_Files/flanks.bed")
-
+SE_MXE_exons[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"]].to_csv(f'{tmp_out_dir}/RMATS/rmats_exons_coords.bed', index=False, sep='\t', header=False)
 
 ## FILTER 3: Drop flanked AS exns overlapping with TSS regions. CS exons are TSS-free since exon_coords.bed alreeady has TSS-filtered exons
 
-os.system('bedtools intersect -wa -a 0_Files/RMATS/rmats_flanks200.bed -b 0_Files/TSS.bed -s -v > 0_Files/rmats_flanks200_temp.bed && mv 0_Files/rmats_flanks200_temp.bed 0_Files/RMATS/rmats_flanks200.bed')
+ # extend exon body by 200bp
+os.system(f"bedtools slop -i {tmp_out_dir}/RMATS/rmats_exons_coords.bed -g {ref_genome} -b 200 > {tmp_out_dir}/RMATS/rmats_exons_flanked.bed" )
 
-#%# Note: Exons have varying lengths. Flanks can overlap.
+# #Drop flanked exons overlapping with TSS
+os.system(f"bedtools intersect -wa -a {tmp_out_dir}/RMATS/rmats_exons_flanked.bed -b {tmp_out_dir}/TSS.bed -s -v > {tmp_out_dir}/RMATS/rmats_exons_filtered.bed")
+
+# # get exon coordinates (remove flanking regions)
+os.system(f"bedtools slop -i {tmp_out_dir}/RMATS/rmats_exons_filtered.bed -g {ref_genome} -l -200 -r -200 -s > {tmp_out_dir}/RMATS/rmats_exons_coords.bed")
+
+ # exon boundary external flanks
+os.system(f"bedtools flank -i {tmp_out_dir}/RMATS/rmats_exons_coords.bed -g {ref_genome}  -b 200 > {tmp_out_dir}/flanks.bed" )
+
+# separate start,stop flank coords
+os.system(f"sed -n 'n;p' {tmp_out_dir}/flanks.bed > {tmp_out_dir}/stop.bed")
+os.system(f"sed -n 'p;n' {tmp_out_dir}/flanks.bed > {tmp_out_dir}/start.bed")
+
+# exon boundary internal flanks
+os.system(f"bedtools slop -i {tmp_out_dir}/start.bed -g {ref_genome} -l 0 -r 200 > {tmp_out_dir}/start_flanks.bed")
+os.system(f"bedtools slop -i {tmp_out_dir}/stop.bed -g {ref_genome} -l 200 -r 0 > {tmp_out_dir}/stop_flanks.bed")
+
+# combine start,stop flank coords
+os.system(f"paste -d'\n' {tmp_out_dir}/start_flanks.bed {tmp_out_dir}/stop_flanks.bed | sort -k1,1 -k2,2n > {tmp_out_dir}/RMATS/rmats_flanks200.bed")
+
+# remove intermediate files
+os.system(f"rm {tmp_out_dir}/start*.bed")
+os.system(f"rm  {tmp_out_dir}/stop*.bed")
+os.system(f"rm {tmp_out_dir}/flanks.bed")
+os.system(f"rm {tmp_out_dir}/RMATS/*flanked*.bed")
+os.system(f"rm {tmp_out_dir}/RMATS/rmats_exons_filtered.bed")
+
+# #%# Note: Exons have varying lengths. Flanks can overlap.
