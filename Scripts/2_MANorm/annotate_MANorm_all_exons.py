@@ -4,6 +4,17 @@ import json
 import pandas as pd
 from pathlib import Path
 import numpy as np
+from argparse import ArgumentParser
+
+
+# Get the process name, use it in the output directory
+def get_argument_parser():
+    p = ArgumentParser()
+    p.add_argument("output_dir")
+    p.add_argument("--process", "-p",
+        help="The name of the process")
+    return p
+
 
 def adjust_pvalue(df, col):
 
@@ -34,14 +45,20 @@ def p_adjust_bh(p):
     return q[by_orig]
 
 
+p = get_argument_parser()
+args = p.parse_args()
+proc = args.process
+
+tmp_out_dir = proc + '_0_Files'
+
 
 # STEP 0: Create directories to store MANorm files
-output_dir = str(Path(os.getcwd())) + "/0_Files/MANorm/"
+output_dir = str(Path(os.getcwd())) + f"/{tmp_out_dir}/MANorm/"
 Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-
 with open('paths.json') as f:
-    d = json.load(f)
+        data = json.load(f)
+d = data[proc]
 
 tissue1 = d["tissue1"]
 tissue2 = d["tissue2"]
@@ -49,7 +66,7 @@ hms = d["Histone modifications"]
 fasta = d['Reference fasta']
 ref_genome= fasta+".fai"
 
-prefix = sys.argv[1]+ 'MANorm/'
+prefix = args.output_dir + 'MANorm/'
 
 print('Annotating candidate exons with HM peaks from MANorm \n') #log
 
@@ -65,9 +82,9 @@ for hm in hms:
     os.system(f"grep -v 'merged_common' {input} > {filtered_peaks}")
 
     # STEP 1: annotate all exons
-    os.system('bedtools intersect -loj -a 0_Files/all_exons.bed -b ' + filtered_peaks + ' | sort | uniq > ' + output1)
+    os.system(f'bedtools intersect -loj -a {tmp_out_dir}/all_exons.bed -b ' + filtered_peaks + ' | sort | uniq > ' + output1)
     ## STEP 2: annotate non-tss-overlap-exons
-    os.system('bedtools intersect -loj -a 0_Files/exon_coords.bed -b ' + filtered_peaks + ' | sort | uniq > ' + output2)
+    os.system(f'bedtools intersect -loj -a {tmp_out_dir}/exon_coords.bed -b ' + filtered_peaks + ' | sort | uniq > ' + output2)
 
     ## STEP 3.a: mark exons overlapping with TSS
 
@@ -158,11 +175,11 @@ for hm in hms:
     ## STEP 6: Assign peaks to flanks of exons
 
     ## STEP 6.1: make flanks of filtered exons
-
+    
     ## Avoid non-integer start/end coords
     ## chr1    10295086.0      10295165.0      flank   0.0     +       ENSG00000054523.17 -> chr1    10295086      10295165      flank   0.0     +       ENSG00000054523.17
     exons[['exon_start', 'exon_end', 'peak_start', 'peak_end']] = exons[['exon_start', 'exon_end', 'peak_start', 'peak_end']].astype(int)
-
+    
     # get non-TSS exons + peaks
     exons = exons[(exons.TSS_exon == False) & (exons.chr_2 != 0)]
     # save exons
@@ -173,23 +190,23 @@ for hm in hms:
     exons[['chr_2', 'peak_start', 'peak_end', "peak_feature", "M_value"]].drop_duplicates().to_csv(output_dir+f'{hm}_filtered_peaks.bed', sep='\t', index=False, header=False)
 
     # exon boundary external flanks
-    os.system(f"bedtools flank -i {output_dir}/{hm}_filtered_exons.bed -g " + ref_genome + " -b 200 > 0_Files/flanks.bed" )
+    os.system(f"bedtools flank -i {output_dir}/{hm}_filtered_exons.bed -g {ref_genome}  -b 200 > {tmp_out_dir}/flanks.bed" )
 
     # separate start,stop flank coords
-    os.system("sed -n 'n;p' 0_Files/flanks.bed > 0_Files/stop.bed")
-    os.system("sed -n 'p;n' 0_Files/flanks.bed > 0_Files/start.bed")
+    os.system(f"sed -n 'n;p' {tmp_out_dir}/flanks.bed > {tmp_out_dir}/stop.bed")
+    os.system(f"sed -n 'p;n' {tmp_out_dir}/flanks.bed > {tmp_out_dir}/start.bed")
 
     # exon boundary internal flanks
-    os.system("bedtools slop -i 0_Files/start.bed -g " + ref_genome + " -l 0 -r 200 > 0_Files/start_flanks.bed")
-    os.system("bedtools slop -i 0_Files/stop.bed -g " + ref_genome +" -l 200 -r 0 > 0_Files/stop_flanks.bed")
+    os.system(f"bedtools slop -i {tmp_out_dir}/start.bed -g {ref_genome} -l 0 -r 200 > {tmp_out_dir}/start_flanks.bed")
+    os.system(f"bedtools slop -i {tmp_out_dir}/stop.bed -g {ref_genome}  -l 200 -r 0 > {tmp_out_dir}/stop_flanks.bed")
 
     # combine start,stop flank coords
-    os.system(f"paste -d'\n' 0_Files/start_flanks.bed 0_Files/stop_flanks.bed | sort -k1,1 -k2,2n > {output_dir}/{hm}_unannotated_flanks.bed")
+    os.system(f"paste -d'\n' {tmp_out_dir}/start_flanks.bed {tmp_out_dir}/stop_flanks.bed | sort -k1,1 -k2,2n > {output_dir}/{hm}_unannotated_flanks.bed")
 
     # remove intermediate files
-    os.system("rm 0_Files/start*.bed")
-    os.system("rm  0_Files/stop*.bed")
-    os.system("rm 0_Files/flanks.bed")
+    os.system(f"rm {tmp_out_dir}/start*.bed")
+    os.system(f"rm  {tmp_out_dir}/stop*.bed")
+    os.system(f"rm {tmp_out_dir}/flanks.bed")
 
     ## STEP 6.2: annotate flanks of filtered exons with peaks
     os.system(f'bedtools intersect -loj -a {output_dir}/{hm}_unannotated_flanks.bed -b {output_dir}/{hm}_filtered_peaks.bed | sort | uniq > {output_dir}/{hm}_annotated_flanks.bed') 

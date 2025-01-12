@@ -5,23 +5,35 @@ from scipy.stats import gaussian_kde
 import os
 from pathlib import Path
 import sys, json
+from argparse import ArgumentParser
 
+# Get the process name, use it in the output directory
+
+p = ArgumentParser()
+p.add_argument("output_dir")
+p.add_argument("--process", "-p",
+    help="The name of the process")
+args = p.parse_args()
+proc = args.process
+
+tmp_out_dir = proc + '_0_Files'
 
 with open('paths.json') as f:
-    d = json.load(f)
+        data = json.load(f)
+d = data[proc]
 
 tissue1 = d["tissue1"]
 tissue2 = d["tissue2"]
 
 # STEP 0: Create directories to store RMATS files
-output_dir = str(Path(os.getcwd())) + "/0_Files/RMATS/"
+output_dir = str(Path(os.getcwd())) + f"/{tmp_out_dir}/RMATS/"
 Path(output_dir).mkdir(parents=True, exist_ok=True)
 
 
 # STEP 1: Extract required columns and split individual dpsi values, their probabilities and junction coords
 
 # Keep relevant columns
-file = sys.argv[1] + 'RMATS/SE.MATS.JC.txt'
+file = args.output_dir + 'RMATS/SE.MATS.JC.txt'
 rmats = pd.read_csv(file, delimiter='\t')
 col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd', 'IncLevel1', 'IncLevel2']
 rmats = rmats[col_list]
@@ -42,7 +54,6 @@ if len(rmats) == 0:
 # Exon inclusion status
 # Average of comma-separated inclusion values
 calculate_average = lambda col_value: sum([float(val) for val in col_value.split(',')]) / len(col_value.split(','))
-
 # Difference between averages 
 rmats['InclusionStatus'] = rmats.apply(lambda row: calculate_average(row['IncLevel1']) - calculate_average(row['IncLevel2']), axis=1)
 rmats['InclusionStatus'] = rmats['InclusionStatus'].apply(lambda x: tissue1 if x > 0 else tissue2)
@@ -97,7 +108,7 @@ df = rmats_AS.copy()
 df['feature'] = "Exon"
 df['score'] = "."
 df['exonStart_0base'] = pd.to_numeric(df['exonStart_0base']) + 1
-df[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "GeneID", "dPSI"]].to_csv(f'0_Files/RMATS/SE_exons.tsv', index=False, sep='\t', header=True)
+df[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "GeneID", "dPSI"]].to_csv(f'{tmp_out_dir}/RMATS/SE_exons.tsv', index=False, sep='\t', header=True)
 df_temp = df.copy()
 del(df_temp['exonStart_0base'])
 del(df['exonEnd'])
@@ -117,5 +128,5 @@ df_bed['score'] = "."
 
 
 df_bed = df_bed[['chr', "exon_coord0", "exon_coord1", "feature", "score", "strand"]]
-df_bed.to_csv(f'0_Files/RMATS/SE.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
-df.to_csv(f'0_Files/RMATS/SE_exons.csv', index=False, sep='\t', header=True)
+df_bed.to_csv(f'{tmp_out_dir}/RMATS/SE.bed', index=False, sep='\t', header=False)  # input for bedtools intersect
+df.to_csv(f'{tmp_out_dir}/RMATS/SE_exons.csv', index=False, sep='\t', header=True)

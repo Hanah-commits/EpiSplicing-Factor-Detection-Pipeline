@@ -1,9 +1,20 @@
 import pandas as pd
 import os
+from argparse import ArgumentParser
+
+# Get the process name, use it in the output directory
+
+p = ArgumentParser()
+p.add_argument("--process", "-p",
+    help="The name of the process")
+args = p.parse_args()
+proc = args.process
+
+tmp_out_dir = proc + '_0_Files'
 
 
-AS_flanks = pd.read_csv(f'0_Files/MAJIQ/Filtered_dPSI.csv', delimiter='\t')
-all_flanks = pd.read_csv('0_Files/flanks200.bed', delimiter='\t', names=['seqid', "start", "stop", "feature", "score", "strand", "gene_id"], skiprows=1)
+AS_flanks = pd.read_csv(f'{tmp_out_dir}/MAJIQ/Filtered_dPSI.csv', delimiter='\t')
+all_flanks = pd.read_csv(f'{tmp_out_dir}/flanks200.bed', delimiter='\t', names=['seqid', "start", "stop", "feature", "score", "strand", "gene_id"], skiprows=1)
 
 ## STEP 1: fetch CS exons
 # add label
@@ -29,10 +40,10 @@ all_genes = pd.concat(combined_AS_CS, ignore_index=True)
 
 #@ STEP 2: Get exon flanks
 
-all_genes[['seqid', "start", "stop", "feature", "score", "strand", "gene_id", "mean_dpsi_per_lsv_junction"]].to_csv('0_Files/MAJIQ/majiq_filtered_flanks.bed', index=False, sep='\t', header=False)
+all_genes[['seqid', "start", "stop", "feature", "score", "strand", "gene_id", "mean_dpsi_per_lsv_junction"]].to_csv(f'{tmp_out_dir}/MAJIQ/majiq_filtered_flanks.bed', index=False, sep='\t', header=False)
 
 ## FILTER 1: Drop flanked AS exns overlapping with TSS regions. CS exons are TSS-free since exon_coords.bed alreeady has TSS-filtered exons
 
-os.system('bedtools intersect -wa -a 0_Files/MAJIQ/majiq_filtered_flanks.bed -b 0_Files/TSS.bed -s -v > 0_Files/majiq_filtered_flanks_temp.bed && mv 0_Files/majiq_filtered_flanks_temp.bed 0_Files/MAJIQ/majiq_filtered_flanks.bed')
+os.system(f'bedtools intersect -wa -a {tmp_out_dir}/MAJIQ/majiq_filtered_flanks.bed -b {tmp_out_dir}/TSS.bed -s -v > {tmp_out_dir}/majiq_filtered_flanks_temp.bed && mv {tmp_out_dir}/majiq_filtered_flanks_temp.bed {tmp_out_dir}/MAJIQ/majiq_filtered_flanks.bed')
 
 #%# Note: Exons have varying lengths. Flanks can overlap.

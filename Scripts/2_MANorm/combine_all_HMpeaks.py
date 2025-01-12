@@ -1,20 +1,35 @@
 import pandas as pd
 import json
+from argparse import ArgumentParser
 
+
+# Get the process name, use it in the output directory
+def get_argument_parser():
+    p = ArgumentParser()
+    p.add_argument("--process", "-p",
+        help="The name of the process")
+    return p
+
+p = get_argument_parser()
+args = p.parse_args()
+proc = args.process
+
+tmp_out_dir = proc + '_0_Files'
 
 with open('paths.json') as f:
-    d = json.load(f)
+        data = json.load(f)
+d = data[proc]
 
 hms = d["Histone modifications"]
 
 
 concat = []
-all_flanks = pd.read_csv('0_Files/flanks200.bed', delimiter='\t', header=None)
+all_flanks = pd.read_csv(f'{tmp_out_dir}/flanks200.bed', delimiter='\t', header=None)
 all_flanks.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'geneSymbol']
 
 peak_dfs = []
 for hm in hms:
-    flank_peaks = pd.read_csv(f'0_Files/MANorm/{hm}_annotated_flanks.bed', delimiter='\t', header=None)
+    flank_peaks = pd.read_csv(f'{tmp_out_dir}/MANorm/{hm}_annotated_flanks.bed', delimiter='\t', header=None)
     flank_peaks.columns = ['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol', 'peak_start', 'peak_end', 'peak_feature', hm]
 
     hm_flanks = all_flanks.merge(flank_peaks, on=['chr', 'flank_start', 'flank_end', 'strand', 'geneSymbol'], how='left')
@@ -36,4 +51,4 @@ peak_dfs = peak_dfs.loc[:, unique_columns]
 
 # save 
 peak_dfs['feature'] = 'exon flank'
-peak_dfs.to_csv('0_Files/MANorm/DHM_peaks_annotation.tsv', sep='\t', index=False)
+peak_dfs.to_csv(f'{tmp_out_dir}/MANorm/DHM_peaks_annotation.tsv', sep='\t', index=False)

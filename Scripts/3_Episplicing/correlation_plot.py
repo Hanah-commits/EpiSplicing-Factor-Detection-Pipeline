@@ -10,6 +10,14 @@ import numpy as np
 from pathlib import Path
 from collections import Counter
 import warnings
+from argparse import ArgumentParser
+
+# Get the process name, use it in the output directory
+def get_argument_parser():
+    p = ArgumentParser()
+    p.add_argument("--process", "-p",
+        help="The name of the process")
+    return p
 
 
 def pearsonr_pval(x, y):
@@ -80,22 +88,20 @@ def process_dataframe(df, hms):
 
     return df
 
-def make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir):
+def make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir, tmp_out_dir):
 
     # create directory to save files
-    Path(f'0_Files/{dir}/{hm}/plots/').mkdir(parents=True, exist_ok=True)
+    Path(f'{tmp_out_dir}/{dir}/{hm}/plots/').mkdir(parents=True, exist_ok=True)
 
     if len(hm_flanks) == 0:
         true_genes = []
         print(hm, '  ', len(true_genes))
 
-        with open(f'0_Files/{dir}/{hm}/{hm}_truepos_epigenes.txt', 'w') as f:
+        with open(f'{tmp_out_dir}/{dir}/{hm}/{hm}_truepos_epigenes.txt', 'w') as f:
             for line in true_genes:
                 f.write("%s\n" % line)
 
-
     else:
-
         file = dir.lower()
 
         hm_flanks = hm_flanks.copy() # Make a copy to avoid the SettingWithCopyWarning
@@ -123,12 +129,12 @@ def make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir):
 
         true_genes = [gene for gene in genes if gene not in filter_out]
 
-        with open(f'0_Files/{dir}/{hm}/{hm}_truepos_epigenes.txt', 'w') as f:
+        with open(f'{tmp_out_dir}/{dir}/{hm}/{hm}_truepos_epigenes.txt', 'w') as f:
             for line in true_genes:
                 f.write("%s\n" % line)
 
         hm_flanks = hm_flanks[hm_flanks['gene_name'].isin(true_genes)]
-        hm_flanks.to_csv(f'0_Files/{dir}/{hm}/dPSI_Mval_epi_{hm}_{file}.csv', sep='\t', index=False)
+        hm_flanks.to_csv(f'{tmp_out_dir}/{dir}/{hm}/dPSI_Mval_epi_{hm}_{file}.csv', sep='\t', index=False)
 
         print(hm, '  ', len(true_genes))
 
@@ -138,10 +144,10 @@ def make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir):
             r = hm_coeff[hm_coeff.gene_name == gene][hm].values.tolist()[0]
             p = hm_pvals[hm_pvals.gene_name == gene][hm].values.tolist()[0]
             gene_df = hm_flanks[hm_flanks['gene_name'] == gene]
-            corr_plot(gene_df, gene, hm, r, p, path=f'0_Files/{dir}/{hm}/plots/')
-        
+            corr_plot(gene_df, gene, hm, r, p, path=f'{tmp_out_dir}/{dir}/{hm}/plots/')
+    
     return true_genes
- 
+
 
 def corr_plot(gene_df, gene, hm, r, p, path):
     
@@ -163,20 +169,23 @@ def corr_plot(gene_df, gene, hm, r, p, path):
     plt.close()
 
 
-def indiv_hms(dir):
+def indiv_hms(args, dir):
 
-    print(f'Epigene Detection: {dir}')
+    print(f'\nEpigene Detection: {dir}')
 
     file = dir.lower()
 
+    proc = args.process
+    tmp_out_dir = proc + '_0_Files'
     with open('paths.json') as f:
-        d = json.load(f)
+        data = json.load(f)
+    d = data[proc]
 
     hms = d["Histone modifications"]
 
     # read dPSI and M-values
     try:
-        flanks = pd.read_csv(f'0_Files/{dir}/DEU_DHM_{file}_flanks.tsv', delimiter='\t')
+        flanks = pd.read_csv(f'{tmp_out_dir}/{dir}/DEU_DHM_{file}_flanks.tsv', delimiter='\t')
         del flanks['geneSymbol']
     except:
         print(f'No DEUs, and consequently, no DHMs available for {dir}')
@@ -209,6 +218,7 @@ def indiv_hms(dir):
     filtered_flanks = flanks[~flanks['gene_name'].isin(non_epi)].copy()
     filtered_flanks.set_index('idx', inplace=True)
 
+    true_epigenes = []
     print('# correlation candidates:        ', len(set(filtered_flanks.gene_name.values.tolist()))) # check num before and after noepi filtering
 
     if len(set(filtered_flanks.gene_name.values.tolist())) > 0:
@@ -224,8 +234,8 @@ def indiv_hms(dir):
         coeff = coeff.fillna(0)
 
         # internal column filtering
-        coeff.to_csv(f'0_Files/{dir}/coeff.csv', sep='\t')
-        coeff = pd.read_csv(f'0_Files/{dir}/coeff.csv', delimiter='\t')
+        coeff.to_csv(f'{tmp_out_dir}/{dir}/coeff.csv', sep='\t')
+        coeff = pd.read_csv(f'{tmp_out_dir}/{dir}/coeff.csv', delimiter='\t')
         coeff = process_dataframe(coeff, hms)
     
         ## STEP 1: Obtain p values of DEU-DHM correlations
@@ -233,8 +243,8 @@ def indiv_hms(dir):
         pval = filtered_flanks.groupby('gene_name').corr(method=pearsonr_pval)
 
         # internal column filtering
-        pval.to_csv(f'0_Files/{dir}/pvals.csv', sep='\t')
-        pval = pd.read_csv(f'0_Files/{dir}/pvals.csv', delimiter='\t')
+        pval.to_csv(f'{tmp_out_dir}/{dir}/pvals.csv', sep='\t')
+        pval = pd.read_csv(f'{tmp_out_dir}/{dir}/pvals.csv', delimiter='\t')
         pval = process_dataframe(pval, hms)
 
         ## STEP 2: Adjust the p values using Benjamini-Hochberg method
@@ -259,16 +269,14 @@ def indiv_hms(dir):
 
         for gene in epigenes:
 
-            with open(f'0_Files/{dir}/{file}_epigenes.txt', 'w') as f:
+            with open(f'{tmp_out_dir}/{dir}/{file}_epigenes.txt', 'w') as f:
                 for line in list(set(epigenes)):
                     f.write("%s\n" % line)
 
         ## STEP 4: Make corr plots of hm-specific epigenes:
-                    
-        if len(epigenes) > 0:            
+        if len(epigenes) > 0:
             # get flanks of hm-specific epigenes
             i = 0
-            true_epigenes = []
             for hm in hms:
 
                 hm_epigenes = hm_epigenes_dict[hm]
@@ -279,35 +287,38 @@ def indiv_hms(dir):
                 hm_pvals = adj_pvals[adj_pvals['gene_name'].isin(hm_epigenes)]
 
                 # hm-specific corrplot
-                true_epigenes.append(make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir))
+                true_epigenes.append(make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir, tmp_out_dir))
 
                 i+=1
 
-            epigenes = list(set([item for items in true_epigenes for item in items]))
-    
-    print('Epigenes                         ', len(epigenes))
-    print('Non-Epigenes                     ', len(non_epi), '\n\n')
+        epigenes = list(set([item for items in true_epigenes for item in items]))
+        
+    print('Epigenes     ', len(epigenes))
+    print('Non-Epigenes ', len(non_epi))
     
     # get flanks of all epispliced genes
-    flanks_meta[flanks_meta['gene_name'].isin(epigenes)].to_csv(f'0_Files/{dir}/dPSI_Mval_epi_{file}.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['gene_name'].isin(epigenes)].to_csv(f'{tmp_out_dir}/{dir}/dPSI_Mval_epi_{file}.csv', sep='\t', index=False)
 
     # # get flanks of non-epispliced genes
-    flanks_meta[flanks_meta['gene_name'].isin(non_epi)].to_csv(f'0_Files/{dir}/dPSI_Mval_nonepi_{file}.csv', sep='\t', index=False)
+    flanks_meta[flanks_meta['gene_name'].isin(non_epi)].to_csv(f'{tmp_out_dir}/{dir}/dPSI_Mval_nonepi_{file}.csv', sep='\t', index=False)
 
     ## save epi and nonepigenes
-    with open(f'0_Files/{dir}/{file}_filtered_epigenes.txt', 'w') as f:
+    with open(f'{tmp_out_dir}/{dir}/{file}_filtered_epigenes.txt', 'w') as f:
         for line in list(set(epigenes)):
             f.write("%s\n" % line)
 
-    with open(f'0_Files/{dir}/{file}_nonepigenes.txt', 'w') as f:
+    with open(f'{tmp_out_dir}/{dir}/{file}_nonepigenes.txt', 'w') as f:
         for line in list(set(non_epi)):
             f.write("%s\n" % line)
 
 
-def plot_venn(dir):
+def plot_venn(args, dir):
 
+    proc = args.process
+    tmp_out_dir = proc + '_0_Files'
     with open('paths.json') as f:
-        d = json.load(f)
+        data = json.load(f)
+    d = data[proc]
 
     hms = d["Histone modifications"]
     tissue1 = d['tissue1'].capitalize()
@@ -317,7 +328,7 @@ def plot_venn(dir):
     
     try:
         for hm in hms:
-            with open(f'0_Files/{dir}/{hm}/{hm}_truepos_epigenes.txt') as file:
+            with open(f'{tmp_out_dir}/{dir}/{hm}/{hm}_truepos_epigenes.txt') as file:
                 epigenes = [line.rstrip() for line in file]
                 hm_epigenes.append(epigenes)
     except:
@@ -337,14 +348,17 @@ def plot_venn(dir):
     venn(data, cmap="plasma")
 
     plt.title(title)
-    plt.savefig(f'0_Files/{dir}/hm_overlap_' + info + '.png')
+    plt.savefig(f'{tmp_out_dir}/{dir}/hm_overlap_' + info + '.png')
     plt.close()
 
 
-def common_genes():
+def common_genes(args):
 
+    proc = args.process
+    tmp_out_dir = proc + '_0_Files'
     with open('paths.json') as f:
-        d = json.load(f)
+        data = json.load(f)
+    d = data[proc]
 
     hms = d["Histone modifications"]
 
@@ -356,7 +370,7 @@ def common_genes():
             hm_epigenes = []
             try:
                 for hm in hms:
-                    with open(f'0_Files/{dir}/{hm}/{hm}_truepos_epigenes.txt') as file:
+                    with open(f'{tmp_out_dir}/{dir}/{hm}/{hm}_truepos_epigenes.txt') as file:
                         genes = [line.rstrip() for line in file]
                         hm_epigenes.extend(genes)
             except:
@@ -371,7 +385,7 @@ def common_genes():
     # Filter genes that appear in all three tools
     overlap_epigenes = [gene for gene, count in epigenee_counts.items() if count >= 2]
 
-    with open(f'0_Files/common_epigenes.txt', 'w') as f:
+    with open(f'{tmp_out_dir}/common_epigenes.txt', 'w') as f:
         for line in list(set(overlap_epigenes)):
             f.write("%s\n" % line)
 
@@ -381,7 +395,7 @@ def common_genes():
     for dir in dirs:
         file = dir.lower()
         try:
-            with open(f'0_Files/{dir}/{file}_nonepigenes.txt') as file:
+            with open(f'{tmp_out_dir}/{dir}/{file}_nonepigenes.txt') as file:
                         nonepigenes[dir]  = [line.rstrip() for line in file]
         except:
             print(f'No DEUs available for {dir}. Cannot find common non-epigenes between this tool and the other two tools.')
@@ -393,27 +407,30 @@ def common_genes():
     # Filter genes that appear in all three tools
     overlap_nonepigenes = [gene for gene, count in nonepigene_counts.items() if count > 2]
 
-    with open(f'0_Files/common_nonepigenes.txt', 'w') as f:
+    with open(f'{tmp_out_dir}/common_nonepigenes.txt', 'w') as f:
         for line in list(set(overlap_nonepigenes)):
             f.write("%s\n" % line)
 
     
     # outputlog
-    print('# Epigenes in 2/3 tools:    ', len(overlap_epigenes))
-    print('# NonEpigenes in 3/3 tools: ', len(overlap_nonepigenes))
+    print('# Epigenes in 2/3 tools:                         ', len(overlap_epigenes))
+    print('# NonEpigenes in 3/3 tools:                      ', len(overlap_nonepigenes))
 
 
 
 
 if __name__ == "__main__":
 
+    p = get_argument_parser()
+    args = p.parse_args()
+
     tools = ['DEXSEQ', 'MAJIQ', 'RMATS']
 
     for tool in tools:
         # get epigenes and their correlation plots
-        indiv_hms(tool)
+        indiv_hms(args, tool)
 
         # venn diagram of true epigenes
-        plot_venn(tool)
+#        plot_venn(args, tool)
 
-    common_genes()
+    common_genes(args)

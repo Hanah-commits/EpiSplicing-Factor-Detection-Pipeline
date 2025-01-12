@@ -2,6 +2,13 @@ library('dplyr')
 suppressPackageStartupMessages( library( "DEXSeq" ) )
 library(jsonlite)
 
+# Ensure that the correct number of command-line arguments is provided
+if (length(commandArgs(trailingOnly = TRUE)) != 4) {
+  stop("Usage: Rscript script.R directory_path tissue1 tissue2 processname")
+}
+
+proc = args[4]
+
 json_data <- fromJSON("paths.json") 
 json_data <- lapply(json_data, function(x) {
   x[sapply(x, is.null)] <- NA
@@ -9,17 +16,13 @@ json_data <- lapply(json_data, function(x) {
 })
 
 do.call("rbind", json_data)
+json_data = json_data$proc
 tissue1 <- json_data$tissue1
 tissue2 <- json_data$tissue2
 dexseq_dir <- json_data[["DEXSEQ directory"]]
 output_dir <- json_data[["Output directory"]]
 
 source(paste0(dexseq_dir,"python_scripts/load_SubreadOutput.R"))
-
-# Ensure that the correct number of command-line arguments is provided
-if (length(commandArgs(trailingOnly = TRUE)) != 3) {
-  stop("Usage: Rscript script.R directory_path tissue1 tissue2")
-}
 
 # Retrieve command-line arguments
 directory_path <- commandArgs(trailingOnly = TRUE)[1]

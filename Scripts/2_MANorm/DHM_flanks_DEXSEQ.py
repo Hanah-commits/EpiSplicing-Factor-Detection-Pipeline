@@ -1,17 +1,33 @@
 import pandas as pd
 import json
+from argparse import ArgumentParser
+
+
+# Get the process name, use it in the output directory
+def get_argument_parser():
+    p = ArgumentParser()
+    p.add_argument("--process", "-p",
+        help="The name of the process")
+    return p
+
+p = get_argument_parser()
+args = p.parse_args()
+proc = args.process
+
+tmp_out_dir = proc + '_0_Files'
 
 with open('paths.json') as f:
-    d = json.load(f)
+        data = json.load(f)
+d = data[proc]
 
 hms = d["Histone modifications"]
 
-deu_flanks = pd.read_csv('0_Files/DEXSEQ/dexseq_flanks200.bed', delimiter='\t', header=None)
+deu_flanks = pd.read_csv(f'{tmp_out_dir}/DEXSEQ/dexseq_flanks200.bed', delimiter='\t', header=None)
 deu_flanks.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'geneSymbol', 'dPSI']
 deu_flanks.drop(columns=['feature', 'score'], inplace=True)
 deu_flanks.drop_duplicates(inplace=True)
 
-dhm_flanks = pd.read_csv('0_Files/MANorm/DHM_peaks_annotation.tsv', delimiter='\t')
+dhm_flanks = pd.read_csv(f'{tmp_out_dir}/MANorm/DHM_peaks_annotation.tsv', delimiter='\t')
 
 print ('Annotating DEXSEQ exons with HM peaks \n')
 print('TSS Filtering:                   ', len(set(deu_flanks.geneSymbol.values.tolist()))) # log
@@ -54,4 +70,4 @@ print('TSL Filtering:                   ', len(set(dhm_flanks.geneSymbol.values.
 
 ## save
 if len(dhm_flanks) > 0:
-    dhm_flanks.to_csv('0_Files/DEXSEQ/DEU_DHM_dexseq_flanks.tsv', sep='\t', index=False)
+    dhm_flanks.to_csv(f'{tmp_out_dir}/DEXSEQ/DEU_DHM_dexseq_flanks.tsv', sep='\t', index=False)

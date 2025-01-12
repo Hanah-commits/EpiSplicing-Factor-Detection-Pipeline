@@ -17,8 +17,16 @@ release_lock <- function() {
   }
 }
 
+args = commandArgs(trailingOnly=TRUE)
+if (length(args)==0) {
+  stop("Process name must be supplied", call.=FALSE)
+} 
+
+proc = args[1]
+tmp_output_dir = paste(proc, "_0_Files", sep = "")
+
 # Read the TSV file into a DataFrame
-data <- read.table('0_Files/MANorm/DHM_peaks_annotation.tsv', header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+data <- read.table(paste(tmp_output_dir,'/MANorm/DHM_peaks_annotation.tsv',sep = ""), header = TRUE, sep = "\t", stringsAsFactors = FALSE)
 
 # Extract Ensembl IDs
 data$ensembl_ids = sub("\\..*$", "", data$geneSymbol) # ENSG00000183878.15 -> ENSG00000183878
@@ -58,4 +66,4 @@ merged_data <- merged_data[, !names(merged_data) %in% c("ensembl_ids")]
 names(merged_data)[names(merged_data) == "external_gene_name"] <- "gene_name"
 
 # Save the dataframe as a TSV file
-write.table(merged_data, file = "0_Files/MANorm/DHM_peaks_annotation.tsv", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(merged_data, file = paste(tmp_output_dir, "/MANorm/DHM_peaks_annotation.tsv", sep = ""), sep = "\t", quote = FALSE, row.names = FALSE)
