@@ -1,18 +1,43 @@
 {
-"tissue1" : "",
-"tissue2" : "",
-"Histone modifications":["", ""],
-"RNASeq files":"",
-"strandedness":"",
-"ChIPSeq files":"",
-"Reference GFF3":"",
-"Reference GTF":"",
-"Reference fasta":"",
-"threads":"",
-"MAJIQ config":"",
-"RBPmap directory" : "",
-"Output directory":"",
-"read_length":"",
-"RMATS directory":"",
-"DEXSEQ directory":""
-}
+    "list_of_processes" : ["pr1", "pr2"],
+    "pr1":{
+        "tissue1": "",
+        "tissue2": "",
+        "Histone modifications": [
+            ""
+        ],
+        "RNASeq files": "",
+        "strandedness":"",
+        "ChIPSeq files": "",
+        "Reference GFF3": "",
+        "Reference GTF": "",
+        "Reference fasta": "",
+        "threads":"",
+        "MAJIQ config": "",
+        "RBPmap directory": "",
+        "Output directory":"",
+        "read_length":"",
+        "RMATS directory":"",
+        "DEXSEQ directory":""
+    },
+    "pr2":{
+        "RNASeq files": "",
+        "Reference GFF3":"",
+        "Reference GTF": "",
+        "Reference fasta": "",
+        "tissue1": "",
+        "tissue2": "",
+        "Histone modifications": [
+            ""
+        ],
+        "ChIPSeq files": "",
+        "MAJIQ config": "",
+        "RBPmap directory": "",
+        "threads": "",
+        "strandedness":"",
+        "Output directory":"",
+        "read_length":"",
+        "RMATS directory":"",
+        "DEXSEQ directory":""
+    }
+    }
