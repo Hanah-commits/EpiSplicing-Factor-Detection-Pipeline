@@ -5,7 +5,7 @@ from statsmodels.stats.multitest import multipletests # type: ignore
 
 def post_rbp(rbp_num):
     '''
-    process RBPmap output -> obtain motif used in each flank by each RBP
+    process RBPmap output -> obtain zscore used in each flank by each RBP
     '''
     
 
@@ -26,7 +26,7 @@ def post_rbp(rbp_num):
             current_region = None
             current_strand = None
             current_protein = None
-            region_data = {protein: [] for protein in proteins}  # (motif, p_value)
+            region_data = {protein: [] for protein in proteins}  # (zscore, p_value)
 
             for line in file:
                 line = line.strip()
@@ -41,18 +41,18 @@ def post_rbp(rbp_num):
 
                             if z_p_tuples:
                                 # separate Z-scores and p-values
-                                motifs, p_values = zip(*z_p_tuples)
+                                zscores, p_values = zip(*z_p_tuples)
 
                                 # Benjamini-Hochberg correction
                                 _, adjusted_pvals, _, _ = multipletests(p_values, method='fdr_bh')
 
                                 # select Z-score corresponding to the smallest adjusted p-value
                                 min_p_index = adjusted_pvals.argmin()
-                                selected_motif = motifs[min_p_index]
+                                selected_zscore = zscores[min_p_index]
 
                                 # filter by adjusted p-value <= 0.05
                                 if adjusted_pvals[min_p_index] <= 0.05:
-                                    row_data.append(selected_motif)
+                                    row_data.append(selected_zscore)
                                 else:
                                     row_data.append(0.0)
                             else:
@@ -85,9 +85,9 @@ def post_rbp(rbp_num):
                     line_parts = line.split()
                     if len(line_parts) >= 6:  # check there are enough elements
                         try:
-                            motif = str(line_parts[-3]) # save most impt binding score
+                            zscore = str(line_parts[-2]) # save most impt binding score
                             p_value = float(line_parts[-1])
-                            region_data[current_protein].append((motif, p_value))
+                            region_data[current_protein].append((zscore, p_value))
                         except ValueError:
                             continue
 
@@ -98,18 +98,18 @@ def post_rbp(rbp_num):
                     z_p_tuples = region_data[protein]
 
                     if z_p_tuples:
-                        motifs, p_values = zip(*z_p_tuples)
+                        zscores, p_values = zip(*z_p_tuples)
 
                         # apply Benjamini-Hochberg correction
                         _, adjusted_pvals, _, _ = multipletests(p_values, method='fdr_bh')
 
                         # select Z-score corresponding to the smallest adjusted p-value
                         min_p_index = adjusted_pvals.argmin()
-                        selected_motif = motifs[min_p_index]
+                        selected_zscore = zscores[min_p_index]
 
                         # filter by adjusted p-value <= 0.05
                         if adjusted_pvals[min_p_index] <= 0.05:
-                            row_data.append(selected_motif)
+                            row_data.append(selected_zscore)
                         else:
                             row_data.append(0.0)
                     else:
@@ -192,12 +192,12 @@ def feature_matix_2(rbp_num):
 
 if __name__ == "__main__":
     
-    # # prep feature motif matrix -132 RBPS
+    # prep feature zscore matrix -132 RBPS
     post_rbp(132)
     feature_matrix_1()
     feature_matix_2(132)
     
-    # prep feature motif matrix - 47 RBPS
+    # prep feature zscore matrix - 47 RBPS
     post_rbp(47)
     feature_matrix_1()
     feature_matix_2(47)
