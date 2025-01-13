@@ -130,7 +130,7 @@ def untuned_vs_tuned():
         eval_scores[hm] = [untuned_train_score, untuned_test_score, tuned_train_score, tuned_test_score]
 
     # print(eval_scores)
-    # eval_scores = {'H3K27ac': [0.8725345520790744, 0.8342091060071373, 0.8870289046935795, 0.9066179046212118], 'H3K27me3': [0.7936426767676767, 0.753075560187311, 0.8370049747882313, 0.8510441809190956], 'H3K36me3': [0.80523916702003, 0.8115620890083819, 0.8165537169654283, 0.8613831726744965], 'H3K9me3': [0.9045557190451009, 0.9338054364686202, 0.9360760624546037, 0.9366370403195617], 'H3K4me3': [0.8054078360910345, 0.8934364712567686, 0.8353645629288127, 0.9298684806477222]}
+    # eval_scores = {'H3K27ac': [0.8042261671224407, 0.7218628338955775, 0.815372799637212, 0.8077], 'H3K27me3': [0.6656229635060281, 0.6100909003156756, 0.7404758516592216, 0.7869], 'H3K36me3': [0.7929480585736148, 0.7941692156016494, 0.8026172756053767, 0.8408], 'H3K9me3': [0.842685777156579, 0.8984815926704977, 0.8501737084370514, 0.9351], 'H3K4me3': [0.7519171626984127, 0.7456918576676813, 0.7718576601106867, 0.7938]}
     plot_evaluation_scores(eval_scores=eval_scores)
 
 
@@ -181,6 +181,7 @@ def plot_evaluation_scores(eval_scores):
 
 def all_prauc_together():
 
+    os.makedirs("0_Files/Post-processing/Analyses/PRAUC/", exist_ok=True)  # Create the directory if it doesn't exist
     hms = [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
     color_dict = dict(zip(hms,["#9A71F8", "#69D4EC", "#B0D212", "#FF9900", "#ED588A"]))
 
@@ -379,7 +380,7 @@ def plot_metrics():
     # Create custom legend
   
     pattern_patches = [mpatches.Patch(facecolor='grey', edgecolor='white', hatch=pattern, label=metric) for pattern, metric in zip(patterns, metrics)]
-    ax.legend(handles=pattern_patches, title="Metrics", loc='upper left', bbox_to_anchor=(0.7, 0.95), prop={'size': 8}, handleheight=2, handlelength=3)
+    ax.legend(handles=pattern_patches, title="Metrics", loc='upper left', bbox_to_anchor=(0.7, 1.0), prop={'size': 8}, handleheight=2, handlelength=3)
 
 
     plt.tight_layout()
@@ -387,6 +388,8 @@ def plot_metrics():
 
 
 def metrics():
+
+    os.makedirs("0_Files/Post-processing/Analyses/Metrics/", exist_ok=True)  # Create the directory if it doesn't exist
 
     # Custom scoring function for specificity
     def specificity_score(y_true, y_pred):
@@ -483,6 +486,8 @@ def metrics():
 
 def confusion_matrix_plot(hm):
 
+    os.makedirs("0_Files/Post-processing/Analyses/Metrics/", exist_ok=True)  # Create the directory if it doesn't exist
+
     parameters = {
         "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
         "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
@@ -568,9 +573,7 @@ def SHAP( hm):
     hms = [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
     color_dict = dict(zip(hms,["#9A71F8", "#69D4EC", "#B0D212", "#FF9900", "#ED588A"]))
 
-    output_dir = sys.argv[1]
-    # Create a directory specific to the hm value
-    hm_dir = os.path.join(output_dir, hm)
+    hm_dir = f"0_Files/Post-processing/Analyses/SHAP/{hm}"
     os.makedirs(hm_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
     features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
@@ -685,9 +688,7 @@ def SHAP_imptRBPs_plot(hm):
     features_to_plot.extend([rbp for rbp in rbps_file.read().split('\n') if rbp])
 
 
-    output_dir = sys.argv[1]
-    # Create a directory specific to the hm value
-    hm_dir = os.path.join(output_dir, hm)
+    hm_dir = f"0_Files/Post-processing/imptRBPS/{hm}"
     os.makedirs(hm_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
     features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
@@ -757,87 +758,90 @@ def SHAP_imptRBPs_plot(hm):
     plt.close()
 
 
-def correlated_to_epi_RBPs(hm):
+def correlated_to_shap_RBPs(hm):
 
     print(hm)
 
-    # Get episplicing RBPs
-    rbps_file = open(f"0_Files/Post-processing/epiRBPS/SHAP_epiRBPs/rbps_{hm}.txt", "r")
-    epi_rbps = [rbp for rbp in rbps_file.read().split('\n') if rbp]
+    for mode in ['epi', 'nonepi']:
 
-    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
-    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
-    features = pd.concat([features1,features2], axis=1)
-    features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
-    features.fillna(0,inplace=True)
-    # features = shuffle(features, random_state=42)
+        # Get episplicing RBPs
+        rbps_file = open(f"0_Files/Post-processing/{mode}RBPS/SHAP_{mode}RBPs/rbps_{hm}.txt", "r")
+        shap_rbps = [rbp for rbp in rbps_file.read().split('\n') if rbp]
 
-    # extract features for hm
-    features = features[features['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
-    # features = features[features.label =='epigene']
-    features = features.drop(['type','label'], axis=1) # drop hm info
-    features = features.applymap(lambda val: 0 if val < 2 else val)
+        features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+        features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
+        features = pd.concat([features1,features2], axis=1)
+        features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
+        features.fillna(0,inplace=True)
+        # features = shuffle(features, random_state=42)
 
-    # Perform Pearson correlation
-    rbps = [val for val in features.columns]
-    corr_coeffs_pvalues = []
-    for i in range(len(rbps)):
-        for j in range(i + 1, len(rbps)):
-            col1 = rbps[i]
-            col2 = rbps[j]
-            corr, p_value = pearsonr(features[col1], features[col2])
-            corr_coeffs_pvalues.append((col1, col2, corr, p_value))
+        # extract features for hm
+        features = features[features['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
+        # features = features[features.label =='epigene']
+        features = features.drop(['type','label'], axis=1) # drop hm info
+        features = features.applymap(lambda val: 0 if val < 2 else val)
 
-    corr_df = pd.DataFrame(corr_coeffs_pvalues, columns=["RBP1", "RBP2", "coeff", "pval"]) # convert to df
-    corr_df["adj_pval"] = multipletests(corr_df["pval"], method="fdr_bh")[1] # adjust pvalues
+        # Perform Pearson correlation
+        rbps = [val for val in features.columns]
+        corr_coeffs_pvalues = []
+        for i in range(len(rbps)):
+            for j in range(i + 1, len(rbps)):
+                col1 = rbps[i]
+                col2 = rbps[j]
+                corr, p_value = pearsonr(features[col1], features[col2])
+                corr_coeffs_pvalues.append((col1, col2, corr, p_value))
 
-
-    # filtered_corr = corr_df[(corr_df["coeff"] >= 0.5) & (corr_df["adj_pval"] <= 0.05)] #get correlated rbps
-    filtered_corr = corr_df[(corr_df["coeff"] >= 0.7) & (corr_df["adj_pval"] <= 0.05)] #get highly correlated rbps
-
-    # get rbps hghly correlated with episplicicng RBPs
-    epi_rbp_corr = filtered_corr[filtered_corr.RBP1.isin(epi_rbps)]
-    final_epi_rbps = list(set(epi_rbp_corr.RBP2.values.tolist() + epi_rbps))
-    final_epi_rbps.sort()
-    with open(f"0_Files/Post-processing/epiRBPS/epiRBPs_{hm}.txt", 'w') as f:
-        for line in final_epi_rbps:
-            f.write("%s\n" % line)
-
-    print(len(epi_rbps), len(final_epi_rbps))
+        corr_df = pd.DataFrame(corr_coeffs_pvalues, columns=["RBP1", "RBP2", "coeff", "pval"]) # convert to df
+        corr_df["adj_pval"] = multipletests(corr_df["pval"], method="fdr_bh")[1] # adjust pvalues
 
 
-def epiRBPS_overlap():
+        # filtered_corr = corr_df[(corr_df["coeff"] >= 0.5) & (corr_df["adj_pval"] <= 0.05)] #get correlated rbps
+        filtered_corr = corr_df[(corr_df["coeff"] >= 0.7) & (corr_df["adj_pval"] <= 0.05)] #get highly correlated rbps
 
-    hm_rbps = {}
-    hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3']
-    for hm in hms:
-        rbps_file = open(f"0_Files/Post-processing/epiRBPS/epiRBPs_{hm}.txt", "r")
-        hm_rbps[hm] = [rbp for rbp in rbps_file.read().split('\n') if rbp]
+        # get rbps hghly correlated with episplicicng RBPs
+        shap_rbp_corr = filtered_corr[filtered_corr.RBP1.isin(shap_rbps)]
+        final_rbps = list(set(shap_rbp_corr.RBP2.values.tolist() + shap_rbps))
+        final_rbps.sort()
+        with open(f"0_Files/Post-processing/{mode}RBPS/{mode}RBPs_{hm}.txt", 'w') as f:
+            for line in final_rbps:
+                f.write("%s\n" % line)
 
-    
-    all_rbps = list(set([rbp for elem_list in hm_rbps.values() for rbp in elem_list]))
-    all_rbps.sort()
+        print(len(shap_rbps), len(final_rbps))
 
-    # Get occurence of epiRBP across all HMs
 
-     # Open a TSV file to write the results
-    with open(f"0_Files/Post-processing/epiRBPS/epiRBPs.tsv", 'w', newline='') as tsvfile:
-        tsv_writer = csv.writer(tsvfile, delimiter='\t')
+def imptRBPS_overlap():
 
-        # Write the header row
-        tsv_writer.writerow([
-            'RBP', 'H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3'
-        ])
+    for mode in ['epi', 'nonepi']:
+        hm_rbps = {}
+        hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3']
+        for hm in hms:
+            rbps_file = open(f"0_Files/Post-processing/{mode}RBPS/{mode}RBPs_{hm}.txt", "r")
+            hm_rbps[hm] = [rbp for rbp in rbps_file.read().split('\n') if rbp]
 
-        tsv_rbps = {rbp:[] for rbp in all_rbps}
-        for rbp in all_rbps:
-            for hm in hms:
-                if rbp in hm_rbps[hm]:
-                    tsv_rbps[rbp].append(1)
-                else:
-                    tsv_rbps[rbp].append(0)
+        
+        all_rbps = list(set([rbp for elem_list in hm_rbps.values() for rbp in elem_list]))
+        all_rbps.sort()
 
-            tsv_writer.writerow([rbp] + tsv_rbps[rbp]) # write occurrence of each RBP
+        # Get occurence of epiRBP across all HMs
+
+        # Open a TSV file to write the results
+        with open(f"0_Files/Post-processing/{mode}RBPS/{mode}RBPS.tsv", 'w', newline='') as tsvfile:
+            tsv_writer = csv.writer(tsvfile, delimiter='\t')
+
+            # Write the header row
+            tsv_writer.writerow([
+                'RBP', 'H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3'
+            ])
+
+            tsv_rbps = {rbp:[] for rbp in all_rbps}
+            for rbp in all_rbps:
+                for hm in hms:
+                    if rbp in hm_rbps[hm]:
+                        tsv_rbps[rbp].append(1)
+                    else:
+                        tsv_rbps[rbp].append(0)
+
+                tsv_writer.writerow([rbp] + tsv_rbps[rbp]) # write occurrence of each RBP
 
 
 def SHAP_weights(hm):
@@ -850,7 +854,7 @@ def SHAP_weights(hm):
     }
 
 
-    output_dir = sys.argv[1]
+    output_dir = "0_Files/Post-processing/Analyses/SHAP/"
     # Create a directory specific to the hm value
     hm_dir = os.path.join(output_dir, hm)
     os.makedirs(hm_dir, exist_ok=True)  # Create the directory if it doesn't exist
@@ -916,7 +920,7 @@ if __name__ == "__main__":
     untuned_vs_tuned() # Tune parameters
     all_prauc_together() # Figure 2a
     metrics() # Figure 2b
-    epiRBPS_overlap() # Table3,4
+    imptRBPS_overlap() # Table3,4
 
     hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3']
 
@@ -926,5 +930,5 @@ if __name__ == "__main__":
         SHAP(hm=hm) 
         ## Manually select imptRBPs (Epi and nonepi)
         SHAP_imptRBPs_plot(hm) # Fig 3,15
-        correlated_to_epi_RBPs(hm=hm) # Fig 16 (Suppl)  
+        correlated_to_shap_RBPs(hm=hm) # Fig 16 (Suppl)  
         # SHAP_weights(hm)
