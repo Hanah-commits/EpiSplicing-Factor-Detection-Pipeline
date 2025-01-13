@@ -26,11 +26,11 @@ def plot_epigenes():
     hfont = {'fontname':'Calibri'}
     for label in (ax.get_xticklabels() + ax.get_yticklabels()):
         label.set_fontsize(10)
-    plt.title('Number of Epigenes Across All Embryonic Cell Line Pairs', fontsize=15)
+    plt.title('Number of Epigenes Across All Embryonic Cell Line Pairs', fontsize=12)
     plt.xticks(rotation=45)
-    plt.ylabel('Number of Epigenes', fontsize=12)
+    plt.ylabel('Number of Epigenes', fontsize=10)
     plt.legend(loc='upper right')
-    plt.savefig('0_Files/Post-processing/Analyses/epigenes/Epigenes.png')
+    plt.savefig('0_Files/Post-processing/Analyses/epigenes/Epigenes.png',bbox_inches='tight', dpi=300)
     # plt.close()
 
 
@@ -70,11 +70,11 @@ def plot_epiflanks():
     # set title, axes etc
     for label in (ax.get_xticklabels() + ax.get_yticklabels()):
         label.set_fontsize(10)
-    plt.title('Number of Flanks of Epispliced and Non-epispliced Exons Available for All Histone Marks', fontsize=15)
+    plt.title('Number of Flanks of Epispliced and Non-epispliced Exons Available for All Histone Marks', fontsize=12)
     plt.xticks(rotation=45)
-    plt.ylabel('Number of Exon Flanks', fontsize=12)
+    plt.ylabel('Number of Exon Flanks', fontsize=10)
     plt.xlabel('')
-    plt.savefig('0_Files/Post-processing/Analyses/epigenes/Epiflanks.png')
+    plt.savefig('0_Files/Post-processing/Analyses/epigenes/Epiflanks.png',bbox_inches='tight', dpi=300)
 
 
 def PCA_plot(hm):
