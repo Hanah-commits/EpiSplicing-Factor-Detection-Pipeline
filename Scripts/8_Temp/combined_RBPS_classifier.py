@@ -20,14 +20,14 @@ def untuned_vs_tuned():
     
     hms= [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
     eval_scores = {}
-
+    os.makedirs("0_Files/Post-processing/Analyses/Metrics/", exist_ok=True)  # Create the directory if it doesn't exist
 
     for hm in hms:
 
         print('\n\n',hm, '\n')
 
-        features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-        features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+        features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+        features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
         features = pd.concat([features1,features2], axis=1)
         features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
         features.fillna(0,inplace=True)
@@ -130,7 +130,7 @@ def untuned_vs_tuned():
         eval_scores[hm] = [untuned_train_score, untuned_test_score, tuned_train_score, tuned_test_score]
 
     # print(eval_scores)
-    # eval_scores = {'H3K27ac': [0.8042261671224407, 0.7218628338955775, 0.815372799637212, 0.8077], 'H3K27me3': [0.6656229635060281, 0.6100909003156756, 0.7404758516592216, 0.7869], 'H3K36me3': [0.7929480585736148, 0.7941692156016494, 0.8026172756053767, 0.8408], 'H3K9me3': [0.842685777156579, 0.8984815926704977, 0.8501737084370514, 0.9351], 'H3K4me3': [0.7519171626984127, 0.7456918576676813, 0.7718576601106867, 0.7938]}
+    # eval_scores = {'H3K27ac': [0.8725345520790744, 0.8342091060071373, 0.8870289046935795, 0.9066179046212118], 'H3K27me3': [0.7936426767676767, 0.753075560187311, 0.8370049747882313, 0.8510441809190956], 'H3K36me3': [0.80523916702003, 0.8115620890083819, 0.8165537169654283, 0.8613831726744965], 'H3K9me3': [0.9045557190451009, 0.9338054364686202, 0.9360760624546037, 0.9366370403195617], 'H3K4me3': [0.8054078360910345, 0.8934364712567686, 0.8353645629288127, 0.9298684806477222]}
     plot_evaluation_scores(eval_scores=eval_scores)
 
 
@@ -186,9 +186,9 @@ def all_prauc_together():
 
     parameters = {
         "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-        "H3K27me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K36me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K9me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
         "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
     }
 
@@ -198,8 +198,8 @@ def all_prauc_together():
 
     for hm in hms:
 
-        features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-        features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+        features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+        features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
         features = pd.concat([features1,features2], axis=1)
         features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
         features.fillna(0,inplace=True)
@@ -265,14 +265,14 @@ def stratified_hms_classifier(output_dir, hm):
 
     parameters = {
         "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-        "H3K27me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K36me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K9me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
         "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
     }
 
-    features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-    features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
     features = pd.concat([features1,features2], axis=1)
     features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
     features.fillna(0,inplace=True)
@@ -401,9 +401,9 @@ def metrics():
 
     parameters = {
         "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-        "H3K27me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K36me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K9me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
         "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
     }
 
@@ -421,8 +421,8 @@ def metrics():
         hms = [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
         for hm in hms:
         
-            features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-            features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+            features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+            features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
             features = pd.concat([features1,features2], axis=1)
             features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
             features.fillna(0,inplace=True)
@@ -485,14 +485,14 @@ def confusion_matrix_plot(hm):
 
     parameters = {
         "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-        "H3K27me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K36me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K9me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
         "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
     }
 
-    features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-    features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
     features = pd.concat([features1,features2], axis=1)
     features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
     features.fillna(0,inplace=True)
@@ -559,9 +559,9 @@ def SHAP( hm):
 
     parameters = {
         "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-        "H3K27me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K36me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K9me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
         "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
     }
 
@@ -573,8 +573,8 @@ def SHAP( hm):
     hm_dir = os.path.join(output_dir, hm)
     os.makedirs(hm_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
-    features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-    features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
     features = pd.concat([features1,features2], axis=1)
     features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
     features.fillna(0,inplace=True)
@@ -671,9 +671,9 @@ def SHAP_imptRBPs_plot(hm):
 
     parameters = {
         "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-        "H3K27me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K36me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K9me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
         "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
     }
 
@@ -690,8 +690,8 @@ def SHAP_imptRBPs_plot(hm):
     hm_dir = os.path.join(output_dir, hm)
     os.makedirs(hm_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
-    features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-    features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
     features = pd.concat([features1,features2], axis=1)
     features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
     features.fillna(0,inplace=True)
@@ -765,8 +765,8 @@ def correlated_to_epi_RBPs(hm):
     rbps_file = open(f"0_Files/Post-processing/epiRBPS/SHAP_epiRBPs/rbps_{hm}.txt", "r")
     epi_rbps = [rbp for rbp in rbps_file.read().split('\n') if rbp]
 
-    features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-    features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
     features = pd.concat([features1,features2], axis=1)
     features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
     features.fillna(0,inplace=True)
@@ -842,12 +842,12 @@ def epiRBPS_overlap():
 
 def SHAP_weights(hm):
     parameters = {
-            "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-            "H3K27me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-            "H3K36me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-            "H3K9me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-            "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
-        }
+        "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
+        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
+        "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
+    }
 
 
     output_dir = sys.argv[1]
@@ -855,8 +855,8 @@ def SHAP_weights(hm):
     hm_dir = os.path.join(output_dir, hm)
     os.makedirs(hm_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
-    features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-    features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
     features = pd.concat([features1,features2], axis=1)
     features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
     features.fillna(0,inplace=True)
@@ -913,7 +913,7 @@ def SHAP_weights(hm):
 
 if __name__ == "__main__":
 
-    untuned_vs_tuned # Tune parameters
+    untuned_vs_tuned() # Tune parameters
     all_prauc_together() # Figure 2a
     metrics() # Figure 2b
     epiRBPS_overlap() # Table3,4
