@@ -79,8 +79,10 @@ def plot_epiflanks():
 
 def PCA_plot(hm):
 
-    features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-    features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+    os.makedirs("0_Files/Post-processing/Analyses/PCA/", exist_ok=True)  # Create the directory if it doesn't exist
+
+    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
     features = pd.concat([features1,features2], axis=1)
     features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
     features.fillna(0,inplace=True)
@@ -145,11 +147,13 @@ def PCA_plot(hm):
 
 def heatmap_allRBPs(hm):
 
+    os.makedirs("0_Files/Post-processing/Analyses/Heatmaps/Corr_Features/", exist_ok=True)  # Create the directory if it doesn't exist
+    os.makedirs("0_Files/Post-processing/Analyses/Heatmaps/Binding_Scores/", exist_ok=True)
 
     print(f'\n\n{hm}')
 
-    features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-    features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
     features = pd.concat([features1,features2], axis=1)
     features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
     features.fillna(0,inplace=True)    
@@ -289,8 +293,10 @@ def splice_site_strength_epi_nonepi():
 
 def heatmap_epiRBPs_correlation(hm):
 
-    features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-    features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+    os.makedirs("0_Files/Post-processing/epiRBPS/corr_heatmaps/", exist_ok=True)  # Create the directory if it doesn't exist
+
+    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
     features = pd.concat([features1,features2], axis=1)
     features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
     features.fillna(0,inplace=True)    
@@ -318,6 +324,8 @@ def heatmap_epiRBPs_correlation(hm):
 
 def heatmap_imptRBPs_binding(hm):
 
+    os.makedirs("0_Files/Post-processing/imptRBPS/bindinscores_heatmaps/", exist_ok=True)  # Create the directory if it doesn't exist
+
     #get epi and nonepiRBPs to plot
     features_to_plot = []
     rbps_file = open(f"0_Files/Post-processing/epiRBPS/epiRBPs_{hm}.txt", "r")
@@ -325,8 +333,8 @@ def heatmap_imptRBPs_binding(hm):
     rbps_file = open(f"0_Files/Post-processing/nonepiRBPS/nonepiRBPs_{hm}.txt", "r")
     features_to_plot.extend(sorted([rbp for rbp in rbps_file.read().split('\n') if rbp]))
 
-    features1 = pd.read_csv('0_Files/Post-processing_132/features_all.csv', delimiter='\t')
-    features2 = pd.read_csv('0_Files/Post-processing_47/features_all.csv', delimiter='\t')
+    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
     features = pd.concat([features1,features2], axis=1)
     features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
     features.fillna(0,inplace=True)
