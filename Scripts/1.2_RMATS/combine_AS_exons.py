@@ -70,8 +70,6 @@ SE_MXE_exons = SE_MXE_exons[SE_MXE_exons.dPSI > 0.2]
 
 print('# genes with SE and/or MXE exons:   ', len(set(SE_MXE_exons.geneSymbol.values.tolist()))) # log
 
-print(SE_MXE_exons[SE_MXE_exons.geneSymbol == 'ENSG00000105219.8'])
-
 ## STEP 2: Get exon flanks
 
 SE_MXE_exons[['chr', "exonStart_0base", "exonEnd", "feature", "score", "strand", "geneSymbol", "dPSI"]].to_csv(f'{tmp_out_dir}/RMATS/rmats_exons_coords.bed', index=False, sep='\t', header=False)
