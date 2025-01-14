@@ -36,6 +36,7 @@ Path(output_dir).mkdir(parents=True, exist_ok=True)
 file = args.output_dir + 'RMATS/SE.MATS.JC.txt'
 rmats = pd.read_csv(file, delimiter='\t')
 col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd', 'IncLevel1', 'IncLevel2']
+# col_list = ['GeneID', 'geneSymbol', 'chr', 'strand', 'IncLevelDifference', 'FDR', 'exonStart_0base', 'exonEnd', 'IncLevel1', 'IncLevel2', 'IJC_SAMPLE_1', 'IJC_SAMPLE_2', 'SJC_SAMPLE_1', 'SJC_SAMPLE_2']
 rmats = rmats[col_list]
 
 print('Processing RMATS output: Skipped Exons \n')
@@ -50,6 +51,17 @@ print('FDR-adj pvalue <= 0.05:          ', len(set(rmats.geneSymbol.values.tolis
 if len(rmats) == 0:
     print(' No skipped exons to process \n')
     sys.exit(0)
+
+# # FILTER 0: Keep events with min 10 read support
+
+# # Get mean # reads per sample for the inclusion and skipped isoforms
+# for read_col in ['IJC_SAMPLE_1', 'IJC_SAMPLE_2', 'SJC_SAMPLE_1', 'SJC_SAMPLE_2']:
+#     rmats.loc[:,read_col] =  rmats[read_col].apply(
+#         lambda x: int(np.floor(np.mean(list(map(float, x.split(','))))))
+# )
+# # Filter events with less than 10 reads
+# rmats = rmats[rmats[['IJC_SAMPLE_1', 'IJC_SAMPLE_2', 'SJC_SAMPLE_1', 'SJC_SAMPLE_2']].gt(10).all(axis=1)]
+# print('Min 10 reads filtering:          ', len(set(rmats.geneSymbol.values.tolist()))) # log
 
 # Exon inclusion status
 # Average of comma-separated inclusion values
