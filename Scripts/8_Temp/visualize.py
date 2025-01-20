@@ -25,10 +25,10 @@ def plot_epigenes():
     # set title, axes etc
     hfont = {'fontname':'Calibri'}
     for label in (ax.get_xticklabels() + ax.get_yticklabels()):
-        label.set_fontsize(10)
-    plt.title('Number of Epigenes Across All Embryonic Cell Line Pairs', fontsize=12)
+        label.set_fontsize(8)
+    plt.title('Number of Epigenes Across All Embryonic Cell Line Pairs', fontsize=10)
     plt.xticks(rotation=45)
-    plt.ylabel('Number of Epigenes', fontsize=10)
+    plt.ylabel('Number of Epigenes', fontsize=8)
     plt.legend(loc='upper right')
     plt.savefig('0_Files/Post-processing/Analyses/epigenes/Epigenes.png',bbox_inches='tight', dpi=300)
     # plt.close()
@@ -69,8 +69,8 @@ def plot_epiflanks():
     # Add legend and labels
     # set title, axes etc
     for label in (ax.get_xticklabels() + ax.get_yticklabels()):
-        label.set_fontsize(10)
-    plt.title('Number of Flanks of Epispliced and Non-epispliced Exons Available for All Histone Marks', fontsize=12)
+        label.set_fontsize(8)
+    plt.title('Number of Flanks of Epispliced and Non-epispliced Exons Available for All Histone Marks', fontsize=10)
     plt.xticks(rotation=45)
     plt.ylabel('Number of Exon Flanks', fontsize=10)
     plt.xlabel('')
@@ -318,6 +318,9 @@ def heatmap_epiRBPs_correlation(hm):
     plt.yticks(fontsize=5, rotation=0)
     cax = ax.figure.axes[-1]
     cax.tick_params(labelsize=6)
+    cbar = ax.collections[0].colorbar
+    cbar.set_label("|Pearson's R|", fontsize=8)
+    
     plt.savefig(f"0_Files/Post-processing/epiRBPS/corr_heatmaps/corr_{hm}.png",dpi=300) #bbox_inches='tight')
     plt.close()
 
@@ -381,7 +384,7 @@ def heatmap_imptRBPs_binding(hm):
 
 def prep_log2_norm_counts():
     # read normalised counts tsv
-    counts = pd.read_csv('0_Files/Post-processing/Analyses/expression/counts/rpkm_values_rbps.tsv', delimiter='\t')
+    counts = pd.read_csv('0_Files/Post-processing/Analyses/expression/counts/tpm_values_rbps.tsv', delimiter='\t')
 
     # remove unwanted prefix from column names
     counts.columns = counts.columns.str.replace(r'validation.', '')
@@ -396,7 +399,8 @@ def prep_log2_norm_counts():
         for col in counts.columns:
             if col.startswith(prefix):
                 clean_prefix = prefix.replace("dermalcell", "") #ectodermalcell -> ecto
-                clean_prefix = prefix.replace("cell", "") #neuronalcell -> neuro
+                clean_prefix = clean_prefix.replace("dermal", "") #ectodermal -> ecto
+                clean_prefix = clean_prefix.replace("cell", "") #neuronalcell -> neuro
                 rename_mapping[col] = f"{clean_prefix}_rep{replicate_counter}"
                 replicate_counter += 1
 
@@ -414,6 +418,8 @@ def prep_log2_norm_counts():
 
     counts['gene'] = counts['gene'].replace(replacement_dict)
 
+    plt_op_dir = '0_Files/Post-processing/Analyses/expression/heatmaps'
+    os.makedirs(plt_op_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
     hms = [  "H3K27ac","H3K27me3","H3K4me3","H3K9me3", "H3K36me3"]    
     for hm in hms:
@@ -422,6 +428,136 @@ def prep_log2_norm_counts():
         with open(f'0_Files/Post-processing/epiRBPS/epiRBPs_{hm}.txt', 'r') as file:
             sfs.extend([line.strip() for line in file.readlines()])      
 
+        sfs.sort()
+        sf_counts = counts[counts['gene'].isin(sfs)]
+        del sf_counts['gene']
+
+        # Plot heatmap
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(
+            sf_counts,
+            cmap="seismic",
+            annot=False,
+            linewidths=1,
+            cbar_kws={"label": "log2(TPM+1)"},
+            xticklabels=True,
+            yticklabels=sfs
+        )
+        plt.title(f"Expression of Episplicing RBPs - {hm}", fontsize=10)
+        plt.xlabel("")
+        plt.ylabel("")
+        plt.tight_layout()
+        plt.savefig(f'{plt_op_dir}/{hm}.png', bbox_inches='tight', dpi=300)
+
+
+def ridgeplot_exon_lengths():
+
+    op_dir = '0_Files/Post-processing/Analyses/MAXENTSCAN/scores'
+
+    epi_ss = pd.read_csv(f'{op_dir}/epi_exons_splicesite_scores.bed', delimiter='\t', header=None)
+    nonepi_ss = pd.read_csv(f'{op_dir}/nonepi_exons_splicesite_scores.bed', delimiter='\t', header=None)
+
+    epi_ss.columns = ['chr', 'start', 'stop', 'gene_name', 'type', 'strand', "5'ss", "3'ss"]
+    nonepi_ss.columns = ['chr', 'start', 'stop', 'gene_name', 'type', 'strand', "5'ss", "3'ss"]
+
+    epi_ss['Exon Class'] = 'Epispliced Exon'
+    nonepi_ss['Exon Class'] = 'Non-epispliced Exon'
+
+    all_ss = pd.concat([epi_ss, nonepi_ss], axis=0)
+
+    # remove exons with both labels
+    common_genes = list(set(epi_ss.gene_name.values.tolist()) & set(nonepi_ss.gene_name.values.tolist()))
+    all_ss = all_ss[~((all_ss.gene_name.isin(common_genes)) & (all_ss['Exon Class'] == 'Non-epispliced Exon'))]
+    all_ss = all_ss[~((all_ss.gene_name.isin(common_genes)) & (all_ss['Exon Class'] == 'Epispliced Exon'))]
+
+    plt_op_dir = '0_Files/Post-processing/Analyses/Epigenes'
+    plt_op_dir = os.path.join(plt_op_dir, 'Exons')
+    os.makedirs(plt_op_dir, exist_ok=True)  # Create the directory if it doesn't exist
+
+    hms = [  "H3K27ac","H3K4me3","H3K9me3", "H3K36me3", "H3K27me3"]
+
+    combined_data = pd.DataFrame()
+    for hm in hms:
+        print(hm) 
+        features = all_ss[all_ss['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
+        features.loc[:,'len'] = abs(features.loc[:, 'start'] - features.loc[:, 'stop'])
+
+        features = features[features['Exon Class'] == 'Epispliced Exon']
+        features['hm'] = hm
+        combined_data = pd.concat([combined_data, features], ignore_index=True)
+
+    
+    # set color palette
+    hms = [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
+    color_dict = dict(zip(hms,["#9A71F8", "#69D4EC", "#B0D212", "#FF9900", "#ED588A"]))
+    custom_palette = { 'Non-epispliced Exon': '#e3e1d3'}
+    custom_palette['Epispliced Exon'] = color_dict[hm]
+
+    # change df to long format
+    df_melted = combined_data.melt(id_vars=['Exon Class', 'hm'], value_vars=["len"], 
+                        var_name='Variable', value_name='Value')
+
+ 
+    plt.figure(figsize=(12, 6))
+    for hm in hms:
+        subset = df_melted[df_melted['hm'] == hm]
+
+        # Density curve
+        sns.kdeplot(data=subset, x='Value', label=hm, color=color_dict[hm], fill=True, alpha=0.4, bw_adjust=0.8, linewidth=1.5)
+
+    # Add labels and legend
+    plt.title('Lengths of Epispliced Exons')
+    plt.xlabel('Lengths (bp)')
+    plt.ylabel('Density')
+    plt.legend(title='Histone Mark')
+    plt.savefig(f'{plt_op_dir}/ridgeplot_exon_bp.png', bbox_inches='tight', dpi=300)
+
+
+def microexons():
+
+    op_dir = '0_Files/Post-processing/Analyses/MAXENTSCAN/scores'
+
+    epi_ss = pd.read_csv(f'{op_dir}/epi_exons_splicesite_scores.bed', delimiter='\t', header=None)
+    nonepi_ss = pd.read_csv(f'{op_dir}/nonepi_exons_splicesite_scores.bed', delimiter='\t', header=None)
+
+    epi_ss.columns = ['chr', 'start', 'stop', 'gene_name', 'type', 'strand', "5'ss", "3'ss"]
+    nonepi_ss.columns = ['chr', 'start', 'stop', 'gene_name', 'type', 'strand', "5'ss", "3'ss"]
+
+    epi_ss['Exon Class'] = 'Epispliced Exon'
+    nonepi_ss['Exon Class'] = 'Non-epispliced Exon'
+
+    all_ss = pd.concat([epi_ss, nonepi_ss], axis=0)
+
+    # remove exons with both labels
+    common_genes = list(set(epi_ss.gene_name.values.tolist()) & set(nonepi_ss.gene_name.values.tolist()))
+    all_ss = all_ss[~((all_ss.gene_name.isin(common_genes)) & (all_ss['Exon Class'] == 'Non-epispliced Exon'))]
+    all_ss = all_ss[~((all_ss.gene_name.isin(common_genes)) & (all_ss['Exon Class'] == 'Epispliced Exon'))]
+
+    plt_op_dir = '0_Files/Post-processing/Analyses/Epigenes'
+    plt_op_dir = os.path.join(plt_op_dir, 'Exons')
+    os.makedirs(plt_op_dir, exist_ok=True)  # Create the directory if it doesn't exist
+
+    hms = [  "H3K27ac","H3K4me3","H3K9me3", "H3K36me3", "H3K27me3"]
+
+    microgenes = []
+
+    combined_data = pd.DataFrame()
+    for hm in hms:
+        print(hm) 
+        features = all_ss[all_ss['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
+        features.loc[:,'len'] = abs(features.loc[:, 'start'] - features.loc[:, 'stop'])
+
+        print(features['len'].mean())
+
+        # ######## microexons ##############
+        features = features[(features['len'] <= 30) & (features['Exon Class'] == 'Epispliced Exon')]
+        microgenes.extend(features.gene_name.values.tolist())
+        # print(features)
+        
+        combined_data = pd.concat([combined_data, features], ignore_index=True)
+
+    combined_data['exon coordinates'] = combined_data['chr'].astype(str) + ':' + combined_data['start'].astype(str) + '-' + combined_data['stop'].astype(str)
+    print(combined_data.drop_duplicates())
 
 if __name__ == "__main__":
 
@@ -438,5 +574,7 @@ if __name__ == "__main__":
         heatmap_epiRBPs_correlation(hm) # Fig 16 (Supp)
         heatmap_imptRBPs_binding(hm) # Fig 17 (Supp)
 
+    ridgeplot_exon_lengths()
+    microexons()
 
     
