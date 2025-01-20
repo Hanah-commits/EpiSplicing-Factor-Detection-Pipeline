@@ -111,7 +111,7 @@ def get_deu_dhm_info(op_dir):
     epi_flanks.drop_duplicates().to_csv(f'{op_dir}/Post-processing/epi_flanks_annotated.bed', sep='\t',index=False)
 
 
-def process_annotated_eclip({op_dir}):
+def process_annotated_eclip(op_dir):
     
     df = pd.read_csv(f'{op_dir}/Post-processing/epi_flanks_annotated.bed', delimiter='\t')
     
