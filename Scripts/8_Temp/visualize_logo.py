@@ -260,61 +260,63 @@ def plot_logo():
 
 
     hms = [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
-    for hm in hms[:1]:
-        
-        op_dir = f"0_Files/Post-processing/Analyses/SequenceLogo/{hm}"
-        Path(op_dir).mkdir(parents=True, exist_ok=True)
+    for hm in hms:
 
         # Get feature scores for current HM
         features_hm = features[features['type'] == hm]
 
-        # Get episplicing RBPs for current HM
-        rbps_file = open(f"0_Files/Post-processing/epiRBPS/epiRBPS_{hm}.txt", "r")
-        epi_rbps = [rbp for rbp in rbps_file.read().split('\n') if rbp]
+        for mode in ['epi', 'nonepi']:
+
+            op_dir = f"0_Files/Post-processing/Analyses/SequenceLogo/{hm}_{mode}"
+            Path(op_dir).mkdir(parents=True, exist_ok=True)
+
+            # Get episplicing RBPs for current HM
+            rbps_file = open(f"0_Files/Post-processing/{mode}RBPS/{mode}RBPS_{hm}.txt", "r")
+            epi_rbps = [rbp for rbp in rbps_file.read().split('\n') if rbp]
 
 
-        for sf in epi_rbps:
-            print(f'\n\n{sf}')          
-            
-            sf_motifs =  [seq for seq in list(set(features_hm[sf].values)) if seq != '0.0']
-
-            
-            # generate PSSM
-            for sequence in sf_motifs:
-                expanded_sequence = expand_iupac(sequence)
-                psssm = generate_pwm(expanded_sequence) ## generate PSSM from expanded sequences
-                pssm_df = pd.DataFrame(psssm, columns=['A', 'C', 'G', 'U'])
-
-                # generate sequence logo
-                plt.figure(figsize=(len(pssm_df), 2))  # adjust width to match sequence length
-                logo = logomaker.Logo(pssm_df)
-
-                # Style adjustments for aesthetics
-                logo.style_spines(visible=False)
-                logo.style_xticks(visible=False)
-                logo.ax.set_axis_off()
-
-                # Save sequence logo
-                png_filename = f'{sf}_{sequence.upper()}.png'
-                png_path = os.path.join(op_dir, png_filename)
-                # plt.show()
-                plt.savefig(png_path, dpi=100, bbox_inches='tight', pad_inches=0)
-                plt.close()
+            for sf in epi_rbps:
+                print(f'\n\n{sf}')          
                 
+                sf_motifs =  [seq for seq in list(set(features_hm[sf].values)) if seq != '0.0']
+
+                
+                # generate PSSM
+                for sequence in sf_motifs:
+                    expanded_sequence = expand_iupac(sequence)
+                    psssm = generate_pwm(expanded_sequence) ## generate PSSM from expanded sequences
+                    pssm_df = pd.DataFrame(psssm, columns=['A', 'C', 'G', 'U'])
+
+                    # generate sequence logo
+                    plt.figure(figsize=(len(pssm_df), 2))  # adjust width to match sequence length
+                    logo = logomaker.Logo(pssm_df)
+
+                    # Style adjustments for aesthetics
+                    logo.style_spines(visible=False)
+                    logo.style_xticks(visible=False)
+                    logo.ax.set_axis_off()
+
+                    # Save sequence logo
+                    png_filename = f'{sf}_{sequence.upper()}.png'
+                    png_path = os.path.join(op_dir, png_filename)
+                    # plt.show()
+                    plt.savefig(png_path, dpi=100, bbox_inches='tight', pad_inches=0)
+                    plt.close()
+                    
 
 
 
 if __name__ == "__main__":
     
-    # # prep feature motif matrix -132 RBPS
-    post_rbp(132)
-    feature_matrix_1()
-    feature_matix_2(132)
+    # # # prep feature motif matrix -132 RBPS
+    # post_rbp(132)
+    # feature_matrix_1()
+    # feature_matix_2(132)
     
-    # prep feature motif matrix - 47 RBPS
-    post_rbp(47)
-    feature_matrix_1()
-    feature_matix_2(47)
+    # # prep feature motif matrix - 47 RBPS
+    # post_rbp(47)
+    # feature_matrix_1()
+    # feature_matix_2(47)
 
     ## sequence logos (Figures 4,18)
     plot_logo()
