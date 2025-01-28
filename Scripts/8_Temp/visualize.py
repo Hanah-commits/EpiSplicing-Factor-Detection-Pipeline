@@ -579,21 +579,58 @@ def last_exon_epi_overlap():
     epi_flanks_TSS = epi_flanks_TSS[~(epi_flanks_TSS.gene_name.isin(common_genes))]
 
     hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3']
-    for hm in hms:
+    color_dict = dict(zip(hms,["#9A71F8", "#69D4EC", "#B0D212", "#FF9900", "#ED588A"]))
+
+    # figure and axes
+    fig, axes = plt.subplots(1, len(hms), figsize=(3 * len(hms), 3.5))  
+    fig.suptitle('Percentage of Internal Epispliced Exons', fontsize=16)
+
+    # shared legend
+    handles = []
+    labels = []
+
+    for i, hm in enumerate(hms):
         epi_flanks_non_TSS_hm = epi_flanks_non_TSS[epi_flanks_non_TSS['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))].drop_duplicates()
         epi_flanks_TSS_hm = epi_flanks_TSS[epi_flanks_TSS['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))].drop_duplicates()
 
         size_of_groups = [len(epi_flanks_non_TSS_hm), len(epi_flanks_TSS_hm)]
+    
+        # set up subplot
+        ax = axes[i]
 
-        # Create a pieplot
-        plt.pie(size_of_groups)
+        # custom colors
+        colors = [color_dict[hm], 'oldlace']
 
-        # add a circle at the center to transform it in a donut chart
-        my_circle=plt.Circle( (0,0), 0.7, color='white')
-        p=plt.gcf()
-        p.gca().add_artist(my_circle)
+        # pie chart
+        wedges, text = ax.pie(
+            size_of_groups,
+            colors=colors,
+            wedgeprops={'linewidth': 1, 'edgecolor': None}
+        )
 
-        plt.savefig(f'{op_dir}/{hm}_exon_overlap.png')
+        # circle in the center to make it a donut chart
+        center_circle = plt.Circle((0, 0), 0.8, color='white', fc='white')
+        ax.add_artist(center_circle)
+
+        largest_percentage = max(size_of_groups) / sum(size_of_groups) * 100
+        ax.text(
+            0, 0, f"{largest_percentage:.1f}%", 
+            ha='center', va='center', fontsize=18, color=color_dict[hm]
+        )
+
+        # add the color and label to the legend list
+        handles.append(wedges[0])  
+        labels.append(hm)
+
+    # shared legend
+    fig.legend(
+    handles, labels,
+    title="", loc="upper center", bbox_to_anchor=(0.5, 0.15), ncol=len(hms)
+    )
+    # spacing between subplots and adjust layout
+    plt.tight_layout(rect=[0, 0.1, 1, 1])
+    plt.savefig(f'{op_dir}/terminal_exon_overlap.png')
+    plt.close()
 
 
 
