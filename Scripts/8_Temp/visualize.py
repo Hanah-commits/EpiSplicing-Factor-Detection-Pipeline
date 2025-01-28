@@ -559,6 +559,44 @@ def microexons():
     combined_data['exon coordinates'] = combined_data['chr'].astype(str) + ':' + combined_data['start'].astype(str) + '-' + combined_data['stop'].astype(str)
     print(combined_data.drop_duplicates())
 
+
+def last_exon_epi_overlap():
+
+    op_dir = '0_Files/Post-processing/Analyses/epigenes/Exons'
+    cols = ['chr', 'start', 'stop', 'feature', 'score', 'strand', 'gene_name', 'type']
+
+    # epi flanks with and without overlap with (alternative) last exons -> 200bp window of transcrp. termination site
+    epi_flanks_non_TSS = pd.read_csv(f'{op_dir}/epi_flanks_non_TSS.bed', delimiter='\t', names=cols)
+    epi_flanks_TSS = pd.read_csv(f'{op_dir}/epi_flanks_TSS.bed', delimiter='\t', names=cols)
+
+    # original flanks
+    epi_flanks = pd.read_csv(f'0_Files/Post-processing/epi_flanks.bed', delimiter='\t', names=cols)
+    nonepi_flanks = pd.read_csv(f'0_Files/Post-processing/nonepi_flanks.bed', delimiter='\t', names=cols)
+
+    ##FILTER 1: Remove epi and nonepiflank overlaps
+    common_genes = list(set(epi_flanks.gene_name.values.tolist()) & set(nonepi_flanks.gene_name.values.tolist()))
+    epi_flanks_non_TSS = epi_flanks_non_TSS[~(epi_flanks_non_TSS.gene_name.isin(common_genes))]
+    epi_flanks_TSS = epi_flanks_TSS[~(epi_flanks_TSS.gene_name.isin(common_genes))]
+
+    hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3']
+    for hm in hms:
+        epi_flanks_non_TSS_hm = epi_flanks_non_TSS[epi_flanks_non_TSS['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))].drop_duplicates()
+        epi_flanks_TSS_hm = epi_flanks_TSS[epi_flanks_TSS['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))].drop_duplicates()
+
+        size_of_groups = [len(epi_flanks_non_TSS_hm), len(epi_flanks_TSS_hm)]
+
+        # Create a pieplot
+        plt.pie(size_of_groups)
+
+        # add a circle at the center to transform it in a donut chart
+        my_circle=plt.Circle( (0,0), 0.7, color='white')
+        p=plt.gcf()
+        p.gca().add_artist(my_circle)
+
+        plt.savefig(f'{op_dir}/{hm}_exon_overlap.png')
+
+
+
 if __name__ == "__main__":
 
     plot_epigenes() # Figure 1
@@ -576,5 +614,6 @@ if __name__ == "__main__":
 
     ridgeplot_exon_lengths()
     microexons()
+    last_exon_epi_overlap()
 
     
