@@ -205,6 +205,7 @@ def expand_iupac(sequence):
         'W':['A','U'],
         'K':['G','U'],
         'M':['A','C'],
+        'N': ['A','G','C','U'],
         'H': ['A','C','U'],
         'V': ['G','C','A'],
         'B': ['G','U','C'],
@@ -260,19 +261,20 @@ def plot_logo():
 
 
     hms = [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
-    for hm in hms:
+    for hm in ['H3K36me3']:
 
         # Get feature scores for current HM
         features_hm = features[features['type'] == hm]
 
         for mode in ['epi', 'nonepi']:
 
-            op_dir = f"0_Files/Post-processing/Analyses/SequenceLogo/{hm}_{mode}"
+            op_dir = f"0_Files/Post-processing/Analyses/SequenceLogo/{hm}_without_impt"
             Path(op_dir).mkdir(parents=True, exist_ok=True)
 
             # Get episplicing RBPs for current HM
-            rbps_file = open(f"0_Files/Post-processing/{mode}RBPS/{mode}RBPS_{hm}.txt", "r")
-            epi_rbps = [rbp for rbp in rbps_file.read().split('\n') if rbp]
+            # rbps_file = open(f"0_Files/Post-processing/{mode}RBPS/{mode}RBPS_{hm}.txt", "r")
+            epi_rbps = ['PUM2']#[rbp for rbp in rbps_file.read().split('\n') if rbp]
+            
 
 
             for sf in epi_rbps:
@@ -286,6 +288,7 @@ def plot_logo():
                     expanded_sequence = expand_iupac(sequence)
                     psssm = generate_pwm(expanded_sequence) ## generate PSSM from expanded sequences
                     pssm_df = pd.DataFrame(psssm, columns=['A', 'C', 'G', 'U'])
+                    print(pssm_df, psssm, expanded_sequence, sequence)
 
                     # generate sequence logo
                     plt.figure(figsize=(len(pssm_df), 2))  # adjust width to match sequence length
