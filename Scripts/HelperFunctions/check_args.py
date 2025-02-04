@@ -91,7 +91,7 @@ def check_args():
                 #create temp dir
                 Path(dir).mkdir(parents=True, exist_ok=True)
 
-        check if log files already exist
+        # check if log files already exist
         log_file_name = f'{proc}_output.log'
         try:
             f = open(log_file_name, 'x')
