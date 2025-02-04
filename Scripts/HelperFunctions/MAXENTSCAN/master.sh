@@ -8,4 +8,6 @@ bash 3_get_indiv_exons.sh flanks.bed | sort | uniq > temp.bed && mv temp.bed fla
 
 bash 4_get_splice_sites.sh
 
+#### Run MAXENTSCAN ###
 
+bash 5_process_scores.sh
