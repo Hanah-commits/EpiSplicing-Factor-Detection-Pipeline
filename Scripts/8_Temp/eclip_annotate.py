@@ -8,6 +8,8 @@ def annotate_eclip_peaks(eclip_directory, flanks_dir):
     # Get list of files containing 'HepG2.bed' or 'K562.bed'
     bed_files = sorted([f for f in os.listdir(eclip_directory) if f.endswith('.bed') and ('HepG2' in f or 'K562' in f)])
     flanks_file = f'{flanks_dir}/Post-processing/epi_flanks.bed'
+    annotated_flanks_file = f'{flanks_dir}/Post-processing/epi_flanks_annotated.bed'
+    subprocess.run(f"cp {flanks_file} {annotated_flanks_file}", shell=True, check=True)
 
     # Iterate over each file
     for bed_file in bed_files:
@@ -15,7 +17,7 @@ def annotate_eclip_peaks(eclip_directory, flanks_dir):
         print(bed_file)
         
         # Command to run bedtools intersect
-        intersect_command = f"bedtools intersect -loj -s -a {flanks_file} -b {bed_file_path} | sort | uniq > bedtools_output.bed"
+        intersect_command = f"bedtools intersect -loj -s -a {annotated_flanks_file} -b {bed_file_path} | sort | uniq > bedtools_output.bed"
         subprocess.run(intersect_command, shell=True, check=True)
         
         # Load the temp_output.bed file into a DataFrame
@@ -40,12 +42,12 @@ def annotate_eclip_peaks(eclip_directory, flanks_dir):
         temp_df.drop_duplicates().to_csv('bedtools_output.bed', sep='\t', header=False, index=False)
         
         # Replace file1.bed with the updated temp_output.bed
-        subprocess.run(f"mv bedtools_output.bed {flanks_file}", shell=True, check=True)
+        subprocess.run(f"mv bedtools_output.bed {annotated_flanks_file}", shell=True, check=True)
 
 
 def get_deu_dhm_info(op_dir):
 
-    epi_flanks = pd.read_csv(f'{op_dir}/Post-processing/epi_flanks.bed', delimiter='\t', header=None, names=['chr', 'flank_start', 'flank_stop', 'feature', 'score', 'strand', 'gene', 'DHM', 'eCLIP'])
+    epi_flanks = pd.read_csv(f'{op_dir}/Post-processing/epi_flanks_annotated.bed', delimiter='\t', header=None, names=['chr', 'flank_start', 'flank_stop', 'feature', 'score', 'strand', 'gene', 'DHM', 'eCLIP'])
     exon_coords = pd.read_csv(f'{op_dir}/RMATS/rmats_exons_coords.bed', delimiter='\t', names=['chr', 'exon_start', 'exon_stop', 'feature', 'score', 'strand', 'gene', 'dPSI'])
 
     epi_flanks['exon_coord0'] = epi_flanks['flank_start'] + 200
@@ -180,11 +182,11 @@ if __name__ == "__main__":
 
     # STEP 1: Annotate eclip peaks
     ## Run epigenes_study_master.py with a confg file for HepG2-K562 (SE, MXE: min 10 read support) -> epi_flanks.bed
-    annotate_eclip_peaks(eclip_directory = eclip_dir, flanks_dir = op_dir)
+    # annotate_eclip_peaks(eclip_directory = eclip_dir, flanks_dir = op_dir)
     
     # STEP 2: Get epi exon coords, deu and dhm status
-    get_deu_dhm_info(op_dir)
+    # get_deu_dhm_info(op_dir)
 
 
-    # STEP 2: Split eclip annot by deu, dhm, eclip patterns
+    # # STEP 2: Split eclip annot by deu, dhm, eclip patterns
     process_annotated_eclip(op_dir)
