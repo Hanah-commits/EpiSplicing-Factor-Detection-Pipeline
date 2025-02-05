@@ -185,14 +185,6 @@ def all_prauc_together():
     hms = [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
     color_dict = dict(zip(hms,["#9A71F8", "#69D4EC", "#B0D212", "#FF9900", "#ED588A"]))
 
-    parameters = {
-        "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
-    }
-
     # Initialize plot
     plt.figure(figsize=(7, 7))
     plt.axes().set_aspect('equal', 'datalim')
@@ -222,7 +214,7 @@ def all_prauc_together():
         X, y = sf_data.values, features['label'].values
 
         # Classifier and cross-validation
-        clf = RandomForestClassifier(n_estimators=parameters[hm]['n_estimators'], max_features= parameters[hm]['max_features'], max_depth=parameters[hm]['max_depth'], min_samples_split= parameters[hm]['min_samples_split'], class_weight='balanced', n_jobs = -1, random_state=0)
+        clf = RandomForestClassifier(class_weight='balanced', n_jobs = -1, random_state=0, n_estimators=200)
         kf = RepeatedStratifiedKFold(n_splits=5, random_state=42, n_repeats=10) 
 
         all_precisions = []
@@ -374,13 +366,13 @@ def plot_metrics():
     ax.set_xticklabels(metrics_df["Model"])
 
     # Set x-tick labels iteratively for each group
-    ax.set_ylabel("Mean Scores")
-    ax.set_title("Model Metrics", fontsize=10)
+    ax.set_ylabel("Mean Scores", fontsize=12)
+    ax.set_title("Model Metrics", fontsize=14)
 
     # Create custom legend
   
     pattern_patches = [mpatches.Patch(facecolor='grey', edgecolor='white', hatch=pattern, label=metric) for pattern, metric in zip(patterns, metrics)]
-    ax.legend(handles=pattern_patches, title="Metrics", loc='upper left', bbox_to_anchor=(0.7, 1.0), prop={'size': 8}, handleheight=2, handlelength=3)
+    ax.legend(handles=pattern_patches, title="Metrics", loc='upper left', bbox_to_anchor=(0.715, 1.0), prop={'size': 8}, handleheight=2, handlelength=3)
 
 
     plt.tight_layout()
@@ -401,14 +393,6 @@ def metrics():
     # Create a specificity scorer, f-beta scores
     specificity_scorer = make_scorer(specificity_score)
     fbeta_scorer = make_scorer(fbeta_score, beta=0.5)
-
-    parameters = {
-        "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
-    }
 
     # Open a TSV file to write the results
     with open(f"0_Files/Post-processing/Analyses/Metrics/metrics.tsv", 'w', newline='') as tsvfile:
@@ -446,7 +430,7 @@ def metrics():
             X, y = sf_data.values, features['label'].values
 
             ## STEP 1: Initialize classifier and cross-validation
-            clf = RandomForestClassifier(n_estimators=parameters[hm]['n_estimators'], max_features= parameters[hm]['max_features'], max_depth=parameters[hm]['max_depth'], min_samples_split= parameters[hm]['min_samples_split'], class_weight='balanced', n_jobs = -1, random_state=0)
+            clf = RandomForestClassifier(class_weight='balanced', n_jobs = -1, random_state=0, n_estimators=200)
             kf = RepeatedStratifiedKFold(n_splits=5, random_state=42, n_repeats=10) 
 
             # Evaluate  model
@@ -481,20 +465,12 @@ def metrics():
                 mean_specificity, mean_precision, mean_avg_precision
             ])
 
-        plot_metrics()
+    plot_metrics()
 
 
 def confusion_matrix_plot(hm):
 
     os.makedirs("0_Files/Post-processing/Analyses/Metrics/", exist_ok=True)  # Create the directory if it doesn't exist
-
-    parameters = {
-        "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
-    }
 
     features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
     features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
@@ -518,7 +494,7 @@ def confusion_matrix_plot(hm):
     X, y = sf_data.values, features['label'].values
 
     ## STEP 1: Initialize classifier and cross-validation
-    clf = RandomForestClassifier(n_estimators=parameters[hm]['n_estimators'], max_features= parameters[hm]['max_features'], max_depth=parameters[hm]['max_depth'], min_samples_split= parameters[hm]['min_samples_split'], class_weight='balanced', n_jobs = -1, random_state=0)
+    clf = RandomForestClassifier(class_weight='balanced', n_jobs = -1, random_state=0, n_estimators=200)
     kf = RepeatedStratifiedKFold(n_splits=5, random_state=42, n_repeats=10) 
 
             
@@ -561,15 +537,6 @@ def confusion_matrix_plot(hm):
 
 def SHAP( hm):
 
-
-    parameters = {
-        "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
-    }
-
     hms = [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
     color_dict = dict(zip(hms,["#9A71F8", "#69D4EC", "#B0D212", "#FF9900", "#ED588A"]))
 
@@ -600,7 +567,7 @@ def SHAP( hm):
     X, y = sf_data.values, features['label'].values
 
     # Initialize classifier and cross-validation
-    clf = RandomForestClassifier(n_estimators=parameters[hm]['n_estimators'], max_features= parameters[hm]['max_features'], max_depth=parameters[hm]['max_depth'], min_samples_split= parameters[hm]['min_samples_split'], class_weight='balanced', n_jobs = -1, random_state=0)
+    clf = RandomForestClassifier(class_weight='balanced', n_jobs = -1, random_state=0, n_estimators=200)
     kf = RepeatedStratifiedKFold(n_splits=5, random_state=42, n_repeats=10) 
 
     # Initialize list to store SHAP values
@@ -667,18 +634,10 @@ def SHAP( hm):
 
     # Sort the features by importance
     feature_importance_df = feature_importance_df.sort_values(by='Mean Absolute SHAP Value', ascending=False)
-    feature_importance_df.to_csv(output_dir + f'/{hm}_shap_feature_importance.csv', sep='\t', index=False)
+    feature_importance_df.to_csv(f'0_Files/Post-processing/Analyses/SHAP/{hm}_shap_feature_importance.csv', sep='\t', index=False)
 
 
 def SHAP_imptRBPs_plot(hm):
-
-    parameters = {
-        "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
-    }
 
     #get epi and nonepiRBPs to plot
     features_to_plot = []
@@ -715,7 +674,7 @@ def SHAP_imptRBPs_plot(hm):
     X, y = sf_data.values, features['label'].values
 
     # Initialize classifier and cross-validation
-    clf = RandomForestClassifier(n_estimators=parameters[hm]['n_estimators'], max_features= parameters[hm]['max_features'], max_depth=parameters[hm]['max_depth'], min_samples_split= parameters[hm]['min_samples_split'], class_weight='balanced', n_jobs = -1, random_state=0)
+    clf = RandomForestClassifier(class_weight='balanced', n_jobs = -1, random_state=0, n_estimators=200)
     kf = RepeatedStratifiedKFold(n_splits=5, random_state=42, n_repeats=10) 
 
     # Initialize list to store SHAP values
@@ -844,77 +803,6 @@ def imptRBPS_overlap():
                 tsv_writer.writerow([rbp] + tsv_rbps[rbp]) # write occurrence of each RBP
 
 
-def SHAP_weights(hm):
-    parameters = {
-        "H3K27ac" : {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200},
-        "H3K27me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K36me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K9me3": {'max_depth': None, 'max_features': 'sqrt', 'min_samples_split': 2, 'n_estimators': 200}, 
-        "H3K4me3": {'max_depth': None, 'max_features': 'log2', 'min_samples_split': 5, 'n_estimators': 200}
-    }
-
-
-    output_dir = "0_Files/Post-processing/Analyses/SHAP/"
-    # Create a directory specific to the hm value
-    hm_dir = os.path.join(output_dir, hm)
-    os.makedirs(hm_dir, exist_ok=True)  # Create the directory if it doesn't exist
-
-    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
-    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
-    features = pd.concat([features1,features2], axis=1)
-    features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
-    features.fillna(0,inplace=True)
-    features = shuffle(features, random_state=42)
-
-    # extract features for hm
-    features = features[features['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
-    features = features.drop('type', axis=1) # drop hm info
-
-    if len(features) == 0:
-        return
-
-    sf = [val for val in features.columns if val != 'label']
-
-    # keep only strong binding events
-    sf_data = features[sf]
-    sf_data = sf_data.applymap(lambda val: 0 if val < 2 else val)
-
-    features['label'] = features['label'].map({'epigene': 1, 'non-epigene': 0}).astype(int)
-    X, y = sf_data.values, features['label'].values
-
-    # Initialize classifier and cross-validation
-    clf = RandomForestClassifier(n_estimators=parameters[hm]['n_estimators'], max_features= parameters[hm]['max_features'], max_depth=parameters[hm]['max_depth'], min_samples_split= parameters[hm]['min_samples_split'], class_weight='balanced', n_jobs = -1, random_state=0)
-    kf = RepeatedStratifiedKFold(n_splits=5, random_state=42, n_repeats=10) 
-
-   # Initialize variables to store cumulative SHAP values and counts
-    cumulative_shap_values = np.zeros((X.shape[0], X.shape[1]))
-    fold_counts = np.zeros(X.shape[0])
-
-    # Loop over folds
-    for i, (train, test) in enumerate(kf.split(X, y)):
-        model = clf.fit(X[train], y[train])
-        
-        # Calculate SHAP values
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(X[test])
-        
-        # Add SHAP values for this fold 
-        cumulative_shap_values[test, :] += shap_values[:,:,1]
-
-        # Count occurrences of each test index (for averaging)
-        fold_counts[test] += 1
-
-    # Compute mean SHAP values across folds
-    mean_shap_values = cumulative_shap_values / fold_counts[:, None]
-
-    shap_df = pd.DataFrame(mean_shap_values, columns=sf)
-    
-
-    # Ssve shap values
-    shap_df.to_csv(output_dir + f'/{hm}_shap_weights.tsv', sep='\t', index=False)
-
-
-
 if __name__ == "__main__":
 
     untuned_vs_tuned() # Tune parameters
@@ -931,4 +819,3 @@ if __name__ == "__main__":
         ## Manually select imptRBPs (Epi and nonepi)
         SHAP_imptRBPs_plot(hm) # Fig 3,15
         correlated_to_shap_RBPs(hm=hm) # Fig 16 (Suppl)  
-        # SHAP_weights(hm)
