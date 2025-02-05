@@ -377,6 +377,7 @@ def plot_metrics():
 
     plt.tight_layout()
     plt.savefig(f"0_Files/Post-processing/Analyses/Metrics/metrics.png", bbox_inches='tight', dpi=300)
+    plt.close()
 
 
 def metrics():
@@ -647,7 +648,7 @@ def SHAP_imptRBPs_plot(hm):
     features_to_plot.extend([rbp for rbp in rbps_file.read().split('\n') if rbp])
 
 
-    hm_dir = f"0_Files/Post-processing/imptRBPS/{hm}"
+    hm_dir = f"0_Files/Post-processing/imptRBPS"
     os.makedirs(hm_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
     features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
@@ -805,17 +806,17 @@ def imptRBPS_overlap():
 
 if __name__ == "__main__":
 
-    untuned_vs_tuned() # Tune parameters
-    all_prauc_together() # Figure 2a
-    metrics() # Figure 2b
-    imptRBPS_overlap() # Table3,4
+    # untuned_vs_tuned() # Tune parameters
+    # all_prauc_together() # Figure 2a
+    # metrics() # Figure 2b
+    # imptRBPS_overlap() # Table3,4
 
     hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3']
 
     for hm in hms:
-        stratified_hms_classifier(output_dir=sys.argv[1], hm=hm) # indiv PRAUC plots
-        confusion_matrix_plot(hm) # Fig 13 (Suppl)
+    #     stratified_hms_classifier(output_dir=sys.argv[1], hm=hm) # indiv PRAUC plots
+        # confusion_matrix_plot(hm) # Fig 13 (Suppl)
         SHAP(hm=hm) 
-        ## Manually select imptRBPs (Epi and nonepi)
-        SHAP_imptRBPs_plot(hm) # Fig 3,15
-        correlated_to_shap_RBPs(hm=hm) # Fig 16 (Suppl)  
+    #     ## Manually select imptRBPs (Epi and nonepi)
+        # SHAP_imptRBPs_plot(hm) # Fig 3,15
+        # correlated_to_shap_RBPs(hm=hm) # Fig 16 (Suppl)  
