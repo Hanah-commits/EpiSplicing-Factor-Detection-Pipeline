@@ -30,7 +30,7 @@ def plot_epigenes():
     plt.xticks(rotation=45)
     plt.ylabel('Number of Epigenes', fontsize=8)
     plt.legend(loc='upper right')
-    plt.savefig('0_Files/Post-processing/Analyses/epigenes/Epigenes.png',bbox_inches='tight', dpi=300)
+    plt.savefig('0_Files/Post-processing/Analyses/epigenes/1_Epigenes.png',bbox_inches='tight', dpi=300)
     # plt.close()
 
 
@@ -74,7 +74,7 @@ def plot_epiflanks():
     plt.xticks(rotation=45)
     plt.ylabel('Number of Exon Flanks', fontsize=10)
     plt.xlabel('')
-    plt.savefig('0_Files/Post-processing/Analyses/epigenes/Epiflanks.png',bbox_inches='tight', dpi=300)
+    plt.savefig('0_Files/Post-processing/Analyses/epigenes/2_EpiFlanks.png',bbox_inches='tight', dpi=300)
 
 
 def PCA_plot(hm):
@@ -138,7 +138,7 @@ def PCA_plot(hm):
 
     # edit x-axis ticks
     ax.set_xticks(np.arange(1, n_components + 1, step=1))
-    ax.tick_params(axis='x', rotation=45)
+    ax.tick_params(axis='x', rotation=90)
     ax.tick_params(axis='both', labelsize=8)
 
     plt.savefig(f"0_Files/Post-processing/Analyses/PCA/PCA_{hm}_explained_variance.png", bbox_inches='tight', dpi=300)
@@ -250,12 +250,12 @@ def ridgeplot_splice_site_scores(df, hm, ss_type):
 
     #  customize plot
     g.set_titles('')
-    g.set_xlabels(f"{ss_type}' Splice Site Strength Scores")
-    g.set_ylabels('Density')
+    g.set_xlabels(f"{ss_type}' Splice Site Strength Scores", fontsize=12)
+    g.set_ylabels('Density', fontsize=12)
     g.add_legend()
     g.despine(left=True)
     plt.subplots_adjust(hspace=0.5)
-    g.fig.suptitle(f" Epispliced vs Non-epispliced Exons - {hm}", fontsize=10)
+    g.fig.suptitle(f" Epispliced vs Non-epispliced Exons - {hm}", fontsize=14)
     g.fig.subplots_adjust(top=0.9)
 
     plt.savefig(f'{op_dir}/{hm}_ridgeplot_{ss_type}prime_splicesite.png', bbox_inches='tight', dpi=300)
@@ -331,8 +331,10 @@ def heatmap_imptRBPs_binding(hm):
 
     #get epi and nonepiRBPs to plot
     features_to_plot = []
+    epi_RBPs = []
     rbps_file = open(f"0_Files/Post-processing/epiRBPS/epiRBPs_{hm}.txt", "r")
     features_to_plot.extend(sorted([rbp for rbp in rbps_file.read().split('\n') if rbp]))
+    epi_RBPs = features_to_plot.copy()
     rbps_file = open(f"0_Files/Post-processing/nonepiRBPS/nonepiRBPs_{hm}.txt", "r")
     features_to_plot.extend(sorted([rbp for rbp in rbps_file.read().split('\n') if rbp]))
 
@@ -358,7 +360,7 @@ def heatmap_imptRBPs_binding(hm):
     label_colors = dict(zip(['epigene', 'non-epigene'], [color_dict[hm], "grey"]))
     row_colors = features.index.map(label_colors)
 
-    cluster = sns.clustermap(features[features_to_plot], annot=False, linewidth=0, row_cluster=False, col_cluster=False, row_colors=row_colors, cmap='winter',  cbar_pos=(0.9, .2, .03, .4))
+    cluster = sns.clustermap(features[features_to_plot], annot=False, linewidth=0, row_cluster=False, col_cluster=False, row_colors=row_colors, cmap='bwr',  cbar_pos=(0.9, .2, .03, .4))
     heatmap = cluster.ax_heatmap
 
     # remove y-axis ticks and tick labels
@@ -367,7 +369,12 @@ def heatmap_imptRBPs_binding(hm):
 
     # set x-axis tick labels
     heatmap.set_xticks(range(len(features_to_plot)))
-    heatmap.set_xticklabels(features_to_plot, size=8, rotation=45)
+    heatmap.set_xticklabels(features_to_plot, size=8, rotation=90)
+
+    #  customize x-axis tick label colo
+    for label in heatmap.get_xticklabels():
+        text = label.get_text()
+        label.set_color(color_dict[hm] if text in epi_RBPs else 'dimgrey')
 
     # add title and axes labels
     heatmap.set_title(f'{hm} : Predicted Binding Scores of Episplicing and Non-episplicing RBPs', fontsize=10)
@@ -377,8 +384,7 @@ def heatmap_imptRBPs_binding(hm):
 
     colorbar = cluster.cax
     colorbar.set_ylabel("Predicted Binding Scores", rotation=90, labelpad=10)
-    
-    plt.savefig(f"0_Files/Post-processing/imptRBPS/bindinscores_heatmaps/bindingscores_{hm}.png", bbox_inches='tight', dpi=300)
+    plt.savefig(f"0_Files/Post-processing/imptRBPS/bindinscores_heatmaps/bindingscores_{hm}.png", bbox_inches='tight', dpi=300, pad_inches=0.2)
     plt.close()
 
 
@@ -510,7 +516,7 @@ def ridgeplot_exon_lengths():
     plt.xlabel('Lengths (bp)')
     plt.ylabel('Density')
     plt.legend(title='Histone Mark')
-    plt.savefig(f'{plt_op_dir}/ridgeplot_exon_bp.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'{plt_op_dir}/Exon_lengths.png', bbox_inches='tight', dpi=300)
 
 
 def microexons():
@@ -629,7 +635,7 @@ def last_exon_epi_overlap():
     )
     # spacing between subplots and adjust layout
     plt.tight_layout(rect=[0, 0.1, 1, 1])
-    plt.savefig(f'{op_dir}/terminal_exon_overlap.png')
+    plt.savefig(f'{op_dir}/Last_exon_overlap.png')
     plt.close()
 
 
