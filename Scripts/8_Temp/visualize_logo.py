@@ -261,7 +261,7 @@ def plot_logo():
 
 
     hms = [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
-    for hm in ['H3K36me3']:
+    for hm in hms:
 
         # Get feature scores for current HM
         features_hm = features[features['type'] == hm]
@@ -272,10 +272,8 @@ def plot_logo():
             Path(op_dir).mkdir(parents=True, exist_ok=True)
 
             # Get episplicing RBPs for current HM
-            # rbps_file = open(f"0_Files/Post-processing/{mode}RBPS/{mode}RBPS_{hm}.txt", "r")
-            epi_rbps = ['PUM2']#[rbp for rbp in rbps_file.read().split('\n') if rbp]
-            
-
+            rbps_file = open(f"0_Files/Post-processing/{mode}RBPS/{mode}RBPS_{hm}.txt", "r")
+            epi_rbps = [rbp for rbp in rbps_file.read().split('\n') if rbp]
 
             for sf in epi_rbps:
                 print(f'\n\n{sf}')          
@@ -311,15 +309,15 @@ def plot_logo():
 
 if __name__ == "__main__":
     
-    # # # prep feature motif matrix -132 RBPS
-    # post_rbp(132)
-    # feature_matrix_1()
-    # feature_matix_2(132)
+    # # prep feature motif matrix -132 RBPS
+    post_rbp(132)
+    feature_matrix_1()
+    feature_matix_2(132)
     
-    # # prep feature motif matrix - 47 RBPS
-    # post_rbp(47)
-    # feature_matrix_1()
-    # feature_matix_2(47)
+    # prep feature motif matrix - 47 RBPS
+    post_rbp(47)
+    feature_matrix_1()
+    feature_matix_2(47)
 
     ## sequence logos (Figures 4,18)
     plot_logo()
