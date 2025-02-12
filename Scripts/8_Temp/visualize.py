@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn.utils import shuffle
 from sklearn.decomposition import PCA
 import seaborn as sns
+from upsetplot import UpSet, from_indicators
 
 
 def plot_epigenes():
@@ -75,6 +76,48 @@ def plot_epiflanks():
     plt.ylabel('Number of Exon Flanks', fontsize=10)
     plt.xlabel('')
     plt.savefig('0_Files/Post-processing/Analyses/epigenes/2_EpiFlanks.png',bbox_inches='tight', dpi=300)
+
+
+def epigene_overlap():
+
+    epigenes_df = pd.read_csv('0_Files/Post-processing/epi_flanks.bed', delimiter='\t', names=['chr', 'start', 'stop', 'feature', 'score', 'strand', 'gene', 'HM'])
+    hms = [  "H3K27ac","H3K27me3", "H3K36me3", "H3K9me3", "H3K4me3"]
+    color_map = dict(zip(hms,["#9A71F8", "#69D4EC", "#B0D212", "#FF9900", "#ED588A"]))
+
+    data = {}
+    for hm in hms:
+        data[hm] = sorted(list(set(epigenes_df[epigenes_df['HM'].str.contains(hm)]['gene'].values.tolist())))
+
+    # convert to dataframe
+    all_elements = sorted(list(set().union(*data.values())))  # unique elements
+    df = pd.DataFrame({key: [item in values for item in all_elements] for key, values in data.items()}, index=all_elements)
+
+    # save as table
+    df.to_csv('0_Files/Post-processing/Analyses/epigenes/epigenes_overlap.tsv', sep='\t')
+
+    # convert to upset format
+    upset_data = from_indicators(df.columns, df)
+
+    # plot
+    fig = plt.figure(figsize=(8, 6))
+    upset = UpSet(upset_data, show_percentages=False, show_counts=True, sort_by="cardinality")
+    plot = upset.plot(fig=fig)
+    plot["totals"].set_xlabel("Num. Epigenes",  fontsize=8)
+    plt.suptitle("Overlap of Epispliced Genes",  fontsize=10, x=0.5, y=0.98, ha='center')
+    
+
+    #  y-axis labels (set names) and color them
+    axes = fig.axes  #  all subplot axes
+    set_labels = axes[1].get_yticklabels()  #  y-axis tick labels (set names)
+
+    # Set tick label and dot colors to match based on the color_map
+    for label in set_labels:
+        text = label.get_text()
+        if text in color_map:
+            label.set_color(color_map[text])
+
+    plt.savefig('0_Files/Post-processing/Analyses/epigenes/2_Epigenes_overlap.png',bbox_inches='tight', dpi=300)
+    plt.close()
 
 
 def PCA_plot(hm):
@@ -658,5 +701,6 @@ if __name__ == "__main__":
     ridgeplot_exon_lengths()
     microexons()
     last_exon_epi_overlap()
+    epigene_overlap()
 
     
