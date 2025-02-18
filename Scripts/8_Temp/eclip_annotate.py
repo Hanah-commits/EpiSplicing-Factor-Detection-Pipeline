@@ -114,6 +114,11 @@ def get_deu_dhm_info(op_dir):
 
 
 def process_annotated_eclip(op_dir):
+
+    ## FILTER 1: Keep internal exons
+    annotated_flanks_file = f'{op_dir}/Post-processing/epi_flanks_annotated.bed'
+    internal_flanks_file = f'{op_dir}/Post-processing/internal_flanks200.bed' ## flanks200.bed - flanks overlapping with terminal exons 
+    subprocess.run(f'bedtools intersect -f 1 -wa -r -a {annotated_flanks_file} -b {internal_flanks_file} | sort -u | temp.bed && mv temp.bed {annotated_flanks_file}', shell=True, check=True)
     
     df = pd.read_csv(f'{op_dir}/Post-processing/epi_flanks_annotated.bed', delimiter='\t')
     
@@ -125,6 +130,18 @@ def process_annotated_eclip(op_dir):
     df = df.explode(['eCLIP']).reset_index(drop=True)
     df = df.assign(DHM=df['DHM'].str.split(','))
     df = df.explode(['DHM']).reset_index(drop=True)
+
+    ## FILTER2: Remove annotations of common eCLIP peaks
+    duplicated_flanks = df[df.duplicated(subset=['chr', 'flank_start', 'flank_stop'], keep=False)].copy()
+
+    # extract RBP name 
+    duplicated_flanks["rbp"] = duplicated_flanks["eCLIP"].str.split('_').str[0]
+
+    # group by flank, remove eclip annotations if found in both cell lines
+    duplicated_flanks["is_duplicate"] = duplicated_flanks.duplicated(subset=['chr', 'flank_start', 'flank_stop', "rbp"], keep=False)
+    filtered_df = duplicated_flanks[~duplicated_flanks["is_duplicate"]].drop(columns=["rbp", "is_duplicate"])
+    df = pd.concat([df[~df.index.isin(duplicated_flanks.index)], filtered_df])
+
 
     hms = [ "H3K27ac",
         "H3K4me3",
