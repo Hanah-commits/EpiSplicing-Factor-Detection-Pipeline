@@ -103,12 +103,7 @@ def get_deu_dhm_info(op_dir):
         axis=1
         ) 
 
-        epi_flanks[f'Signal_{hm}'] = epi_flanks.apply(
-        lambda row: dhm_file[(dhm_file['exon_start'].isin([row['exon_start'], row['exon_stop']])) | (dhm_file['exon_stop'].isin([row['exon_start'], row['exon_stop']]))]['signal_status'].iloc[0].split('_peak_unique')[0] 
-        if not dhm_file[(dhm_file['exon_start'].isin([row['exon_start'], row['exon_stop']])) | (dhm_file['exon_stop'].isin([row['exon_start'], row['exon_stop']]))].empty 
-        else None,
-        axis=1
-        )
+        epi_flanks[f'Signal_{hm}'] = epi_flanks[f'M_value_{hm}'].apply(lambda x: x if x == '.' else ('K562' if float(x) > 0 else 'HepG2'))
 
     epi_flanks.drop_duplicates().to_csv(f'{op_dir}/Post-processing/epi_flanks_annotated.bed', sep='\t',index=False)
 
