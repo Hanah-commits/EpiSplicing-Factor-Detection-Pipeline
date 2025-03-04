@@ -492,7 +492,7 @@ def prep_log2_norm_counts():
             xticklabels=True,
             yticklabels=sfs
         )
-        plt.title(f"Expression of Episplicing RBPs - {hm}", fontsize=10)
+        # plt.title(f"Expression of Episplicing RBPs - {hm}", fontsize=10)
         plt.xlabel("")
         plt.ylabel("")
         plt.tight_layout()
@@ -682,6 +682,38 @@ def last_exon_epi_overlap():
     plt.close()
 
 
+def validation_epigenes():
+
+    hms = ['H3K27ac','H3K36me3', 'H3K9me3', 'H3K4me3']
+    color_map = dict(zip(hms,["#9A71F8", "#B0D212", "#FF9900", "#ED588A"]))
+
+    data = dict(zip(hms,[6,25,1,3]))
+
+    # Extract labels and sizes from the dictionary
+    labels = list(data.keys())
+    sizes = list(data.values())
+
+    # Assign colors based on the labels
+    colors = [color_map[label] for label in labels]
+
+    # Create the pie chart
+    plt.figure(figsize=(6, 6))
+    wedges, texts = plt.pie(
+        sizes,
+        labels=labels,
+        colors=colors,
+        # autopct='%1.1f%%',
+        startangle=140
+    )
+
+    # Add value labels (instead of percentages)
+    for i, text in enumerate(texts):
+        text.set_text(f"{labels[i]}: {sizes[i]}")  # Format as 'Label: Value'
+
+    # Add a title
+    plt.title("Number of Epispliced Genes: HepG2-K562")
+    plt.savefig('0_Files/Post-processing/Analyses/epigenes/Validation-Epigenes.png',bbox_inches='tight', dpi=300)
+
 
 if __name__ == "__main__":
 
@@ -702,5 +734,6 @@ if __name__ == "__main__":
     microexons()
     last_exon_epi_overlap()
     epigene_overlap()
+    validation_epigenes()
 
     
