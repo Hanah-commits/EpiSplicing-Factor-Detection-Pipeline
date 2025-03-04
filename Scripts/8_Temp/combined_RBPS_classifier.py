@@ -615,8 +615,8 @@ def SHAP( hm):
             artist.remove()
         plt.scatter(combined_X_test[:,feature_index], combined_shap_values[:, feature_index], s=3, color=color_dict[hm])
 
-        plt.title(f'{feature} Binding in {hm} Flanks', fontsize=10)
-        plt.xlabel(f'Binding Scores of {feature}', fontsize=10)
+        plt.title(f'{feature} Binding in {hm}-marked Exon Flanks', fontsize=10)
+        plt.xlabel(f'Predicted Binding Scores of {feature}', fontsize=10)
         plt.ylabel(f'SHAP Values for {feature}', fontsize=10)
         plt.xticks(fontsize=10)
         plt.yticks(fontsize=10)
@@ -640,13 +640,20 @@ def SHAP( hm):
 
 def SHAP_imptRBPs_plot(hm):
 
-    #get epi and nonepiRBPs to plot
+    #get SHAP epi and nonepiRBPs to plot
     features_to_plot = []
     rbps_file = open(f"0_Files/Post-processing/epiRBPS/SHAP_epiRBPs/rbps_{hm}.txt", "r")
     features_to_plot.extend([rbp for rbp in rbps_file.read().split('\n') if rbp])
     rbps_file = open(f"0_Files/Post-processing/nonepiRBPS/SHAP_nonepiRBPs/rbps_{hm}.txt", "r")
     features_to_plot.extend([rbp for rbp in rbps_file.read().split('\n') if rbp])
 
+    # get RBPs corr with SHAP RBPs to plot
+    corr_features_to_plot = []
+    rbps_file = open(f"0_Files/Post-processing/epiRBPS/epiRBPs_{hm}.txt", "r")
+    corr_features_to_plot.extend([rbp for rbp in rbps_file.read().split('\n') if rbp])
+    rbps_file = open(f"0_Files/Post-processing/nonepiRBPS/nonepiRBPs_{hm}.txt", "r")
+    corr_features_to_plot.extend([rbp for rbp in rbps_file.read().split('\n') if rbp])
+    features_to_plot = list(set(features_to_plot + corr_features_to_plot))
 
     hm_dir = f"0_Files/Post-processing/imptRBPS"
     os.makedirs(hm_dir, exist_ok=True)  # Create the directory if it doesn't exist
@@ -708,7 +715,7 @@ def SHAP_imptRBPs_plot(hm):
     filtered_feature_names = [sf_data.columns[i] for i in feature_indices]
 
     # Plot summary plot for filtered features
-    shap.summary_plot(filtered_shap_values, filtered_X_test, feature_names=filtered_feature_names, show=False)
+    shap.summary_plot(filtered_shap_values, filtered_X_test, feature_names=filtered_feature_names, show=False, max_display=50)
 
     # Use matplotlib to add a title
     plt.title(f'SHAP Summary Plot for {hm}', fontsize=12)
