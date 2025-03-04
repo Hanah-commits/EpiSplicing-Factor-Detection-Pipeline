@@ -1,13 +1,9 @@
-import pandas as pd
+import pandas as pd, numpy as np
 import re
-from statsmodels.stats.multitest import multipletests # type: ignore
 
 
 def post_rbp(rbp_num):
-    '''
-    process RBPmap output -> obtain zscore used in each flank by each RBP
-    '''
-    
+  
 
     for type in ['epi', 'nonepi']:
         opdir = '0_Files/Post-processing'
@@ -42,19 +38,10 @@ def post_rbp(rbp_num):
                             if z_p_tuples:
                                 # separate Z-scores and p-values
                                 zscores, p_values = zip(*z_p_tuples)
+                                # select max Z-score 
+                                selected_zscore = np.max(np.array(zscores, dtype=float)) 
+                                row_data.append(selected_zscore)
 
-                                # Benjamini-Hochberg correction
-                                _, adjusted_pvals, _, _ = multipletests(p_values, method='fdr_bh')
-
-                                # select Z-score corresponding to the smallest adjusted p-value
-                                min_p_index = adjusted_pvals.argmin()
-                                selected_zscore = zscores[min_p_index]
-
-                                # filter by adjusted p-value <= 0.05
-                                if adjusted_pvals[min_p_index] <= 0.05:
-                                    row_data.append(selected_zscore)
-                                else:
-                                    row_data.append(0.0)
                             else:
                                 row_data.append(0.0)
 
@@ -99,19 +86,8 @@ def post_rbp(rbp_num):
 
                     if z_p_tuples:
                         zscores, p_values = zip(*z_p_tuples)
-
-                        # apply Benjamini-Hochberg correction
-                        _, adjusted_pvals, _, _ = multipletests(p_values, method='fdr_bh')
-
-                        # select Z-score corresponding to the smallest adjusted p-value
-                        min_p_index = adjusted_pvals.argmin()
-                        selected_zscore = zscores[min_p_index]
-
-                        # filter by adjusted p-value <= 0.05
-                        if adjusted_pvals[min_p_index] <= 0.05:
-                            row_data.append(selected_zscore)
-                        else:
-                            row_data.append(0.0)
+                        # select max Z-score 
+                        selected_zscore = np.max(np.array(zscores, dtype=float)) 
                     else:
                         row_data.append(0.0)
 
