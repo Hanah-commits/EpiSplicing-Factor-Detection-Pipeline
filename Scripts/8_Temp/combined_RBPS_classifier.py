@@ -246,7 +246,7 @@ def all_prauc_together():
     plt.ylim([-0.01, 1.01])
     plt.legend(loc='lower right')
 
-    plt.title(f'Precision-Recall Curve', fontsize=10)
+    # plt.title(f'Precision-Recall Curve', fontsize=10)
     plt.savefig(f"0_Files/Post-processing/Analyses/PRAUC/PRAUC_affinities.png", bbox_inches='tight', dpi=300)
     plt.close()
     
@@ -367,7 +367,7 @@ def plot_metrics():
 
     # Set x-tick labels iteratively for each group
     ax.set_ylabel("Mean Scores", fontsize=12)
-    ax.set_title("Model Metrics", fontsize=14)
+    # ax.set_title("Model Metrics", fontsize=14)
 
     # Create custom legend
   
@@ -526,12 +526,12 @@ def confusion_matrix_plot(hm):
     cm_percentage = cm.astype('float') / cm.sum() * 100
 
     plt.figure(figsize=(8, 6))
-    sns.heatmap(cm_percentage, annot=True, fmt=".2f", cmap="viridis", cbar_kws={'label': 'Percentage'})
+    sns.heatmap(cm_percentage, annot=True, fmt=".2f", cmap="binary", cbar_kws={'label': 'Percentage'}, vmin=1, vmax=100)
 
     # Add labels
     plt.xlabel("Predicted Labels")
     plt.ylabel("True Labels")
-    plt.title(f'Confusion Matrix - {hm}')
+    # plt.title(f'Confusion Matrix - {hm}')
     plt.savefig(f"0_Files/Post-processing/Analyses/Metrics/{hm}_CM.png", bbox_inches='tight', dpi=300)
     plt.close()
 
@@ -615,7 +615,7 @@ def SHAP( hm):
             artist.remove()
         plt.scatter(combined_X_test[:,feature_index], combined_shap_values[:, feature_index], s=3, color=color_dict[hm])
 
-        plt.title(f'{feature} Binding in {hm}-marked Exon Flanks', fontsize=10)
+        # plt.title(f'{feature} Binding in {hm}-marked Exon Flanks', fontsize=10)
         plt.xlabel(f'Predicted Binding Scores of {feature}', fontsize=10)
         plt.ylabel(f'SHAP Values for {feature}', fontsize=10)
         plt.xticks(fontsize=10)
@@ -718,7 +718,7 @@ def SHAP_imptRBPs_plot(hm):
     shap.summary_plot(filtered_shap_values, filtered_X_test, feature_names=filtered_feature_names, show=False, max_display=50)
 
     # Use matplotlib to add a title
-    plt.title(f'SHAP Summary Plot for {hm}', fontsize=12)
+    # plt.title(f'SHAP Summary Plot for {hm}', fontsize=12)
 
     # # Display the plot
     plt.savefig(f'{hm_dir}/{hm}_SHAP_impt.png')
@@ -811,6 +811,101 @@ def imptRBPS_overlap():
                 tsv_writer.writerow([rbp] + tsv_rbps[rbp]) # write occurrence of each RBP
 
 
+
+def correlated_to_shap_RBPs_PTBP1(hm):
+
+    print(hm)
+
+    for mode in ['epi']:
+
+        # Get episplicing RBPs
+        rbps_file = open(f"0_Files/Post-processing/{mode}RBPS/epiRBPs_{hm}.txt", "r")
+        shap_rbps = [rbp for rbp in rbps_file.read().split('\n') if rbp]
+        print(shap_rbps)
+
+        features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+        features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
+        features = pd.concat([features1,features2], axis=1)
+        features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
+        features.fillna(0,inplace=True)
+        # features = shuffle(features, random_state=42)
+
+        # extract features for hm
+        features = features[features['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
+        # features = features[features.label =='epigene']
+        features = features.drop(['type','label'], axis=1) # drop hm info
+        features = features.applymap(lambda val: 0 if val < 2 else val)
+
+        # Perform Pearson correlation
+        rbps = [val for val in features.columns]
+        corr_coeffs_pvalues = []
+        for i in range(len(rbps)):
+            for j in range(i + 1, len(rbps)):
+                col1 = rbps[i]
+                col2 = rbps[j]
+                corr, p_value = pearsonr(features[col1], features[col2])
+                corr_coeffs_pvalues.append((col1, col2, corr, p_value))
+
+        corr_df = pd.DataFrame(corr_coeffs_pvalues, columns=["RBP1", "RBP2", "coeff", "pval"]) # convert to df
+
+        corr_df["adj_pval"] = multipletests(corr_df["pval"], method="fdr_bh")[1] # adjust pvalues
+
+        rbps = shap_rbps
+        corr_df = corr_df[corr_df['RBP1'].isin(rbps)]
+        filtered_corr = corr_df[corr_df["adj_pval"] <= 0.05] #get highly correlated rbps
+        print(filtered_corr[filtered_corr['RBP2']=='FUBP3']['coeff'].abs().mean())
+
+
+def cdf_plot():
+
+    import scipy.stats as stats
+
+    hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3']
+
+    for hm in hms:
+
+        features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+        features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
+        features = pd.concat([features1,features2], axis=1)
+        features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
+        features.fillna(0,inplace=True)
+        features = shuffle(features, random_state=42)
+
+        # extract features for hm
+        features = features[features['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
+        features = features.drop('type', axis=1) # drop hm info
+
+
+        rbps = [val for val in features.columns if val != 'label']  
+        epi_features = features[features['label']=='epigene'][rbps]
+        nonepi_features = features[features['label']!='epigene'][rbps]
+        epi_features = epi_features.applymap(lambda val: 0 if val < 2 else val) # strong binding events
+        nonepi_features = nonepi_features.applymap(lambda val: 0 if val < 2 else val) # strong binding events
+
+        # Store t-test results
+        p_values = []
+
+        # Perform t-test for each column
+        for rbp in rbps:
+            t_stat, p_val = stats.ttest_ind(epi_features[rbp], nonepi_features[rbp], equal_var=False)  # Welch’s t-test
+            p_values.append(p_val)
+
+        # Convert to NumPy array
+        p_values = np.array(p_values)
+
+        # Plot CDF of p-values
+        plt.figure(figsize=(6, 4))
+        plt.hist(p_values, bins=20, cumulative=True, density=True, histtype='step', color='b', linewidth=2)
+        plt.xlabel("p-value")
+        plt.ylabel("Cumulative Probability")
+        plt.title("CDF of T-test p-values")
+        plt.grid()
+        plt.show()
+        
+
+
+
+
 if __name__ == "__main__":
 
     # untuned_vs_tuned() # Tune parameters
@@ -827,3 +922,6 @@ if __name__ == "__main__":
     #     ## Manually select imptRBPs (Epi and nonepi)
         # SHAP_imptRBPs_plot(hm) # Fig 3,15
         # correlated_to_shap_RBPs(hm=hm) # Fig 16 (Suppl)  
+        # correlated_to_shap_RBPs_PTBP1(hm)
+    # cdf_plot()
+    
