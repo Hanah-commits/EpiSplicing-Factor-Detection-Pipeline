@@ -27,7 +27,7 @@ def plot_epigenes():
     hfont = {'fontname':'Calibri'}
     for label in (ax.get_xticklabels() + ax.get_yticklabels()):
         label.set_fontsize(8)
-    plt.title('Number of Epigenes Across All Embryonic Cell Line Pairs', fontsize=10)
+    # plt.title('Number of Epigenes Across All Embryonic Cell Line Pairs', fontsize=10)
     plt.xticks(rotation=45)
     plt.ylabel('Number of Epigenes', fontsize=8)
     plt.legend(loc='upper right')
@@ -71,7 +71,7 @@ def plot_epiflanks():
     # set title, axes etc
     for label in (ax.get_xticklabels() + ax.get_yticklabels()):
         label.set_fontsize(8)
-    plt.title('Number of Flanks of Epispliced and Non-epispliced Exons Available for All Histone Marks', fontsize=10)
+    # plt.title('Number of Flanks of Epispliced and Non-epispliced Exons Available for All Histone Marks', fontsize=10)
     plt.xticks(rotation=45)
     plt.ylabel('Number of Exon Flanks', fontsize=10)
     plt.xlabel('')
@@ -103,7 +103,7 @@ def epigene_overlap():
     upset = UpSet(upset_data, show_percentages=False, show_counts=True, sort_by="cardinality")
     plot = upset.plot(fig=fig)
     plot["totals"].set_xlabel("Num. Epigenes",  fontsize=8)
-    plt.suptitle("Overlap of Epispliced Genes",  fontsize=10, x=0.5, y=0.98, ha='center')
+    # plt.suptitle("Overlap of Epispliced Genes",  fontsize=10, x=0.5, y=0.98, ha='center')
     
 
     #  y-axis labels (set names) and color them
@@ -175,7 +175,7 @@ def PCA_plot(hm):
     ax.set_xlim(0, n_components + 1)
     ax.set_xlabel('Number of Components', fontsize=8)
     ax.set_ylabel('Cumulative Variance Explained', fontsize=8)
-    ax.set_title(f'Number of Principal Components Needed to Explain Variance - {hm}', fontsize=10)
+    # ax.set_title(f'Number of Principal Components Needed to Explain Variance - {hm}', fontsize=10)
     ax.grid(which='both', linestyle='--', linewidth=0.5, alpha=0.7)
     ax.legend(loc='lower right', fontsize=12)
 
@@ -223,7 +223,7 @@ def heatmap_allRBPs(hm):
 
             plt.figure(figsize=(8, 6))
             ax = sns.heatmap(corr, annot=False, xticklabels=corr.columns, yticklabels=corr.index, cmap='coolwarm', linewidths=0.1)
-            plt.title(f'Correlation of Predicted RBP Binding Scores - {hm}', fontsize=8)
+            # plt.title(f'Correlation of Predicted RBP Binding Scores - {hm}', fontsize=8)
 
             plt.xticks(np.arange(len(sf))+ 0.5, labels=corr.columns, fontsize=2, rotation=90)
             plt.yticks(np.arange(len(sf))+ 0.5, labels=corr.columns, fontsize=2, rotation=0)
@@ -298,7 +298,7 @@ def ridgeplot_splice_site_scores(df, hm, ss_type):
     g.add_legend()
     g.despine(left=True)
     plt.subplots_adjust(hspace=0.5)
-    g.fig.suptitle(f" Epispliced vs Non-epispliced Exons - {hm}", fontsize=14)
+    # g.fig.suptitle(f" Epispliced vs Non-epispliced Exons - {hm}", fontsize=14)
     g.fig.subplots_adjust(top=0.9)
 
     plt.savefig(f'{op_dir}/{hm}_ridgeplot_{ss_type}prime_splicesite.png', bbox_inches='tight', dpi=300)
@@ -356,7 +356,7 @@ def heatmap_epiRBPs_correlation(hm):
     # Plot corr coeffs
     corr = features.corr()
     ax = sns.heatmap(corr, annot=False, cmap='coolwarm')
-    plt.title(f'Correlation Coefficients of Episplicing RBPs Associated with {hm}', fontsize=8)
+    # plt.title(f'Correlation Coefficients of Episplicing RBPs Associated with {hm}', fontsize=8)
     plt.xticks(fontsize=5, rotation=90)
     plt.yticks(fontsize=5, rotation=0)
     cax = ax.figure.axes[-1]
@@ -420,7 +420,7 @@ def heatmap_imptRBPs_binding(hm):
         label.set_color(color_dict[hm] if text in epi_RBPs else 'dimgrey')
 
     # add title and axes labels
-    heatmap.set_title(f'{hm} : Predicted Binding Scores of Episplicing and Non-episplicing RBPs', fontsize=10)
+    # heatmap.set_title(f'{hm} : Predicted Binding Scores of Episplicing and Non-episplicing RBPs', fontsize=10)
     heatmap.set_ylabel(f'Flanks of Epispliced and Non-epispliced Exons', fontsize =10, labelpad=-505)
     cax = cluster.figure.axes[-1]
     cax.tick_params(labelsize=8)
@@ -555,7 +555,7 @@ def ridgeplot_exon_lengths():
         sns.kdeplot(data=subset, x='Value', label=hm, color=color_dict[hm], fill=True, alpha=0.4, bw_adjust=0.8, linewidth=1.5)
 
     # Add labels and legend
-    plt.title('Lengths of Epispliced Exons')
+    # plt.title('Lengths of Epispliced Exons')
     plt.xlabel('Lengths (bp)')
     plt.ylabel('Density')
     plt.legend(title='Histone Mark')
@@ -632,7 +632,7 @@ def last_exon_epi_overlap():
 
     # figure and axes
     fig, axes = plt.subplots(1, len(hms), figsize=(3 * len(hms), 3.5))  
-    fig.suptitle('Percentage of Internal Epispliced Exons', fontsize=16)
+    # fig.suptitle('Percentage of Internal Epispliced Exons', fontsize=16)
 
     # shared legend
     handles = []
@@ -711,7 +711,7 @@ def validation_epigenes():
         text.set_text(f"{labels[i]}: {sizes[i]}")  # Format as 'Label: Value'
 
     # Add a title
-    plt.title("Number of Epispliced Genes: HepG2-K562")
+    # plt.title("Number of Epispliced Genes: HepG2-K562")
     plt.savefig('0_Files/Post-processing/Analyses/epigenes/Validation-Epigenes.png',bbox_inches='tight', dpi=300)
 
 
