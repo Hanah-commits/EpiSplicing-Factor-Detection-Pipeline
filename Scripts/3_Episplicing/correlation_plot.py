@@ -312,125 +312,13 @@ def indiv_hms(args, dir):
             f.write("%s\n" % line)
 
 
-def plot_venn(args, dir):
-
-    proc = args.process
-    tmp_out_dir = proc + '_0_Files'
-    with open('paths.json') as f:
-        data = json.load(f)
-    d = data[proc]
-
-    hms = d["Histone modifications"]
-    tissue1 = d['tissue1'].capitalize()
-    tissue2 = d['tissue2'].capitalize()
-
-    hm_epigenes = []
-    
-    try:
-        for hm in hms:
-            with open(f'{tmp_out_dir}/{dir}/{hm}/{hm}_truepos_epigenes.txt') as file:
-                epigenes = [line.rstrip() for line in file]
-                hm_epigenes.append(epigenes)
-    except:
-        print(f'No epigenes available for {dir}. Cannot make a venn diagram.')
-        return
-    
-    # visualise overlap
-    info = tissue1 + ' - ' + tissue2
-
-    unique_epi =  set(i for j in hm_epigenes for i in j)
-    title = info + ' : ' + str(len(unique_epi)) + ' Epigenes'
-
-    labels = [elem.split('_adj')[0]+ ' : ' + str(len(hm_epigenes[ind])) for ind,elem in enumerate(hms)]
-    values = [set(i) for i in hm_epigenes]
-
-    data = dict(zip(labels, values))
-    venn(data, cmap="plasma")
-
-    plt.title(title)
-    plt.savefig(f'{tmp_out_dir}/{dir}/hm_overlap_' + info + '.png')
-    plt.close()
-
-
-def common_genes(args):
-
-    proc = args.process
-    tmp_out_dir = proc + '_0_Files'
-    with open('paths.json') as f:
-        data = json.load(f)
-    d = data[proc]
-
-    hms = d["Histone modifications"]
-
-    dirs = ['DEXSEQ', 'MAJIQ', 'RMATS']
-
-    # get overlap from 2/3 tools : epigenes
-    epigenes = {}
-    for dir in dirs:
-            hm_epigenes = []
-            try:
-                for hm in hms:
-                    with open(f'{tmp_out_dir}/{dir}/{hm}/{hm}_truepos_epigenes.txt') as file:
-                        genes = [line.rstrip() for line in file]
-                        hm_epigenes.extend(genes)
-            except:
-                print(f'No epigenes available for {dir}. Cannot find common epigenes between this tool and the other two tools.')
-                continue
-
-            epigenes[dir] = list(set(hm_epigenes))        
-
-    # Count occurrences of genes across all three tools
-    epigenee_counts = Counter(value for sublist in epigenes.values() for value in sublist)
-
-    # Filter genes that appear in all three tools
-    overlap_epigenes = [gene for gene, count in epigenee_counts.items() if count >= 2]
-
-    with open(f'{tmp_out_dir}/common_epigenes.txt', 'w') as f:
-        for line in list(set(overlap_epigenes)):
-            f.write("%s\n" % line)
-
-
-    # get overlap from all three tools : nonepigenes
-    nonepigenes = {}
-    for dir in dirs:
-        file = dir.lower()
-        try:
-            with open(f'{tmp_out_dir}/{dir}/{file}_nonepigenes.txt') as file:
-                        nonepigenes[dir]  = [line.rstrip() for line in file]
-        except:
-            print(f'No DEUs available for {dir}. Cannot find common non-epigenes between this tool and the other two tools.')
-            continue
-                    
-    # Count occurrences of genes across all three tools
-    nonepigene_counts = Counter(value for sublist in nonepigenes.values() for value in sublist)
-
-    # Filter genes that appear in all three tools
-    overlap_nonepigenes = [gene for gene, count in nonepigene_counts.items() if count > 2]
-
-    with open(f'{tmp_out_dir}/common_nonepigenes.txt', 'w') as f:
-        for line in list(set(overlap_nonepigenes)):
-            f.write("%s\n" % line)
-
-    
-    # outputlog
-    print('# Epigenes in 2/3 tools:                         ', len(overlap_epigenes))
-    print('# NonEpigenes in 3/3 tools:                      ', len(overlap_nonepigenes))
-
-
-
-
 if __name__ == "__main__":
 
     p = get_argument_parser()
     args = p.parse_args()
 
-    tools = ['DEXSEQ', 'MAJIQ', 'RMATS']
+    tools = ['RMATS']
 
     for tool in tools:
         # get epigenes and their correlation plots
         indiv_hms(args, tool)
-
-        # venn diagram of true epigenes
-#        plot_venn(args, tool)
-
-    common_genes(args)

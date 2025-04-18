@@ -25,19 +25,7 @@ def master_function(proc, output_dir):
         move_dirs(output_dir, proc)
         sys.exit(1)
 
-    ## STEP 1: Differential Exon Usage
-
-    ## 1.1 Execute MAJIQ 
-    try:
-        print('\n\n Executing MAJIQ \n\n', flush=True)
-        os.system(f"python 1.1_MAJIQ/runMAJIQ.py {output_dir} -p {proc} >> {log_file_name} 2>&1")
-        print('\n\n----------- DONE -----------', flush=True)
-    except Exception as ex:
-        print(ex)
-        move_dirs(output_dir, proc)
-        sys.exit(1)
-
-    ## 1.2 Execute RMATS
+    ## STEP 1: Differential Exon Usage - RMATS
     try:
         print('\n\n Executing RMATS \n\n', flush=True)
         os.system(f"python 1.2_RMATS/runRMATS.py {output_dir} -p {proc} >> {log_file_name} 2>&1")
@@ -47,15 +35,6 @@ def master_function(proc, output_dir):
         move_dirs(output_dir, proc)
         sys.exit(1)    
 
-    ## 1.3 Execute DXESEQ
-    try:
-        print('\n\n Executing DEXSEQ \n\n', flush=True)
-        os.system(f"python 1.3_DEXSEQ/runDEXSEQ.py {output_dir} -p {proc} >> {log_file_name} 2>&1")
-        print('\n\n----------- DONE -----------', flush=True)
-    except Exception as ex:
-        print(ex)
-        move_dirs(output_dir, proc)
-        sys.exit(1)
 
     # STEP 2: Execute MANorm -  Differential Histone Modifications
     try:
@@ -99,84 +78,10 @@ def master_function(proc, output_dir):
         move_dirs(output_dir, proc)
         sys.exit(1)
 
-    ## STEP 4: Process MAJIQ output and annotate its exon flanks with peaks
 
-    ## 4.1 Process majiq output
-    try:
-        print('\n\n MAJIQ: Analysing MAJIQ Output \n\n', flush=True)
-        os.system(f"python 1.1_MAJIQ/post-MAJIQ.py {output_dir} -p {proc} >> {log_file_name} 2>&1")
-        print('\n\n----------- DONE -----------', flush=True)
-    except Exception as ex:
-        print(ex)
-        move_dirs(output_dir, proc)
-        sys.exit(1)
+    ## STEP 4: Process RMATS output and annotate its exon flanks with peaks
 
-    ## 4.2 BEDTools - Annotate exon flanks with MAJIQ junctions
-    try:
-        print('\n\n MAJIQ: Annotating Candidate Flanks with DEU Score\n\n', flush=True)
-        os.system(f"python 1.1_MAJIQ/annotate-MAJIQ.py -p {proc} >> {log_file_name} 2>&1")
-        print('\n\n----------- DONE -----------', flush=True)
-    except Exception as ex:
-        print(ex)
-        move_dirs(output_dir, proc)
-        sys.exit(1)
-
-    ## 4.3 Process BEDTools output
-    try:
-        print('\n\n MAJIQ: Analysing BEDtools Output \n\n', flush=True)
-        os.system(f"python 1.1_MAJIQ/post-bedtools.py -p {proc} >> {log_file_name} 2>&1")
-        print('\n\n----------- DONE -----------', flush=True)
-    except Exception as ex:
-        print(ex)
-        move_dirs(output_dir, proc)
-        sys.exit(1)
-
-    ## 4.4 Process annotated flanks (TSS-filtering)
-    try:
-        print('\n\n MAJIQ: Including Constiutively Spliced Exon-flanks \n\n', flush=True)
-        os.system(f"python 1.1_MAJIQ/combine_AS_CS_flanks.py -p {proc} >> {log_file_name} 2>&1")
-        print('\n\n----------- DONE -----------', flush=True)
-    except Exception as ex:
-        print(ex)
-        move_dirs(output_dir, proc)
-        sys.exit(1)   
-
-    ## 4.5 Annotate TSS-filtered flanks with peaks
-    try:
-        print('\n\n MAJIQ: Annotating Candidate Flanks with DHM Score \n\n', flush=True)
-        os.system(f'python 2_MANorm/DHM_flanks_MAJIQ.py -p {proc} >> {log_file_name} 2>&1')
-        print('\n\n----------- DONE -----------', flush=True)
-    except Exception as ex:
-        print(ex)
-        move_dirs(output_dir, proc)
-        sys.exit(1)
-
-
-    # STEP 5: Process DEXSEQ output and annotate its exon flanks with peaks
-
-    ## 5.1 Get deu exons, TSS-filter flanks of these exons    
-    try:
-        print('\n\n DEXSEQ: Analysing DEXSEQ Output & Annotating Exons with DEU Score \n\n', flush=True)
-        os.system(f'python 1.3_DEXSEQ/post_dexseq.py {output_dir} -p {proc} >> {log_file_name} 2>&1')
-        print('\n\n----------- DONE -----------', flush=True)
-    except Exception as ex:
-        print(ex)
-        move_dirs(output_dir, proc)
-        sys.exit(1)   
-
-    ## 5.2 Annotate TSS-filtered flanks with peaks
-    try:
-        print('\n\n DEXSEQ: Annotating Candidate Exons with DHM Score \n\n', flush=True)
-        os.system(f'python 2_MANorm/DHM_flanks_DEXSEQ.py -p {proc} >> {log_file_name} 2>&1' )
-        print('\n\n----------- DONE -----------', flush=True)
-    except Exception as ex:
-        print(ex)
-        move_dirs(output_dir, proc)
-        sys.exit(1) 
-
-    ## STEP 6: Process RMATS output and annotate its exon flanks with peaks
-
-    ## 6.1 Extract skipped exons   
+    ## 4.1 Extract skipped exons   
     try:
         print('\n\n RMATS: Analysing RMATS Output - Skipped Exons \n\n', flush=True)
         os.system(f'python 1.2_RMATS/get_SE.py {output_dir} -p {proc} >> {log_file_name} 2>&1')
@@ -186,7 +91,7 @@ def master_function(proc, output_dir):
         move_dirs(output_dir, proc)
         sys.exit(1) 
 
-    ## 6.2 Extract mutually exclusive exons
+    ## 4.2 Extract mutually exclusive exons
     try:
         print('\n\n RMATS: Analysing RMATS Output - Mutually Exclusive Exons \n\n', flush=True)
         os.system(f'python 1.2_RMATS/get_MXE.py {output_dir} -p {proc} >> {log_file_name} 2>&1')
@@ -196,7 +101,7 @@ def master_function(proc, output_dir):
         move_dirs(output_dir, proc)
         sys.exit(1) 
 
-    ## 6.3 Get flanks of alternative exons
+    ## 4.3 Get flanks of alternative exons
     try:
         print('\n\n RMATS: Combining DEU Scores of Skipped and Mutally Exclusive Exons \n\n', flush=True)
         os.system(f'python 1.2_RMATS/combine_AS_exons.py -p {proc} >> {log_file_name} 2>&1')
@@ -207,7 +112,7 @@ def master_function(proc, output_dir):
         sys.exit(1) 
 
 
-    ## 6.4 annotate TSS-filtered flanks with peaks
+    ## 4.4 annotate TSS-filtered flanks with peaks
     try:
         print('\n\n RMATS: Annotating Candidate Exons with DHM Score \n\n', flush=True)
         os.system(f'python 2_MANorm/DHM_flanks_RMATS.py -p {proc} >> {log_file_name} 2>&1')
@@ -217,7 +122,7 @@ def master_function(proc, output_dir):
         move_dirs(output_dir, proc)
         sys.exit(1) 
 
-    ## STEP 7: DEU - DHM Correlation
+    ## STEP 5: DEU - DHM Correlation
     try:
         print('\n\n Computing DEU-DHM Correlation \n\n', flush=True)
         os.system(f"python 3_Episplicing/correlation_plot.py -p {proc} >> {log_file_name} 2>&1")
