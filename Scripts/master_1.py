@@ -28,7 +28,7 @@ def master_function(proc, output_dir):
     ## STEP 1: Differential Exon Usage - RMATS
     try:
         print('\n\n Executing RMATS \n\n', flush=True)
-        os.system(f"python 1.2_RMATS/runRMATS.py {output_dir} -p {proc} >> {log_file_name} 2>&1")
+        os.system(f"python 1_RMATS/runRMATS.py {output_dir} -p {proc} >> {log_file_name} 2>&1")
         print('\n\n----------- DONE -----------', flush=True)
     except Exception as ex:
         print(ex)
@@ -84,7 +84,7 @@ def master_function(proc, output_dir):
     ## 4.1 Extract skipped exons   
     try:
         print('\n\n RMATS: Analysing RMATS Output - Skipped Exons \n\n', flush=True)
-        os.system(f'python 1.2_RMATS/get_SE.py {output_dir} -p {proc} >> {log_file_name} 2>&1')
+        os.system(f'python 1_RMATS/get_SE.py {output_dir} -p {proc} >> {log_file_name} 2>&1')
         print('\n\n----------- DONE -----------', flush=True)
     except Exception as ex:
         print(ex)
@@ -94,7 +94,7 @@ def master_function(proc, output_dir):
     ## 4.2 Extract mutually exclusive exons
     try:
         print('\n\n RMATS: Analysing RMATS Output - Mutually Exclusive Exons \n\n', flush=True)
-        os.system(f'python 1.2_RMATS/get_MXE.py {output_dir} -p {proc} >> {log_file_name} 2>&1')
+        os.system(f'python 1_RMATS/get_MXE.py {output_dir} -p {proc} >> {log_file_name} 2>&1')
         print('\n\n----------- DONE -----------', flush=True)
     except Exception as ex:
         print(ex)
@@ -104,7 +104,7 @@ def master_function(proc, output_dir):
     ## 4.3 Get flanks of alternative exons
     try:
         print('\n\n RMATS: Combining DEU Scores of Skipped and Mutally Exclusive Exons \n\n', flush=True)
-        os.system(f'python 1.2_RMATS/combine_AS_exons.py -p {proc} >> {log_file_name} 2>&1')
+        os.system(f'python 1_RMATS/combine_AS_exons.py -p {proc} >> {log_file_name} 2>&1')
         print('\n\n----------- DONE -----------', flush=True)
     except Exception as ex:
         print(ex)
