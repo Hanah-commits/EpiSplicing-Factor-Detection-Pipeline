@@ -3,7 +3,7 @@ import sys
 from HelperFunctions.check_args import check_args_post_processing
 
 
-def master_function(tool):
+def master_function():
 
     log_file_name = 'analysis_output.log'
     sys.stdout = open(log_file_name, 'a')
@@ -11,8 +11,8 @@ def master_function(tool):
     # STEP 1: Pool epi and nonepiflanks
     try:
         print('\n\n Pooling Epispliced and Non-epispliced exon flanks \n\n', flush=True)
-        os.system(f"python 3_Episplicing/get_epi_nonepi_flanks.py {tool} nonepi >> {log_file_name} 2>&1")
-        os.system(f"python 3_Episplicing/get_epi_nonepi_flanks.py {tool} epi >> {log_file_name} 2>&1")
+        os.system(f"python 3_Episplicing/get_epi_nonepi_flanks.py nonepi >> {log_file_name} 2>&1")
+        os.system(f"python 3_Episplicing/get_epi_nonepi_flanks.py epi >> {log_file_name} 2>&1")
         print('\n\n----------- DONE -----------', flush=True)
     except Exception as ex:
         print(ex)
@@ -84,15 +84,4 @@ if __name__ == "__main__":
     # combine epi and non-epiflanks from individual analysis for downstream analyses
     print(f'Starting post-processing..')
     check_args_post_processing()
-
-    #check command line arguments
-    tool = ''
-    try:
-        tool = sys.argv[1]
-        if tool not in ["MAJIQ", "RMATS", "DEXSEQ"]:
-            raise Exception 
-    except Exception as ex:
-        print(ex)
-        sys.exit(1)
-
-    master_function(tool)
+    master_function()

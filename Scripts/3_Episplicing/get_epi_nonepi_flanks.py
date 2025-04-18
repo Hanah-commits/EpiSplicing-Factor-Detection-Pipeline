@@ -175,8 +175,8 @@ def get_nonepigenes(tool):
 
 
 if __name__ == "__main__":
-    tool = sys.argv[1]
-    type = sys.argv[2]
+    tool = "RMATS"
+    type = sys.argv[1]
 
     if type == 'epi':
         get_epigenes_study(tool)
