@@ -81,7 +81,7 @@ def check_args():
 
         
         # check if temp directories already exist
-        temp_dirs = [f'{proc}_0_Files/', f'../{proc}_RBPmap/']
+        temp_dirs = [f'{proc}_0_Files/']
         for dir in temp_dirs:
             if os.path.exists(dir):
                 # temp dir not empty
@@ -126,3 +126,19 @@ def move_dirs(output_dir, proc):
     shutil.move(f'{proc}_output.log', f'{output_dir}output.log')
 
 
+def check_args_post_processing():
+    dir = '0_Files'
+    log_file_name = 'analysis_output.log'
+    if os.path.exists(dir):
+            # temp dir not empty
+        if len(os.listdir(dir)) != 0:
+            raise ValueError('Delete or move directory to another location ' + dir)
+    else: 
+        #create temp dir
+        Path(dir).mkdir(parents=True, exist_ok=True)
+
+    # check if log file already exists
+    try:
+        f = open(log_file_name, 'x')
+    except FileExistsError:
+        raise ValueError('Delete or move the log file to another location ' + log_file_name)
