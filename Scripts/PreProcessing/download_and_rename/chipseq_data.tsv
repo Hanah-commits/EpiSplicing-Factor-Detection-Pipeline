@@ -1,0 +1,73 @@
+Biosample	File accession	Experiment accession	File format	Output type	Experiment target	Isogenic replicate	Lab	Reference Genome	
+H1	ENCFF948UXT	ENCSR880SUY	bam	alignments	H3K27ac	1	Bing Ren, UCSD	GRCh38	
+H1	ENCFF663SAM	ENCSR880SUY	bam	alignments	H3K27ac	2	Bing Ren, UCSD	GRCh38	
+H1	ENCFF045CUG	ENCSR880SUY	bed narrowPeak	replicated peaks	H3K27ac	1,2	Bing Ren, UCSD	GRCh38	
+H1	ENCFF310SBN	ENCSR216OGD	bam	alignments	H3K27me3	1	Bradley Bernstein, Broad	GRCh38	
+H1	ENCFF083QQZ	ENCSR216OGD	bam	alignments	H3K27me3	2	Bradley Bernstein, Broad	GRCh38	
+H1	ENCFF084QDP	ENCSR216OGD	bed narrowPeak	replicated peaks	H3K27me3	1,2	Bradley Bernstein, Broad	GRCh38	
+H1	ENCFF619JFN	ENCSR925LJZ	bam	alignments	H3K36me3	1	Bradley Bernstein, Broad	GRCh38	
+H1	ENCFF044YAN	ENCSR925LJZ	bam	alignments	H3K36me3	2	Bradley Bernstein, Broad	GRCh38	
+H1	ENCFF736WAN	ENCSR925LJZ	bed narrowPeak	replicated peaks	H3K36me3	1,2	Bradley Bernstein, Broad	GRCh38	
+H1	ENCFF571AXH	ENCSR000AMG	bam	alignments	H3K4me3	1	Bradley Bernstein, Broad	GRCh38	
+H1	ENCFF153RJP	ENCSR000AMG	bam	alignments	H3K4me3	2	Bradley Bernstein, Broad	GRCh38	
+H1	ENCFF668YOE	ENCSR000AMG	bed narrowPeak	replicated peaks	H3K4me3	1,2	Bradley Bernstein, Broad	GRCh38	
+H1	ENCFF669PQL	ENCSR000APZ	bam	alignments	H3K9me3	1	Bradley Bernstein, Broad	GRCh38	
+H1	ENCFF230VQG	ENCSR000APZ	bam	alignments	H3K9me3	2	Bradley Bernstein, Broad	GRCh38	
+H1	ENCFF654ZZO	ENCSR000APZ	bed narrowPeak	replicated peaks	H3K9me3	1,2	Bradley Bernstein, Broad	GRCh38	
+ectodermal cell	ENCFF728FKI	ENCSR747HAM	bam	alignments	H3K27ac	1	Bradley Bernstein, Broad	GRCh38	
+ectodermal cell	ENCFF537TER	ENCSR747HAM	bam	alignments	H3K27ac	2	Bradley Bernstein, Broad	GRCh38	
+ectodermal cell	ENCFF909CTU	ENCSR747HAM	bed narrowPeak	replicated peaks	H3K27ac	1,2	Bradley Bernstein, Broad	GRCh38	
+ectodermal cell	ENCFF761AOT	ENCSR690GLT	bam	alignments	H3K27me3	1	Bradley Bernstein, Broad	GRCh38	
+ectodermal cell	ENCFF154LYG	ENCSR690GLT	bam	alignments	H3K27me3	3	Bradley Bernstein, Broad	GRCh38	
+ectodermal cell	ENCFF940CGE	ENCSR690GLT	bed narrowPeak	replicated peaks	H3K27me3	1,3	Bradley Bernstein, Broad	GRCh38	
+ectodermal cell	ENCFF711UXZ	ENCSR807LJO	bam	alignments	H3K4me3	1	Bradley Bernstein, Broad	GRCh38	
+ectodermal cell	ENCFF597UZU	ENCSR807LJO	bam	alignments	H3K4me3	3	Bradley Bernstein, Broad	GRCh38	
+ectodermal cell	ENCFF450NCT	ENCSR807LJO	bed narrowPeak	replicated peaks	H3K4me3	1,3	Bradley Bernstein, Broad	GRCh38	
+ectodermal cell	ENCFF405EWU	ENCSR235CEI	bam	alignments	H3K9me3	1	Bradley Bernstein, Broad	GRCh38	
+ectodermal cell	ENCFF724TDW	ENCSR235CEI	bam	alignments	H3K9me3	3	Bradley Bernstein, Broad	GRCh38	
+ectodermal cell	ENCFF482VRI	ENCSR235CEI	bed narrowPeak	replicated peaks	H3K9me3	1,3	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF898KBV	ENCSR200ETW	bam	alignments	H3K27ac	1	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF668YUL	ENCSR200ETW	bam	alignments	H3K27ac	2	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF435HDB	ENCSR200ETW	bed narrowPeak	replicated peaks	H3K27ac	1,2	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF249NJY	ENCSR273IYV	bam	alignments	H3K27me3	1	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF465YTB	ENCSR273IYV	bam	alignments	H3K27me3	2	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF901CSA	ENCSR273IYV	bed narrowPeak	replicated peaks	H3K27me3	1,2	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF778DVB	ENCSR677EZB	bam	alignments	H3K36me3	1	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF352SYV	ENCSR677EZB	bam	alignments	H3K36me3	3	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF280ASK	ENCSR677EZB	bed narrowPeak	replicated peaks	H3K36me3	1,3	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF347EDU	ENCSR446ZCY	bam	alignments	H3K4me3	1	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF937ZPT	ENCSR446ZCY	bam	alignments	H3K4me3	2	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF599VIR	ENCSR446ZCY	bed narrowPeak	replicated peaks	H3K4me3	1,2	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF184CLR	ENCSR823BHO	bam	alignments	H3K9me3	1	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF520XOV	ENCSR823BHO	bam	alignments	H3K9me3	2	Bradley Bernstein, Broad	GRCh38	
+endodermal cell	ENCFF446HIG	ENCSR823BHO	bed narrowPeak	replicated peaks	H3K9me3	1,2	Bradley Bernstein, Broad	GRCh38	
+mesodermal cell	ENCFF114JZY	ENCSR931WLE	bam	alignments	H3K27ac	1	Bradley Bernstein, Broad	GRCh38	
+mesodermal cell	ENCFF175GQI	ENCSR931WLE	bam	alignments	H3K27ac	2	Bradley Bernstein, Broad	GRCh38	
+mesodermal cell	ENCFF997UPL	ENCSR931WLE	bed narrowPeak	replicated peaks	H3K27ac	1,2	Bradley Bernstein, Broad	GRCh38	
+mesodermal cell	ENCFF333ZYU	ENCSR000DSL	bam	alignments	H3K27me3	1	John Stamatoyannopoulos, UW	GRCh38	
+mesodermal cell	ENCFF698VBI	ENCSR000DSL	bam	alignments	H3K27me3	2	John Stamatoyannopoulos, UW	GRCh38	
+mesodermal cell	ENCFF776BSP	ENCSR000DSL	bed narrowPeak	replicated peaks	H3K27me3	1,2	John Stamatoyannopoulos, UW	GRCh38	
+mesodermal cell	ENCFF592HWS	ENCSR100LWU	bam	alignments	H3K36me3	1	Bradley Bernstein, Broad	GRCh38	
+mesodermal cell	ENCFF335KOW	ENCSR100LWU	bam	alignments	H3K36me3	2	Bradley Bernstein, Broad	GRCh38	
+mesodermal cell	ENCFF049SYA	ENCSR100LWU	bed narrowPeak	replicated peaks	H3K36me3	1,2	Bradley Bernstein, Broad	GRCh38	
+mesodermal cell	ENCFF592VIQ	ENCSR959RHF	bam	alignments	H3K4me3	1	Bradley Bernstein, Broad	GRCh38	
+mesodermal cell	ENCFF019SFR	ENCSR959RHF	bam	alignments	H3K4me3	2	Bradley Bernstein, Broad	GRCh38	
+mesodermal cell	ENCFF870OTW	ENCSR959RHF	bed narrowPeak	replicated peaks	H3K4me3	1,2	Bradley Bernstein, Broad	GRCh38	
+mesodermal cell	ENCFF619CYH	ENCSR887ZPC	bam	alignments	H3K9me3	2	Bradley Bernstein, Broad	GRCh38	
+mesodermal cell	ENCFF334UGS	ENCSR887ZPC	bam	alignments	H3K9me3	3	Bradley Bernstein, Broad	GRCh38	
+mesodermal cell	ENCFF708SUO	ENCSR887ZPC	bed narrowPeak	replicated peaks	H3K9me3	2,3	Bradley Bernstein, Broad	GRCh38	
+neuronal stemcell	ENCFF063LDJ	ENCSR799SRL	bam	alignments	H3K27ac	1	Bing Ren, UCSD	GRCh38	
+neuronal stemcell	ENCFF263UOB	ENCSR799SRL	bam	alignments	H3K27ac	3	Bing Ren, UCSD	GRCh38	
+neuronal stemcell	ENCFF722OBP	ENCSR799SRL	bed narrowPeak	replicated peaks	H3K27ac	1,3	Bing Ren, UCSD	GRCh38	
+neuronal stemcell	ENCFF101MMK	ENCSR550XZG	bam	alignments	H3K27me3	1	Bradley Bernstein, Broad	GRCh38	
+neuronal stemcell	ENCFF230ZHL	ENCSR550XZG	bam	alignments	H3K27me3	2	Bradley Bernstein, Broad	GRCh38	
+neuronal stemcell	ENCFF491GSQ	ENCSR550XZG	bed narrowPeak	replicated peaks	H3K27me3	1,2	Bradley Bernstein, Broad	GRCh38	
+neuronal stemcell	ENCFF226NJT	ENCSR238WMO	bam	alignments	H3K36me3	1	Bradley Bernstein, Broad	GRCh38	
+neuronal stemcell	ENCFF726UFJ	ENCSR238WMO	bam	alignments	H3K36me3	2	Bradley Bernstein, Broad	GRCh38	
+neuronal stemcell	ENCFF286UMF	ENCSR238WMO	bed narrowPeak	replicated peaks	H3K36me3	1,2	Bradley Bernstein, Broad	GRCh38	
+neuronal stemcell	ENCFF396QPN	ENCSR354XWM	bam	alignments	H3K4me3	1	Bradley Bernstein, Broad	GRCh38	
+neuronal stemcell	ENCFF490QCW	ENCSR354XWM	bam	alignments	H3K4me3	2	Bradley Bernstein, Broad	GRCh38	
+neuronal stemcell	ENCFF043FGL	ENCSR354XWM	bed narrowPeak	replicated peaks	H3K4me3	1,2	Bradley Bernstein, Broad	GRCh38	
+neuronal stemcell	ENCFF369SMM	ENCSR800IIW	bam	alignments	H3K9me3	1	Bradley Bernstein, Broad	GRCh38	
+neuronal stemcell	ENCFF347GTB	ENCSR800IIW	bam	alignments	H3K9me3	2	Bradley Bernstein, Broad	GRCh38	
+neuronal stemcell	ENCFF304FHZ	ENCSR800IIW	bed narrowPeak	replicated peaks	H3K9me3	1,2	Bradley Bernstein, Broad	GRCh38	
