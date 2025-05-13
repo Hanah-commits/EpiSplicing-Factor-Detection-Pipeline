@@ -3,41 +3,31 @@
     "pr1":{
         "tissue1": "",
         "tissue2": "",
-        "Histone modifications": [
-            ""
-        ],
-        "RNASeq files": "",
-        "strandedness":"",
-        "ChIPSeq files": "",
-        "Reference GFF3": "",
-        "Reference GTF": "",
-        "Reference fasta": "",
-        "threads":"",
-        "MAJIQ config": "",
-        "RBPmap directory": "",
-        "Output directory":"",
-        "read_length":"",
-        "RMATS directory":"",
-        "DEXSEQ directory":""
-    },
-    "pr2":{
         "RNASeq files": "",
         "Reference GFF3":"",
         "Reference GTF": "",
         "Reference fasta": "",
-        "tissue1": "",
-        "tissue2": "",
         "Histone modifications": [
             ""
         ],
         "ChIPSeq files": "",
-        "MAJIQ config": "",
         "RBPmap directory": "",
-        "threads": "",
-        "strandedness":"",
         "Output directory":"",
-        "read_length":"",
-        "RMATS directory":"",
-        "DEXSEQ directory":""
+        "RMATS directory":""
+    },
+    "pr2":{
+        "tissue1": "",
+        "tissue2": "",
+        "RNASeq files": "",
+        "Reference GFF3":"",
+        "Reference GTF": "",
+        "Reference fasta": "",
+        "Histone modifications": [
+            ""
+        ],
+        "ChIPSeq files": "",
+        "RBPmap directory": "",
+        "Output directory":"",
+        "RMATS directory":""
     }
     }

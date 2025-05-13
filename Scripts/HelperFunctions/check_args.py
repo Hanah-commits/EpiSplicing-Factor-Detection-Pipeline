@@ -29,12 +29,8 @@ def check_args():
         "tissue2" : d["tissue2"],
         "Histone modifications" : d["Histone modifications"],
         "ChIPSeq files" : d["ChIPSeq files"],
-        "MAJIQ config" : d["MAJIQ config"],
         "RBPmap directory" : d["RBPmap directory"],
-        "threads" : d['threads'],
-        "read_length":  d['read_length'],
         "Output directory" : d['Output directory'],
-        "DEXSEQ directory": d['DEXSEQ directory'],
         "RMATS directory": d['RMATS directory'],
         }
 
@@ -45,17 +41,9 @@ def check_args():
 
         if len(args["tissue1"].strip()) == 0 or len(args["tissue2"].strip()) == 0:
             raise ValueError('No Tissue Name(s)')
-        
-        #check datatypes
-        for val in ['threads', 'read_length']:
-            try:
-                int(args[val])
-            except:
-                raise ValueError('Invalid Input ' + args[val])
-
 
         # check path validity of directories
-        dirs = ["RNASeq files", "ChIPSeq files", "RBPmap directory", "DEXSEQ directory", "RMATS directory"]
+        dirs = ["RNASeq files", "ChIPSeq files", "RBPmap directory", "RMATS directory"]
         if len(args['Output directory']) != 0:
             dirs.append('Output directory')
         dir_paths = []
@@ -73,7 +61,7 @@ def check_args():
                 raise ValueError('Path does not exist ' + path)
 
         # check path validity of files
-        file_paths = [args["Reference GFF3"], args["Reference GTF"], args["Reference fasta"], args["MAJIQ config"]]
+        file_paths = [args["Reference GFF3"], args["Reference GTF"], args["Reference fasta"]]
         for file in file_paths:
             
             if not os.path.isfile(file):
