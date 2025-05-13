@@ -1,127 +1,24 @@
 # EpiSplicing Factor Detection Pipeline
 
-## Usage
-
-```
-user@ubuntu:~/EpiSplicing-Factor-Detection-Pipeline/Scripts$ python master.py -w
-```
-
-The weight flag (optional) `-w` is used when the expression levels of the splicing factors are used as weights for the binding scores.
+This pipeline is used to analyze and connect RNA-seq and histone modification ChIP-seq data in the context of differential exon usage.
 
 ## Installations
 
-_Note: When using a conda environemnt, check the R version for which the required R packages exist before creating the conda environment._
-
-1. Create a conda environment from the environment.yml file:
+1. Setup environment
 
 ```
 $ conda env create -f environment.yml
 ```
 
-2. Install [dependencies required for MAJIQ](https://biociphers.bitbucket.io/majiq-docs-academic/getting-started-guide/installing.html)
 
-3. Install [MAJIQ](https://bitbucket.org/biociphers/majiq_academic/src/main/)
-
-```
-$ pip install git+https://bitbucket.org/biociphers/majiq_academic.git/voila
-```
-
-4.Install the following R packages:
-
-```
-$ GenomicFeatures
-
-# Optional: if using the weight flag `-w` , install the following R packages:
-
-$ edger
-$ limma
-$ install.packages("rjson")
-```
-
-5.  Install [RBPMap](http://rbpmap.technion.ac.il/download.html#requirements)
-
-    _Note: [Helper scripts](#Helper-Scripts) for the installation can be found in_
-
-    `~/EpiSplicing-Factor-Detection-Pipeline/Scripts/HelperScripts`
+2.  Install [RBPMap](http://rbpmap.technion.ac.il/download.html#requirements)
 
 - Download the required files from http://rbpmap.technion.ac.il/download.html#requirements and follow the installation instructions.
-- Copy the perl script `~/EpiSplicing-Factor-Detection-Pipeline/Scripts/HelperScripts/RBPmap_EpiSplicing.pl` to your main RBPmap directory. This will be used as the main RBPmap script.
-- In `RBPmap_Episplicing.pl`, please edit the paths in the following variables: $scripts_dir, $results_dir to your local *RBPmap* and *EpiSplicing-Factor-Detection-Pipeline* paths, respectively.
+- Copy the perl script `~/EpiSplicing-Factor-Detection-Pipeline/Scripts/HelperFunctions/RBPmap_EpiSplicing.pl` to the RBPmap directory. This will be used as the main RBPmap script.
+- In `RBPmap_Episplicing.pl`, edit the paths in the following variables: $scripts_dir, $results_dir to the local *RBPmap* and *EpiSplicing-Factor-Detection-Pipeline* paths, respectively.
+- To install the desired genomes: 
 
-## Required Files
-
-1. Reference Genome: GFF3 file, fasta
-
-- Download the gff3 file from gencode. It fits the [requirements of MAJIQ.](https://biociphers.bitbucket.io/majiq/quick.html)
-- Download the corresponding .fa file
-
-2.  RNASeq files : .bam and .bam.bai
-
-- Name all the bam and indexed bam files using the following convention:
-
-```
-<tissue type>_<identifier>.bam
-endodermalcell_ENCFF489LAR.bam
-```
-
-3. Create config file for MAJIQ
-   Example:
-
-```
-[info]
-readlen=76
-bamdirs=/data/MGP/ERP000591/bam[,/data/MGP2/ERP000591/bam]
-genome=mm10
-[experiments]
-Hippocampus=Hippocampus1,Hippocampus2
-Liver=Liver1,Liver2
-[optional]
-Hippocampus1=strandness:None,
-Liver2=strandness:reverse,
-```
-
-4 ChIPSeq Files: .bed
-
-- Name all the bed files using the following convention:
-
-```
-<histone modification>_<tissue type>_alignment.bed
-H3K27ac_ectodermalcell_alignment.bed
-
-<histone modification>_<tissue type>_peak.bed
-H3K27ac_ectodermalcell_peak.bed
-```
-
-5. `~/EpiSplicing-Factor-Detection-Pipeline/Scripts/paths.json`
-
-- Fill the fields in the .json file. Example:
-
-```json
-{
-  "tissue1": "ectodermalcell",
-  "tissue2": "endodermalcell",
-  "Histone modifications": ["H3K27ac", "H3K9me3"],
-  "RNASeq files": "/home/user/bam_files",
-  "strandedness" : "1",
-  "ChIPSeq files": "/home/user/bed_files",
-  "Reference genome": "/home/user/gencode.gtf",
-  "threads": "8",
-  "MAJIQ config": "/home/user/majiq/sample.config",
-  "RBPmap directory": "/home/user/RBPmap"
-}
-```
-
-*Note: _strandedness" can take three possible values:  0 (unstranded), 1 (stranded) and 2 (reversely stranded) 
-
-## Helper Scripts
-
-### RBPMap installation helper scripts
-
-*Note: Please replace the given paths with the appropriate paths in your machine*
-
-1. To download .fa files of required chromosomes.
-   ftp.py
-
+*ftp.py*
 ```python
 import os
 
@@ -134,14 +31,97 @@ for x in ['X', 'Y']:
 
 os.system("gunzip -r *.fa.gz")
 ```
+- To convert .fa files to .nib
 
-2. To convert all.fa files to .nib
-   allFaToNib.sh
-
+*allFaToNib.sh*
 ```shell
 for i in *.fa; do
   j="/home/ubuntu/RBPmap_1.2/UCSC/hg38/${i%.*}.nib";
   "../faToNib" "/home/ubuntu/RBPmap_1.2/UCSC/hg38/${i}" "${j}";
   done
+```
+
+## Required Files
+
+1. Reference Annotation, Genome: GTF, GFF3 and fasta (gencode)
+
+2.  RNASeq files : .bam and .bam.bai
+
+- Name all the bam and indexed bam files using the following convention:
+
+```
+<tissue type>_<identifier>.bam
+endodermalcell_ENCFF489LAR.bam
+```
+
+3. ChIPSeq Files: .bed
+
+- Name all the bed files using the following convention:
+
+```
+<histone modification>_<tissue type>_alignment.bed
+H3K27ac_ectodermalcell_alignment.bed
+
+<histone modification>_<tissue type>_peak.bed
+H3K27ac_ectodermalcell_peak.bed
+```
+
+5. Config file: `~/EpiSplicing-Factor-Detection-Pipeline/Scripts/paths.json`
+
+- Fill the fields in paths.json. Example:
+
+```json
+    {
+    "list_of_processes" : ["pr1", "pr2"],
+    "pr1":{
+        "tissue1": "ectodermalcell",
+        "tissue2": "H1",
+        "RNASeq files": "/home/user/data/bam_dir/",
+        "Reference GFF3": "/home/user/data/ref_genome/v24/gencode.v24.PRI.gff3",
+        "Reference GTF": "/home/user/data/ref_genome/v24/gencode.v24.PRI.gtf",
+        "Reference fasta": "/home/user/data/ref_genome/v24/GRCh38.PRI.fa",
+                "Histone modifications": [
+            "H3K27ac",
+            "H3K27me3",
+            "H3K9me3",
+            "H3K4me3"
+        ],
+         "ChIPSeq files": "/home/user/data/bam_dir/histone_data/",
+        "RBPmap directory": "/home/user/RBPmap_1.2/",
+        "Output directory":"", #optional
+        "RMATS directory":"/home/user/miniconda3/envs/epi_env/rMATS/"
+    },
+    "pr2":{
+        "tissue1": "endodermalcell",
+        "tissue2": "H1",
+        "RNASeq files": "/home/user/data/bam_dir/",
+        "Reference GFF3": "/home/user/data/ref_genome/v24/gencode.v24.PRI.gff3",
+        "Reference GTF": "/home/user/data/ref_genome/v24/gencode.v24.PRI.gtf",
+        "Reference fasta": "/home/user/data/ref_genome/v24/GRCh38.PRI.fa",
+                "Histone modifications": [
+            "H3K27ac",
+            "H3K27me3",
+            "H3K9me3",
+            "H3K4me3",
+            "H3K36me3"     
+        ],
+        "ChIPSeq files": "/home/user/data/bam_dir/histone_data/",
+        "RBPmap directory": "/home/user/RBPmap_1.2/",
+        "Output directory":"", #optional
+        "RMATS directory":"/home/user/miniconda3/envs/epi_env/rMATS/"
+    }
+    }
+```
+
+## Usage
+
+```bash 
+# Run processes(pr*) from config file
+# Returns epispliced and non-epispliced genes for every biosample pair
+~/EpiSplicing-Factor-Detection-Pipeline/Scripts$ python master_1.py
+
+# Post-processing
+# Pools epispliced and non-epispliced genes, run RBPmap, binary classification
+~/EpiSplicing-Factor-Detection-Pipeline/Scripts$ python master_2.py 
 ```
 
