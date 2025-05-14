@@ -110,7 +110,6 @@ def check_args():
 def move_dirs(output_dir, proc):
     sys.stdout.close()
     shutil.move(f'{proc}_0_Files/', f'{output_dir}0_Files')
-    shutil.move(f'../{proc}_RBPmap/', f'{output_dir}RBPmap')
     shutil.move(f'{proc}_output.log', f'{output_dir}output.log')
 
 

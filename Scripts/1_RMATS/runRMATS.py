@@ -1,5 +1,4 @@
 import os
-import sys
 import json
 import glob
 from pathlib import Path
@@ -50,4 +49,4 @@ if __name__ == "__main__":
 
     # run rmats
     ## -t single (to include paired reads and those without a proper pair), --libType fr-firststrand (reverse-stranded), --allow-clipping
-    os.system(f'python {rmats_dir}rmats.py --b1 {output_dir}{tissue1}.txt --b2 {output_dir}{tissue2}.txt --gtf {ref} -t single --readLength {read_len} --variable-read-length --libType fr-firststrand --allow-clipping --nthread 8 --od {output_dir} --tmp {output_dir}tmp/ --task both')
+    os.system(f'python {rmats_dir}rmats.py --b1 {output_dir}{tissue1}.txt --b2 {output_dir}{tissue2}.txt --gtf {ref} -t single --variable-read-length --libType fr-firststrand --allow-clipping --nthread 8 --od {output_dir} --tmp {output_dir}tmp/ --task both')

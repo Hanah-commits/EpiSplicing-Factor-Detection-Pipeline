@@ -1,14 +1,11 @@
-import sys
 import json
 import pandas as pd
 import numpy as np
 from scipy.stats import pearsonr
 import matplotlib.pyplot as plt
-from venn import venn
 import seaborn as sns
 import numpy as np
 from pathlib import Path
-from collections import Counter
 import warnings
 from argparse import ArgumentParser
 
