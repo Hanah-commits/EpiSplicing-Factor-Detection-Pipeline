@@ -432,6 +432,10 @@ def heatmap_imptRBPs_binding(hm):
 
 
 def prep_log2_norm_counts():
+
+    # # obtain normalised expression values
+    # os.system('bash HelperFunctions/RBP_Expression/main.sh')
+
     # read normalised counts tsv
     counts = pd.read_csv('0_Files/Post-processing/Analyses/expression/counts/tpm_values_rbps.tsv', delimiter='\t')
 
