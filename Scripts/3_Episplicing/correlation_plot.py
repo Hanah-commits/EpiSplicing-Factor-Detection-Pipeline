@@ -146,6 +146,56 @@ def make_hm_plots(hm, hm_flanks, hm_pvals, hm_coeff, dir, tmp_out_dir):
     return true_genes
 
 
+def get_true_controls(hm, hm_flanks, dir, tmp_out_dir):
+
+    if len(hm_flanks) == 0:
+        true_genes = []
+        print(hm, '  ', len(true_genes))
+
+        with open(f'{tmp_out_dir}/{dir}/{hm}/{hm}_truepos_epiNonDEU_genes.txt', 'w') as f:
+            for line in true_genes:
+                f.write("%s\n" % line)
+
+    else:
+        file = dir.lower()
+
+        hm_flanks = hm_flanks.copy() # Make a copy to avoid the SettingWithCopyWarning
+        genes = list(set(hm_flanks['gene_name'].values.tolist()))
+        hm_flanks["type"] = hm_flanks.apply(lambda row: 'deu' if row['dPSI'] != 0 else 'non-deu', axis=1)
+
+        # impute missing data points
+        hm_flanks.fillna(0,inplace=True)
+
+        # get absolute DEU, DHM values
+        hm_flanks.loc[:, 'dPSI'] = hm_flanks['dPSI'].abs()
+        hm_flanks.loc[:, hm] = hm_flanks[hm].abs()
+        
+        # round off
+        hm_flanks.loc[:, 'dPSI'] = hm_flanks['dPSI'].round(2)
+        hm_flanks.loc[:, hm] = hm_flanks[hm].round(2)
+
+
+        filter_out = []
+        for gene in genes:
+            ## FILTER 1: remve genes whee AS exons also have DHM peakss
+            gene_df = hm_flanks[hm_flanks.gene_name == gene]
+            if ((gene_df[hm] != 0) & (gene_df['type'] == 'deu')).any():
+                filter_out.append(gene)
+
+        true_genes = [gene for gene in genes if gene not in filter_out]
+
+        with open(f'{tmp_out_dir}/{dir}/{hm}/{hm}_truepos_epiNonDEU_genes.txt', 'w') as f:
+            for line in true_genes:
+                f.write("%s\n" % line)
+
+        hm_flanks = hm_flanks[hm_flanks['gene_name'].isin(true_genes)]
+        hm_flanks.to_csv(f'{tmp_out_dir}/{dir}/{hm}/dPSI_Mval_epiNonDEU_{hm}_{file}.csv', sep='\t', index=False)
+
+        print(hm, '  ', len(true_genes))
+    
+    return true_genes
+
+
 def corr_plot(gene_df, gene, hm, r, p, path):
     
     # plot deu vs dhm with regression line
@@ -216,6 +266,7 @@ def indiv_hms(args, dir):
     filtered_flanks.set_index('idx', inplace=True)
 
     true_epigenes = []
+    true_epiNonDEU_genes = []
     print('# correlation candidates:        ', len(set(filtered_flanks.gene_name.values.tolist()))) # check num before and after noepi filtering
 
     if len(set(filtered_flanks.gene_name.values.tolist())) > 0:
@@ -290,11 +341,58 @@ def indiv_hms(args, dir):
 
         epigenes = list(set([item for items in true_epigenes for item in items]))
         
-    print('Epigenes     ', len(epigenes))
-    print('Non-Epigenes ', len(non_epi))
+        # STEP 4: Find epi(NonDEU)genes: genes where adjusted_pval <= 0.05, R  >= -0.5 
+
+        print(f'\nConstitutively-spliced Epigene Detection: {dir}')
+
+        #rename and rearrange columns
+
+        correlated_genes = list(set(adj_pvals.gene_name.values.tolist()))
+        hm_epiNonDEU_genes_dict = {hm: [] for hm in hms}
+        for gene in correlated_genes:
+            for hm in hms:
+                condition = (adj_pvals.gene_name == gene) & (adj_pvals[hm] <= 0.05) & (coeff.gene_name == gene) & (coeff[hm] >= -0.5)
+                if condition.any():
+                    hm_epiNonDEU_genes_dict[hm].append(gene)
+
+        epiNonDEU_genes = list(set([item for sublist in hm_epiNonDEU_genes_dict.values() for item in sublist]))
+        print('PRE-FILTERING:                   ', len(epiNonDEU_genes)) # temp comment
+
+        for gene in epiNonDEU_genes:
+
+            with open(f'{tmp_out_dir}/{dir}/{file}_epiNonDEUgenes.txt', 'w') as f:
+                for line in list(set(epigenes)):
+                    f.write("%s\n" % line)
+
+        ## STEP 4: Make corr plots of hm-specific epiNonDEUgenes:
+        if len(epiNonDEU_genes) > 0:
+            # get flanks of hm-specific epiNonDEUgenes
+            i = 0
+            for hm in hms:
+
+                hm_epiNonDEU_genes = hm_epiNonDEU_genes_dict[hm]
+            
+                # get flanks, pvals and coeffs of hm-specific epiNonDEUgenes
+                hm_flanks = flanks_meta[flanks_meta['gene_name'].isin(hm_epiNonDEU_genes)]
+                hm_coeff = coeff[coeff['gene_name'].isin(hm_epiNonDEU_genes)]
+                hm_pvals = adj_pvals[adj_pvals['gene_name'].isin(hm_epiNonDEU_genes)]
+
+                # hm-specific corrplot
+                true_epiNonDEU_genes.append(get_true_controls(hm, hm_flanks, dir, tmp_out_dir))
+
+                i+=1
+
+        epiNonDEU_genes = list(set([item for items in true_epiNonDEU_genes for item in items]))
+
+    print('Epigenes             ', len(epigenes))
+    print('Non-Epigenes         ', len(non_epi))
+    print('EpiNonDEU_genes      ', len(epiNonDEU_genes))
     
     # get flanks of all epispliced genes
     flanks_meta[flanks_meta['gene_name'].isin(epigenes)].to_csv(f'{tmp_out_dir}/{dir}/dPSI_Mval_epi_{file}.csv', sep='\t', index=False)
+
+    # get flanks of all epi non-DEU genes
+    flanks_meta[flanks_meta['gene_name'].isin(epiNonDEU_genes)].to_csv(f'{tmp_out_dir}/{dir}/dPSI_Mval_epiNonDEU_{file}.csv', sep='\t', index=False)
 
     # # get flanks of non-epispliced genes
     flanks_meta[flanks_meta['gene_name'].isin(non_epi)].to_csv(f'{tmp_out_dir}/{dir}/dPSI_Mval_nonepi_{file}.csv', sep='\t', index=False)

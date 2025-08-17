@@ -1,9 +1,13 @@
 import pandas as pd, numpy as np
 import re
+import os
+import glob
 
 
 def post_rbp(rbp_num):
-  
+
+    # get list of RBPs
+    os.system(f'cp HelperFunctions/rbps_{str(rbp_num)}.txt ../RBPmap_{str(rbp_num)}/rbps.txt')
 
     for type in ['epi', 'nonepi']:
         opdir = '0_Files/Post-processing'
@@ -12,8 +16,73 @@ def post_rbp(rbp_num):
         proteins = list(set([rbp for rbp in rbps.read().split('\n') if len(rbp)]))
 
         # # proteins = ['RBM15'] #if single rbp
+        try:
+            filename=f'../RBPmap_{str(rbp_num)}/resultsrbp_input_{type}1.csv*/All_Predictions.txt' # local RBPmap/old versions
+            filename = [file for file in glob.glob(filename)][0]
+        except:
+            filename=f'../RBPmap_{str(rbp_num)}/resultsrbp_input_{type}1.csv*/All_Predictions.csv' # webserver/ new version
+            filename = [file for file in glob.glob(filename)][0]
+        
+        if 'Predictions.csv' in filename:
+            coor_scores = pd.DataFrame(columns=proteins)
+            coordinate = ""
+            score_dict = {}
 
-        filename=f'../RBPmap_{str(rbp_num)}/results_rbp_input_{type}1.csv/All_Predictions.txt'
+            with open(filename, 'r') as file:
+
+                for line in file:
+                    line = line.strip()
+
+                    # skip empty lines and metadata
+                    if not line or line.startswith(("Predictions for job", "Calculation parameters", "Genome:", "Selected motifs:", "Stringency level:", "Conservation filter:", "Protein")):
+                        continue
+
+                    if line.startswith("chr") and ":" in line and "-" in line:
+                        coordinate = line
+
+                    fields = [f.strip() for f in line.split(",")]
+                    if len(fields) != 7:
+                        continue
+
+                    raw_protein = fields[0]
+                    z_score_str = fields[5]
+                    protein_match = re.search(r"(?:User_)?([a-zA-Z0-9]+)(?:\()?", raw_protein) #"U2AF2(Hs/Mm)", "User_U2AF2"
+                    # print(protein_match)
+                    if not protein_match or protein_match.group(1) not in proteins:
+                        continue
+                    protein = protein_match.group(1)
+                    
+
+                    try:
+                        z_score = float(z_score_str)
+                    except ValueError:
+                        continue
+
+                    # keep max binding score of RBP in current flanks
+                    if coordinate and protein:
+                        if coordinate not in score_dict:
+                            score_dict[coordinate] = {}
+                        current = score_dict[coordinate].get(protein, 0.0)
+                        score_dict[coordinate][protein] = max(current, z_score)
+
+                for coord, protein_scores in score_dict.items():
+                    for prot, val in protein_scores.items():
+                        coor_scores.loc[coord, prot] = val
+
+                coor_scores.infer_objects(copy=False).fillna(0.0, inplace=True)
+                coor_scores.index = coor_scores.index.astype(str)
+
+                # # Split coords into columns
+                coor_scores['coord'] = coor_scores.index
+                coor_scores[['chr', 'start_end', 'strand']] = coor_scores['coord'].str.split(':', expand=True)
+                coor_scores[['flank_start', 'flank_end']] = coor_scores['start_end'].str.split('-', expand=True)
+                #drop index and cols, rearrange cols
+                coor_scores = coor_scores.drop(columns=['coord','start_end'])
+                coor_scores = coor_scores[['chr', 'flank_start', 'flank_end', 'strand'] + proteins]
+                coor_scores.reset_index(drop=True, inplace=True)
+                coor_scores.to_csv(f"{opdir}/FilteredZscores_{type}.csv", sep=',', index=None)
+
+                return
 
         parsed_data = []
 
