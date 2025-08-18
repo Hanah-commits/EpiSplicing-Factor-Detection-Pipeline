@@ -117,7 +117,7 @@ def process_annotated_eclip(op_dir):
     
     df = pd.read_csv(f'{op_dir}/Post-processing/epi_flanks_annotated.bed', delimiter='\t')
     
-    os.makedirs(f"{op_dir}/Post-processing/eclip/", exist_ok=True)  # Create the directory if it doesn't exist
+    os.makedirs(f"{op_dir}/Post-processing/Analyses/eclip/", exist_ok=True)  # Create the directory if it doesn't exist
 
     # split column values to multiple lines
     df['eCLIP'] = df['eCLIP'].str.replace(".,", "")
