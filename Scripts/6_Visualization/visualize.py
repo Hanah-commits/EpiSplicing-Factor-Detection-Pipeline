@@ -6,6 +6,7 @@ from sklearn.utils import shuffle
 from sklearn.decomposition import PCA
 import seaborn as sns
 from upsetplot import UpSet, from_indicators
+from scipy.stats import mannwhitneyu
 
 
 def plot_epigenes():
@@ -719,6 +720,72 @@ def validation_epigenes():
     plt.savefig('0_Files/Post-processing/Analyses/epigenes/Validation-Epigenes.png',bbox_inches='tight', dpi=300)
 
 
+def RBP_binding_comparison(type):
+
+    op_dir = "0_Files/Post-processing/imptRBPS/bindinscores_heatmaps/"
+    os.makedirs(op_dir, exist_ok=True)
+
+    features1 = pd.read_csv('0_Files/Post-processing/features_all_132.csv', delimiter='\t')
+    features2 = pd.read_csv('0_Files/Post-processing/features_all_47.csv', delimiter='\t')
+
+    features = pd.concat([features1,features2], axis=1)
+    features = features.loc[:,~features.columns.duplicated()].copy() # drop duplicate columns
+    features.fillna(0,inplace=True)
+    features = features[features.label==type]
+
+    hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3']
+    for hm in hms:
+
+        #get epi and nonepiRBPs to plot
+        features_to_plot = []
+        epi_RBPs = []
+        rbps_file = open(f"0_Files/Post-processing/epiRBPS/epiRBPs_{hm}.txt", "r")
+        features_to_plot.extend(sorted([rbp for rbp in rbps_file.read().split('\n') if rbp]))
+        epi_RBPs = features_to_plot.copy()
+        rbps_file = open(f"0_Files/Post-processing/nonepiRBPS/nonepiRBPs_{hm}.txt", "r")
+        features_to_plot.extend(sorted([rbp for rbp in rbps_file.read().split('\n') if rbp]))
+            
+        # extract features for hm
+        features_hm = features[features['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
+        features_hm = features_hm[features_to_plot]
+        features_hm = features_hm.applymap(lambda val: 0 if val < 2 else val) # keep only strong binding events
+        features_hm = features_hm.T
+        features_hm['Binding_mean'] = features_hm.mean(axis=1)
+        class_var = f'{hm} : RBP class'
+        features_hm[class_var] = np.where(features_hm.index.isin(epi_RBPs),'Episplicing RBPs', 'Non-episplicing RBPs')
+        features_hm = features_hm[[class_var, 'Binding_mean']]
+
+        ## MannWhitney Utest       
+        epiRBP_scores = features_hm.loc[features_hm[class_var]=="Episplicing RBPs", "Binding_mean"]
+        nonepiRBP_scores = features_hm.loc[features_hm[class_var]=="Non-episplicing RBPs", "Binding_mean"]
+        stat, pval = mannwhitneyu(epiRBP_scores, nonepiRBP_scores, alternative="two-sided")
+
+        # plot binding scores
+
+        color_dict = dict(zip(hms,["#9A71F8", "#69D4EC", "#B0D212", "#FF9900", "#ED588A"]))
+        custom_palette = { 'Non-episplicing RBPs': '#e3e1d3'}
+        custom_palette['Episplicing RBPs'] = color_dict[hm]
+
+        plt.figure(figsize=(6,5))
+        sns.boxplot(data=features_hm, x=class_var, y="Binding_mean", palette=custom_palette, showfliers=False, width=0.6)
+
+        # swarmplot for individual points
+        sns.swarmplot(data=features_hm, x=class_var, y="Binding_mean", color="k", alpha=0.6, size=3)
+
+        # annotate p-value above the boxes
+        x1, x2 = 0, 1
+        y = features_hm["Binding_mean"].max() + (features_hm["Binding_mean"].max() - features_hm["Binding_mean"].min()) * 0.1
+        plt.plot([x1, x1, x2, x2], [y, y+0.02, y+0.02, y], lw=1.5, c='k')
+        plt.text((x1+x2)*.5, y+0.03, f"p = {pval:.3e}", ha='center', va='bottom')
+
+       
+        plt.xlabel("")
+        plt.ylabel(f"Average Predicted Binding Scores - {hm}", fontsize=10)
+        # plt.title(f"{hm}", fontsize=14)
+        plt.tight_layout()
+        plt.savefig(f'{op_dir}/{hm}_boxplot_impt_RBPs_{type}.png', bbox_inches='tight', dpi=300)
+
+
 if __name__ == "__main__":
 
     plot_epigenes() # Figure 1
@@ -739,5 +806,8 @@ if __name__ == "__main__":
     last_exon_epi_overlap()
     epigene_overlap()
     validation_epigenes()
+
+    for type in ['epigene', 'non-epigene']: 
+        RBP_binding_comparison(type)
 
     
