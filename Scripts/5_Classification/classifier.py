@@ -5,6 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import RepeatedStratifiedKFold, cross_validate
 from sklearn.metrics import precision_recall_curve, average_precision_score, make_scorer, fbeta_score, confusion_matrix
 from sklearn.utils import shuffle
@@ -20,8 +21,7 @@ def all_prauc_together():
     color_dict = dict(zip(hms,["#9A71F8", "#69D4EC", "#B0D212", "#FF9900", "#ED588A"]))
 
     # Initialize plot
-    plt.figure(figsize=(7, 7))
-    plt.axes().set_aspect('equal', 'datalim')
+    fig, axes = plt.subplots(1, 2, figsize=(14,6), sharey=True)
 
     for hm in hms:
 
@@ -47,40 +47,52 @@ def all_prauc_together():
         features['label'] = features['label'].map({'epigene': 1, 'non-epigene': 0}).astype(int)
         X, y = sf_data.values, features['label'].values
 
-        # Classifier and cross-validation
+        # Classifiers
         clf = RandomForestClassifier(class_weight='balanced', n_jobs = -1, random_state=0, n_estimators=200)
-        kf = RepeatedStratifiedKFold(n_splits=5, random_state=42, n_repeats=10) 
+        dummy_clf = DummyClassifier(strategy='uniform', random_state=42)
 
-        all_precisions = []
-        mean_pr_aucs = []
+        # cross-validation
+        kf = RepeatedStratifiedKFold(n_splits=5, random_state=42, n_repeats=10)         
 
-        # Loop over folds
-        for i, (train, test) in enumerate(kf.split(X, y)):
-            model = clf.fit(X[train], y[train])
-            y_score = model.predict_proba(X[test])
-            avg_precision = average_precision_score(y[test], y_score[:, 1])
-            mean_pr_aucs.append(avg_precision)      
+        def evaluate_model(clf_model, X, y):
 
-            precision, recall, _ = precision_recall_curve(y[test], y_score[:, 1])
-            all_precisions.append(np.interp(np.linspace(0, 1, 100), recall[::-1], precision[::-1])) ## Interpolate precision values for consistent recall points
+            all_precisions = []
+            mean_pr_aucs = []
 
-        # calculate the mean precision-recall curve
-        mean_precision = np.mean(all_precisions, axis=0)
-        mean_recall = np.linspace(0, 1, 100)
-        mean_pr_auc = np.mean(mean_pr_aucs)
-        pr_auc_ci = np.std(mean_pr_aucs) * 1.96  # 95% CI approximation
+            # Loop over folds
+            for i, (train, test) in enumerate(kf.split(X, y)):
+                model = clf_model.fit(X[train], y[train])
+                y_score = model.predict_proba(X[test])
+                avg_precision = average_precision_score(y[test], y_score[:, 1])
+                mean_pr_aucs.append(avg_precision)      
 
-        # plot the mean curve
-        plt.plot(mean_recall, mean_precision, color=color_dict[hm], label=f'{hm} Mean PR-AUC = {mean_pr_auc:.2f} ± {pr_auc_ci:.2f}')
+                precision, recall, _ = precision_recall_curve(y[test], y_score[:, 1])
+                all_precisions.append(np.interp(np.linspace(0, 1, 100), recall[::-1], precision[::-1])) ## Interpolate precision values for consistent recall points
 
-    # customize plot
-    plt.xlabel('Recall',  fontsize=10)
-    plt.ylabel('Precision',  fontsize=10)
-    plt.xlim([-0.01, 1.01])
-    plt.ylim([-0.01, 1.01])
-    plt.legend(loc='lower right')
+            # calculate the mean precision-recall curve
+            mean_precision = np.mean(all_precisions, axis=0)
+            mean_recall = np.linspace(0, 1, 100)
+            mean_pr_auc = np.mean(mean_pr_aucs)
+            pr_auc_ci = np.std(mean_pr_aucs) * 1.96  # 95% CI approximation
 
-    # plt.title(f'Precision-Recall Curve', fontsize=10)
+            return mean_recall, mean_precision, mean_pr_auc, pr_auc_ci
+        
+        # classifiers
+        rf_recall, rf_precision, rf_auc, rf_ci = evaluate_model(clf, X, y)
+        dummy_recall, dummy_precision, dummy_auc, dummy_ci = evaluate_model(dummy_clf, X, y)
+
+        # RF model
+        axes[0].plot(rf_recall, rf_precision, color=color_dict[hm], label = f'{hm} Mean PR-AUC = {rf_auc:.2f} ± {rf_ci:.2f}')
+        axes[0].set_xlabel("Recall")
+        axes[0].set_ylabel("Precision")
+        axes[0].legend(loc='lower left')
+
+        # Baseline
+        axes[1].plot(dummy_recall, dummy_precision, color=color_dict[hm], label = f'Baseline {hm} Mean PR-AUC = {dummy_auc:.2f} ± {dummy_ci:.2f}', linestyle="--")
+        axes[1].set_xlabel("Recall")
+        axes[1].legend(loc='lower left')
+
+    plt.tight_layout(pad = 0, h_pad=0, w_pad=0,rect=[0, 0, 1, 1])
     plt.savefig(f"0_Files/Post-processing/Analyses/PRAUC/PRAUC_affinities.png", bbox_inches='tight', dpi=300)
     plt.close()
     
