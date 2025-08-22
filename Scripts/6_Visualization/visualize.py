@@ -7,6 +7,7 @@ from sklearn.decomposition import PCA
 import seaborn as sns
 from upsetplot import UpSet, from_indicators
 from scipy.stats import mannwhitneyu
+from statsmodels.stats.multitest import multipletests
 
 
 def plot_epigenes():
@@ -733,7 +734,11 @@ def RBP_binding_comparison(type):
     features.fillna(0,inplace=True)
     features = features[features.label==type]
 
+    hm_pvals = {}
+    hm_stats = {}
     hms = ['H3K27ac', 'H3K27me3','H3K36me3', 'H3K9me3', 'H3K4me3']
+
+    # STEP 1: MannWhitney UTest
     for hm in hms:
 
         #get epi and nonepiRBPs to plot
@@ -759,8 +764,38 @@ def RBP_binding_comparison(type):
         epiRBP_scores = features_hm.loc[features_hm[class_var]=="Episplicing RBPs", "Binding_mean"]
         nonepiRBP_scores = features_hm.loc[features_hm[class_var]=="Non-episplicing RBPs", "Binding_mean"]
         stat, pval = mannwhitneyu(epiRBP_scores, nonepiRBP_scores, alternative="two-sided")
+        hm_pvals[hm] = pval
+        hm_stats[hm] = stat
 
-        # plot binding scores
+    # STEP 2:  FDR correction
+    pvals = list(hm_pvals.values())
+    _, pvals_adj, _, _ = multipletests(pvals, method="fdr_bh")
+    hm_pvals = dict(zip(hm_pvals.keys(), pvals_adj))
+
+    # STEP 3:  plot binding scores
+    for hm in hms:
+
+        print(f'{hm} \n Test statistic: ', hm_stats[hm])
+        print('Adj Pval: ', hm_pvals[hm])
+
+        #get epi and nonepiRBPs to plot
+        features_to_plot = []
+        epi_RBPs = []
+        rbps_file = open(f"0_Files/Post-processing/epiRBPS/epiRBPs_{hm}.txt", "r")
+        features_to_plot.extend(sorted([rbp for rbp in rbps_file.read().split('\n') if rbp]))
+        epi_RBPs = features_to_plot.copy()
+        rbps_file = open(f"0_Files/Post-processing/nonepiRBPS/nonepiRBPs_{hm}.txt", "r")
+        features_to_plot.extend(sorted([rbp for rbp in rbps_file.read().split('\n') if rbp]))
+            
+        # extract features for hm
+        features_hm = features[features['type'].apply(lambda x: any(item in [hm] for item in x.split(',')))]
+        features_hm = features_hm[features_to_plot]
+        features_hm = features_hm.applymap(lambda val: 0 if val < 2 else val) # keep only strong binding events
+        features_hm = features_hm.T
+        features_hm['Binding_mean'] = features_hm.mean(axis=1)
+        class_var = f'{hm} : RBP class'
+        features_hm[class_var] = np.where(features_hm.index.isin(epi_RBPs),'Episplicing RBPs', 'Non-episplicing RBPs')
+        features_hm = features_hm[[class_var, 'Binding_mean']]
 
         color_dict = dict(zip(hms,["#9A71F8", "#69D4EC", "#B0D212", "#FF9900", "#ED588A"]))
         custom_palette = { 'Non-episplicing RBPs': '#e3e1d3'}
@@ -776,7 +811,7 @@ def RBP_binding_comparison(type):
         x1, x2 = 0, 1
         y = features_hm["Binding_mean"].max() + (features_hm["Binding_mean"].max() - features_hm["Binding_mean"].min()) * 0.1
         plt.plot([x1, x1, x2, x2], [y, y+0.02, y+0.02, y], lw=1.5, c='k')
-        plt.text((x1+x2)*.5, y+0.03, f"p = {pval:.3e}", ha='center', va='bottom')
+        plt.text((x1+x2)*.5, y+0.03, f"p = {hm_pvals[hm]:.3e}", ha='center', va='bottom')
 
        
         plt.xlabel("")
