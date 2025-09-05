@@ -1,3 +1,4 @@
+from pathlib import Path
 import pandas as pd
 import numpy as np
 import sys, os, csv
@@ -341,7 +342,7 @@ def SHAP( hm):
     sf_data = features[sf]
     sf_data = sf_data.applymap(lambda val: 0 if val < 2 else val)
 
-    features['label'] = features['label'].map({'epigene': 0, 'non-epigene': 1}).astype(int)
+    features['label'] = features['label'].map({'epigene': 1, 'non-epigene': 0}).astype(int)
     X, y = sf_data.values, features['label'].values
 
     # Initialize classifier and cross-validation
@@ -424,4 +425,10 @@ if __name__ == "__main__":
     for hm in hms:
         confusion_matrix_plot(hm)
         SHAP(hm=hm)
+
+        # empty files for manual selection of impt RBPs based on SHAP plots
+        for mode in ['epi', 'nonepi']:
+            output_dir = str(Path(os.getcwd())) + f"/0_Files/Post-processing/{mode}RBPs/SHAP_{mode}RBPs"
+            Path(output_dir).mkdir(parents=True, exist_ok=True)
+            open(f'{output_dir}/rbps_{hm}.txt', 'a').close()
     
