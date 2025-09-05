@@ -211,13 +211,13 @@ def feature_matrix_1():
 def feature_matix_2(rbp_num):
 
     types = ['epi', 'nonepi', 'epi_nonspliced']
-    labels = ['epigene', 'non-epigene', 'epi_nonspliced_gene']
+    label = ['epigene', 'non-epigene', 'epi_nonspliced_gene']
 
     # read feature matrices
     feature_dfs = []
     for type in types:
         feature_df = pd.read_csv(f'0_Files/Post-processing/features_{type}.csv', delimiter='\t')
-        if type == 'nonepi': # keep nonepi flanks for hms available in current study
+        if type == 'nonepi':
             feature_df = feature_df[feature_df['type'].apply(lambda x: any(item in ['H3K27ac', 'H3K27me3', 'H3K9me3', 'H3K4me3', 'H3K36me3'] for item in x.split(',')))]
         feature_dfs.append(feature_df)
 
@@ -231,8 +231,8 @@ def feature_matix_2(rbp_num):
             features2 = feature_dfs[j]
 
             # label exon classes
-            features1['labels'] = labels[i]
-            features2['labels'] = labels[j]
+            features1['label'] = label[i]
+            features2['label'] = label[j]
 
             # merge into single matrix
             all_features = pd.concat([features1, features2], axis=0)
@@ -241,17 +241,17 @@ def feature_matix_2(rbp_num):
             for hm in ['H3K27ac', 'H3K27me3', 'H3K9me3', 'H3K4me3', 'H3K36me3']:
                 print('\n',hm)
                 temp_features = all_features[all_features['type'].apply(lambda x: hm in x.split(','))]
-                features1 = temp_features[temp_features.labels == labels[i]]
-                features2 = temp_features[temp_features.labels != labels[i]]
+                features1 = temp_features[temp_features.label == label[i]]
+                features2 = temp_features[temp_features.label != label[i]]
                 
-                # remove genes with both labels
+                # remove genes with both label
                 common_genes = list(set(features1.gene_name.values.tolist()) & set(features2.gene_name.values.tolist()))
                 if len(common_genes):
-                    temp_features = temp_features[~((temp_features.gene_name.isin(common_genes)) & (temp_features.labels == labels[j]))]
-                    temp_features = temp_features[~((temp_features.gene_name.isin(common_genes)) & (temp_features.labels == labels[i]))]
+                    temp_features = temp_features[~((temp_features.gene_name.isin(common_genes)) & (temp_features.label == label[j]))]
+                    temp_features = temp_features[~((temp_features.gene_name.isin(common_genes)) & (temp_features.label == label[i]))]
 
-                print(f'{labels[i].title()}s:', len(set(temp_features[temp_features.labels==labels[i]].gene_name.values)), 'Flanks:', len(temp_features[temp_features.labels==labels[i]]))
-                print(f'{labels[j].title()}s:', len(set(temp_features[temp_features.labels==labels[j]].gene_name.values)), 'Flanks:', len(temp_features[temp_features.labels==labels[j]]))
+                print(f'{label[i].title()}s:', len(set(temp_features[temp_features.label==label[i]].gene_name.values)), 'Flanks:', len(temp_features[temp_features.label==label[i]]))
+                print(f'{label[j].title()}s:', len(set(temp_features[temp_features.label==label[j]].gene_name.values)), 'Flanks:', len(temp_features[temp_features.label==label[j]]))
 
                 filtered_features.append(temp_features)
 
@@ -259,11 +259,61 @@ def feature_matix_2(rbp_num):
             all_features.drop(['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name'], axis=1, inplace=True)
 
 
-            col = all_features.pop("labels")
+            col = all_features.pop("label")
             all_features.insert(0, col.name, col)
 
             all_features.to_csv(f'0_Files/Post-processing/features_all_{types[i]}_vs_{types[j]}_{rbp_num}.csv', sep='\t', index=False)
             print( '\n-----------------------\n')
+
+
+def feature_matix_3(rbp_num):
+
+    types = ['epi', 'nonepi', 'epi_nonspliced']
+    labels = ['epigene', 'non-epigene', 'epi_nonspliced_gene']
+
+    # read feature matrices
+    feature_dfs = []
+
+    for i in range(len(types)):
+        feature_df = pd.read_csv(f'0_Files/Post-processing/features_{types[i]}.csv', delimiter='\t')
+        feature_df['label'] = labels[i]  # label exon classes
+        if types[i] == 'nonepi':
+            feature_df = feature_df[feature_df['type'].apply(lambda x: any(item in ['H3K27ac', 'H3K27me3', 'H3K9me3', 'H3K4me3', 'H3K36me3'] for item in x.split(',')))]
+        feature_dfs.append(feature_df)
+        
+
+    # construct feature matrix of all three exon classes
+    all_features = pd.concat(feature_dfs, axis=0) # merge into single matrix
+
+    filtered_features = []
+    for hm in ['H3K27ac', 'H3K27me3', 'H3K9me3', 'H3K4me3', 'H3K36me3']:
+        print('\n',hm)
+        temp_features = all_features[all_features['type'].apply(lambda x: hm in x.split(','))]
+
+        # remove overlapping genes
+        common_genes = set()
+        for i in range(len(types)):
+            for j in range(len(types)):
+                if i >= j:
+                    continue
+                common_genes.update(list(set(temp_features[temp_features.label == labels[i]].gene_name.values.tolist()) & set(temp_features[temp_features.label == labels[j]].gene_name.values.tolist())))
+        if len(common_genes):
+            temp_features = temp_features[~temp_features.gene_name.isin(common_genes)]
+
+        for i in range(len(labels)):
+            print(f'{labels[i].title()}s:', len(set(temp_features[temp_features.label==labels[i]].gene_name.values)), 'Flanks:', len(temp_features[temp_features.label==labels[i]]))
+   
+        filtered_features.append(temp_features)
+
+    all_features = pd.concat(filtered_features, axis=0).drop_duplicates()
+    all_features.drop(['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name'], axis=1, inplace=True)
+
+    col = all_features.pop("label")
+    all_features.insert(0, col.name, col)
+
+    all_features.to_csv(f'0_Files/Post-processing/features_all_exon_classes_{rbp_num}.csv', sep='\t', index=False)
+    print( '\n-----------------------\n')
+
 
     # remove intermediate files
     for type in types:
@@ -276,8 +326,10 @@ if __name__ == "__main__":
     post_rbp(132)
     feature_matrix_1()
     feature_matix_2(132)
-    
+    feature_matix_3(132)
+
     # prep feature zscore matrix - 47 RBPS
     post_rbp(47)
     feature_matrix_1()
     feature_matix_2(47)
+    feature_matix_3(47)
