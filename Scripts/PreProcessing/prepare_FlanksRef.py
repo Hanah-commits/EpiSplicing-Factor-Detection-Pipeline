@@ -27,7 +27,7 @@ os.system(f'bash PreProcessing/get_exons.sh {proc}')
 ref_genome= fasta+".fai"
 
 # flanks
-flanks = ["50", "100", "200"]
+flanks = ["200"]
 
 for flank in flanks:
 
