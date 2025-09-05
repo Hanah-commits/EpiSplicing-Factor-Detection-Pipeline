@@ -106,7 +106,7 @@ H3K27ac_ectodermalcell_peak.bed
     }
     }
 ```
-*Note: If a path to the existing output directory is not specified, a custom output directory will be created using the naming convention: ./Output/<tissue1>_<tissue2>_timestamp*. The directory path will be updated in the config file.
+*Note: If a path to the existing output directory is not specified, a custom output directory will be created using the naming convention: ```../Output/<tissue1>_<tissue2>_timestamp*```. The directory path will be updated in the config file.
 
 ## Usage
 
