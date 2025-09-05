@@ -9,6 +9,8 @@ import sys
 
 def get_epigenes_study(tool):
 
+    print('\n\n STEP 1: Pooling Epispliced exon flanks (DEU !=0, DHM !=0) \n\n')
+
     prefix = tool.lower()
 
     # STEP 0: Create directories to store MAJIQ files
@@ -50,7 +52,7 @@ def get_epigenes_study(tool):
         ## STEP 3: TODO: Plot frequency of occurrence of genes across all ten conditions
         
         
-        print('Epigenes:\n', hm_epigenes)
+        print('Epigenes:\n', len(hm_epigenes))
         epigenes[hm] = hm_epigenes
 
 
@@ -92,6 +94,8 @@ def get_epigenes_study(tool):
     df.to_csv(f'{output_dir}epi_flanks.bed', sep='\t', index=False, header=False)
 
 def get_nonepigenes(tool):
+
+    print('\n\n STEP 2: Pooling Non-epispliced exon flanks (DEU !=0, DHM ==0) \n\n')
 
     prefix = tool.lower()
 
@@ -175,6 +179,8 @@ def get_nonepigenes(tool):
 
 def get_epi_nonspliced_genes(tool):
 
+    print('\n\n STEP 3: Pooling Constitutive exon flanks with DHM annotation (DEU ==0, DHM !=0) \n\n')
+
     file = tool.lower()
 
     output_dir = str(Path(os.getcwd())) + "/0_Files/Post-processing/"
@@ -228,7 +234,7 @@ def get_epi_nonspliced_genes(tool):
     # STEP 2: Save flanks
     epi_nonDEU_flanks = epi_nonDEU_flanks[['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name', 'type']].drop_duplicates()
     
-    print('Exon flanks  (DEU !=0 & DHM !=0)  combined across all 10 analyses:\n')
+    print('\n\n Exon flanks  (DEU !=0 & DHM !=0)  combined across all 10 analyses:\n')
     print(epi_nonDEU_flanks['type'].value_counts())
 
     epi_nonDEU_flanks = epi_nonDEU_flanks.groupby(['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name'])['type'].apply(','.join).reset_index()
