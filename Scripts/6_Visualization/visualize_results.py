@@ -81,7 +81,8 @@ def epigene_overlap(base_op_dir):
     fig = plt.figure(figsize=(8, 6))
     upset = UpSet(upset_data, show_percentages=False, show_counts=True, sort_by="cardinality")
     plot = upset.plot(fig=fig)
-    plot["totals"].set_xlabel("Num. Epigenes",  fontsize=8)
+    plot['intersections'].set_ylabel('Intersection size', fontsize=12)
+    plot["totals"].set_xlabel("Num. Epigenes",  fontsize=12)
     # plt.suptitle("Overlap of Epispliced Genes",  fontsize=10, x=0.5, y=0.98, ha='center')
     
 
@@ -154,10 +155,10 @@ def heatmap_imptRBPs_binding(hm, base_op_dir):
 
     # add title and axes labels
     # heatmap.set_title(f'{hm} : Predicted Binding Scores of Episplicing and Non-episplicing RBPs', fontsize=10)
-    heatmap.set_ylabel(f'Flanks of Epispliced and Non-epispliced Exons', fontsize =14, labelpad=-505)
+    heatmap.set_ylabel(f'Flanks of Epispliced and Non-epispliced Exons', fontsize =16, labelpad=-520)
     cax = cluster.cax
     cax.tick_params(labelsize=12)
-    cax.set_ylabel("Predicted Binding Scores", rotation=90, labelpad=10, fontsize=12)
+    cax.set_ylabel("Predicted Binding Scores", rotation=90, labelpad=10, fontsize=16)
     plt.savefig(f"{output_dir}/bindingscores_{hm}.png", bbox_inches='tight', dpi=300, pad_inches=0.2)
     plt.close()
 
@@ -318,22 +319,23 @@ def plot_manhattan(corr_dfs_hm, hm_epigenes, op_dir,  hm):
 
         # colorbar
         cbar = plt.colorbar(sc)   # use the same scatter handle
-        cbar.set_label("Adjusted p-value", fontsize=14)
+        cbar.set_label("Adjusted p-value", fontsize=16)
 
         # formatting
         # Set y-axis ticks in intervals of 0.10
         # plt.yticks(np.arange(-1, 1.0, 0.10))
-        plt.xticks(range(len(datasets)), datasets, rotation=45, fontsize=10, ha="right", color='black')
+        plt.xticks(range(len(datasets)), datasets, rotation=45, fontsize=13, ha="right", color='black')
         plt.ylim(-1.05, 1.05)
-        plt.ylabel("Pearson Correlation Coefficient R", fontsize=14)
+        plt.ylabel("Pearson Correlation Coefficient R", fontsize=16)
         # plt.legend()
 
         # Legend below plot
         handles = [plt.Line2D([], [], marker=marker_map[cat], color="black", linestyle="", label=cat) for cat in ["R < 0.5", "R >= 0.5", f"R >= 0.5 & ¬(¬DEU & DHM:{hm})"]]
         plt.legend(
+            fontsize=12,
             handles=handles,
             loc="upper center",
-            bbox_to_anchor=(0.5, 1.07),   # below the x-axis
+            bbox_to_anchor=(0.5, 1.1),   # below the x-axis
             ncol=3,                        # put categories in one row
             frameon=True
         )
@@ -537,11 +539,11 @@ def RBP_binding_comparison_epispliced_vs_nonepispliced(base_op_dir):
         g.fig.text(
             x=0.01,
             y=0.5,
-            s="Average Predicted RBP Binding Scores",
+            s="Average Predicted Binding Scores",
             va="center",
             ha="center",
             rotation="vertical",
-            fontsize=16
+            fontsize=18
         )
 
         plt.tight_layout()
@@ -614,7 +616,7 @@ def imptRBP_binding_comparison(RBP_type, base_op_dir):
 
         plt.figure(figsize=(6,5))
         ax = sns.boxplot(data=flanks_mean, x=class_var, y="Binding_mean",
-        palette=custom_palette, showfliers=False, width=0.6, whis=2.0,
+        palette=custom_palette, saturation=1, showfliers=False, width=0.6, whis=2.0,
         boxprops=dict(edgecolor=edgecolor_dict[hm], linewidth=2, linestyle="--"),
         medianprops=dict(color="grey"),
         whiskerprops=dict(color=edgecolor_dict[hm], linewidth=2, linestyle="--"),
@@ -627,7 +629,7 @@ def imptRBP_binding_comparison(RBP_type, base_op_dir):
 
         ## annotate with pvalues
         annotator = Annotator(ax, pairs, data=flanks_mean, x=class_var, y="Binding_mean")
-        annotator.configure(text_format="simple", loc='inside', fontsize=12)
+        annotator.configure(text_format="simple", loc='inside', fontsize=14)
         annotator.set_pvalues(pvals_adj.tolist())
         annotator.annotate()
 
@@ -641,10 +643,10 @@ def imptRBP_binding_comparison(RBP_type, base_op_dir):
         ymin = np.floor(flanks_mean['Binding_mean'].min() * 4) / 4 
         ax.set_ylim(ymin, ymax)
         # ax.set_yticks(np.arange(ymin, ymax + 0.25, 0.25))
-        ax.tick_params(axis="both", labelsize=9)
+        ax.tick_params(axis="both", labelsize=12)
        
-        plt.xlabel(f"Exon Classes - {hm}", fontsize=12, labelpad=15)
-        plt.ylabel(f"Average Predicted RBP Binding Scores", fontsize=12, labelpad=15)
+        plt.xlabel(f"Exon Classes - {hm}", fontsize=14, labelpad=15)
+        plt.ylabel(f"Average Predicted Binding Scores", fontsize=14, labelpad=15)
         plt.tight_layout()
         plt.savefig(f'{op_dir}/{hm}_{RBP_type}RBP_binding.png', bbox_inches='tight', dpi=300)
 

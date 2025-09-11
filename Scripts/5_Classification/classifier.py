@@ -69,7 +69,6 @@ def all_prauc_together():
                 def evaluate_model(clf_model, X, y, SHAP):
                     all_precisions = []
                     mean_pr_aucs = []
-                    # loop over folds
                     for i, (train, test) in enumerate(kf.split(X, y)):
                         model = clf_model.fit(X[train], y[train])
                         y_score = model.predict_proba(X[test])
@@ -91,13 +90,13 @@ def all_prauc_together():
 
                 # RF model
                 axes[0].plot(rf_recall, rf_precision, color=color_dict[hm], label = f'{hm} Mean PR-AUC = {rf_auc:.2f} ± {rf_ci:.2f}')
-                axes[0].set_xlabel("Recall", fontsize=14)
-                axes[0].set_ylabel("Precision", fontsize=14)
+                axes[0].set_xlabel("Recall", fontsize=16)
+                axes[0].set_ylabel("Precision", fontsize=16)
                 axes[0].legend(loc='lower left', fontsize=12)
 
                 # Baseline
                 axes[1].plot(dummy_recall, dummy_precision, color=color_dict[hm], label = f'Baseline {hm} Mean PR-AUC = {dummy_auc:.2f} ± {dummy_ci:.2f}', linestyle="--")
-                axes[1].set_xlabel("Recall", fontsize=14)
+                axes[1].set_xlabel("Recall", fontsize=16)
                 axes[1].legend(loc='upper right', fontsize=12)
 
             plt.tight_layout(pad = 0, h_pad=0, w_pad=0,rect=[0, 0, 1, 1])
@@ -144,13 +143,13 @@ def plot_metrics():
     ax.set_xticklabels(metrics_df["Model"])
 
     # Set x-tick labels iteratively for each group
-    ax.set_ylabel("Mean Scores", fontsize=12)
+    ax.set_ylabel("Mean Scores", fontsize=14)
     # ax.set_title("Model Metrics", fontsize=14)
 
     # Create custom legend
   
     pattern_patches = [mpatches.Patch(facecolor='grey', edgecolor='white', hatch=pattern, label=metric) for pattern, metric in zip(patterns, metrics)]
-    ax.legend(handles=pattern_patches, title="Metrics", loc='upper left', bbox_to_anchor=(0.715, 1.0), prop={'size': 8}, handleheight=2, handlelength=3)
+    ax.legend(handles=pattern_patches, title="", loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=3, prop={'size': 12}, handleheight=2, handlelength=3)
 
 
     plt.tight_layout()
@@ -371,8 +370,6 @@ def SHAP( hm):
 
     # Plot summary plot for combined SHAP values
     shap.summary_plot(combined_shap_values, combined_X_test, feature_names=sf_data.columns, show=False, max_display=50)
-
-    # Use matplotlib to add a title
     plt.title(f'SHAP Summary Plot for {hm}', fontsize=12)
 
     # # Display the plot
