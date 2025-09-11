@@ -44,20 +44,15 @@ for i in *.fa; do
 ## Required Files
 
 1. Reference Annotation, Genome: GTF, GFF3 and fasta (gencode)
-
 2.  RNASeq files : .bam and .bam.bai
-
 - Name all the bam and indexed bam files using the following convention:
-
 ```
 <tissue type>_<identifier>.bam
 endodermalcell_ENCFF489LAR.bam
 ```
-
 3. ChIPSeq Files: .bed
-
+- Helper scripts to download and pre-process alignment and peak files: *./Scripts/PreProcessing/download_and_rename/chipseq_files.py*
 - Name all the bed files using the following convention:
-
 ```
 <histone modification>_<tissue type>_alignment.bed
 H3K27ac_ectodermalcell_alignment.bed
@@ -65,8 +60,7 @@ H3K27ac_ectodermalcell_alignment.bed
 <histone modification>_<tissue type>_peak.bed
 H3K27ac_ectodermalcell_peak.bed
 ```
-
-5. Config file: `~/EpiSplicing-Factor-Detection-Pipeline/Scripts/paths.json`
+4. Config file: `~/EpiSplicing-Factor-Detection-Pipeline/Scripts/paths.json`
 
 - Fill the fields in paths.json. Example:
 
@@ -112,9 +106,11 @@ H3K27ac_ectodermalcell_peak.bed
     }
     }
 ```
+*Note: If a path to the existing output directory is not specified, a custom output directory will be created using the naming convention: ```../Output/<tissue1>_<tissue2>_timestamp*```. The directory path will be updated in the config file.
 
 ## Usage
 
+### TLDR
 ```bash 
 # Run processes(pr*) from config file
 # Returns epispliced and non-epispliced genes for every biosample pair
@@ -122,6 +118,54 @@ H3K27ac_ectodermalcell_peak.bed
 
 # Post-processing
 # Pools epispliced and non-epispliced genes, run RBPmap, binary classification
-~/EpiSplicing-Factor-Detection-Pipeline/Scripts$ python master_2.py 
+~/EpiSplicing-Factor-Detection-Pipeline/Scripts$ python master_2.py <pool/rbpmap/classify/visualize>
 ```
 
+![Training curve](Figs/Epi_Exons.png)
+
+### Pairwise Differential Analysis
+```master_1.py``` triggers the sequential run of the scripts that perform differential analysis of each tissue pair (process) specified in the config file. Specifically, the following scripts:
+```
+├── 1_RMATS
+│   ├── combine_AS_exons.py
+│   ├── get_MXE.py
+│   ├── get_SE.py
+│   └── runRMATS.py
+├── 2_MANorm
+│   ├── annotate_MANorm_all_exons.py
+│   ├── annotate_MANorm_gviz.py
+│   ├── combine_all_HMpeaks.py
+│   ├── DHM_flanks_RMATS.py
+│   └── manorm_all.py
+├── 3_Episplicing
+│   ├── correlation_plot.py
+├── PreProcessing
+│   ├── gene_id_to_gene_symbol.R
+│   ├── get_exons.sh
+│   └── prepare_FlanksRef.py
+```
+**Output**: For each tissue pair (process) specified in the config file, results are stored in the path under ```Output directory```. The following files can be found:
+*    The candidate exons and their flanking regions.
+*    The output and intermediate files from RMATS, MANorm.
+*    List of epispliced and non-epispliced genes.
+*    output.log with log statements from each pipeline script.
+
+### Post-processing
+```master_2.py``` needs to be run sequentially with the following arguments:
+1. ```pool```
+    - Pools +/200bp flanking regions of three exon classes from all the tissue pairs (processes) specified in the config file: epispliced (DEU & DHM), non-epispliced (DEU & !DHM), constitutive exons with DHM annotations (!DEU & DHM).
+    - Prepares input for RBPmap.
+    - Provides instructions to run RBPmap with user-provided RBPs.
+2. ```rbpmap```
+    - Runs RBPmap using 132 RBPs from internal database.
+3. ```classify```
+    - Constructs feature matrix and runs Random forest classifier.
+    - Provides instructions to manually select important features from SHAP plots.
+4. ```visualize```
+    - Creates SHAP plots of important features, binding and correlation heatmaps, boxplots, sequence logos etc.
+
+    
+#### Additional Scripts
+```Scripts/6_Visualization/visualize_supplement.py``` : MAXENTSCAN, featureCounts etc.
+
+```Scripts/7_Post/*```: bigwig file generation (eCLIP/MAnorm peak read density), PPI analysis

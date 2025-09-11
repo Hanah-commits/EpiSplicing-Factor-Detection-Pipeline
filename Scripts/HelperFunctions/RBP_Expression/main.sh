@@ -22,4 +22,5 @@ wait $!
 Rscript get_TPM.R
 
 wait $!
+mkdir  -p 0_Files/Post-processing/Analyses/expression/counts
 mv rpkm_values_rbps.tsv 0_Files/Post-processing/Analyses/expression/counts/tpm_values_rbps.tsv

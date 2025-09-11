@@ -4,7 +4,8 @@ import re
 from pathlib import Path
 from statsmodels.stats.multitest import multipletests # type: ignore
 import logomaker
-import os 
+import os
+import glob 
 import matplotlib.pyplot as plt
 
 
@@ -22,8 +23,86 @@ def post_rbp(rbp_num):
         proteins = list(set([rbp for rbp in rbps.read().split('\n') if len(rbp)]))
 
         # # proteins = ['RBM15'] #if single rbp
+        try:
+            filename=f'../RBPmap_{str(rbp_num)}/resultsrbp_input_{type}1.csv*/All_Predictions.txt' # local RBPmap/old versions
+            filename = [file for file in glob.glob(filename)][0]
+        except:
+            filename=f'../RBPmap_{str(rbp_num)}/resultsrbp_input_{type}1.csv*/All_Predictions.csv' # webserver/ new version
+            filename = [file for file in glob.glob(filename)][0]
 
-        filename=f'../RBPmap_{str(rbp_num)}/results_rbp_input_{type}1.csv/All_Predictions.txt'
+        if 'Predictions.csv' in filename:
+            motifs_df = pd.DataFrame(columns=proteins)
+            coordinate = ""
+            score_dict = {}
+            motif_dict = {}
+
+            with open(filename, 'r') as file:
+
+                for line in file:
+                    line = line.strip()
+
+                    # skip empty lines and metadata
+                    if not line or line.startswith(("Predictions for job", "Calculation parameters", "Genome:", "Selected motifs:", "Stringency level:", "Conservation filter:", "Protein")):
+                        continue
+
+                    if line.startswith("chr") and ":" in line and "-" in line:
+                        coordinate = line
+                    elif line == 'No motifs found.':
+
+                        for d in [score_dict, motif_dict]:
+                            d[coordinate] = {}
+                            d[coordinate][proteins[0]] = 0.0 #pseudo score
+
+
+                    fields = [f.strip() for f in line.split(",")]
+                    if len(fields) != 7:
+                        continue
+
+                    raw_protein = fields[0]
+                    motif = fields[3]
+                    z_score_str = fields[5]
+                    protein_match = re.search(r"(?:User_)?([a-zA-Z0-9]+)(?:\()?", raw_protein) #"U2AF2(Hs/Mm)", "User_U2AF2"
+                    # print(protein_match)
+                    if not protein_match or protein_match.group(1) not in proteins:
+                        continue
+                    protein = protein_match.group(1)
+
+                    try:
+                        z_score = float(z_score_str)
+                    except ValueError:
+                        continue
+
+                    # keep significant binding motif
+                    if coordinate and protein:
+                        if coordinate not in score_dict:
+                            score_dict[coordinate] = {}
+                            motif_dict[coordinate] = {}
+                        
+                        current = score_dict[coordinate].get(protein, 0.0)
+                        score_dict[coordinate][protein] = max(current, z_score)
+
+                        if max(current,z_score) == z_score:
+                            motif_dict[coordinate][protein] = motif
+
+    
+                for coord, motif in motif_dict.items():
+                    for prot, val in motif.items():
+                        motifs_df.loc[coord, prot] = val
+
+                motifs_df.infer_objects(copy=False).fillna(0.0, inplace=True)
+                motifs_df.index = motifs_df.index.astype(str)
+
+                # # Split coords into columns
+                motifs_df['coord'] = motifs_df.index
+                motifs_df[['chr', 'start_end', 'strand']] = motifs_df['coord'].str.split(':', expand=True)
+                motifs_df[['flank_start', 'flank_end']] = motifs_df['start_end'].str.split('-', expand=True)
+                #drop index and cols, rearrange cols
+                motifs_df = motifs_df.drop(columns=['coord','start_end'])
+                motifs_df = motifs_df[['chr', 'flank_start', 'flank_end', 'strand'] + proteins]
+                motifs_df.reset_index(drop=True, inplace=True)
+                motifs_df.to_csv(f"{opdir}/FilteredZscores_{type}.csv", sep=',', index=None)
+
+                return
 
         parsed_data = []
 
@@ -134,10 +213,14 @@ def post_rbp(rbp_num):
 
 def feature_matrix_1():
 
-    exons_files = ['0_Files/Post-processing/epi_flanks.bed', '0_Files/Post-processing/nonepi_flanks.bed']
-    Zscore_files = ['0_Files/Post-processing/FilteredZscores_epi_motifs.csv', '0_Files/Post-processing/FilteredZscores_nonepi_motifs.csv']
+    exons_files = []
+    Zscore_files = []
+    types = ['epi', 'nonepi']
+    for type in types:
+        exons_files.append(f'0_Files/Post-processing/{type}_flanks.bed')
+        Zscore_files.append(f'0_Files/Post-processing/FilteredZscores_{type}_motifs.csv')
 
-    for i in range(2):
+    for i in range(len(exons_files)):
         exons = pd.read_csv(exons_files[i], delimiter='\t', header=None)
         exons.columns = ['chr', 'exon_start', 'exon_end', 'feature', 'score', 'strand', 'gene_name', 'type']
 
@@ -152,14 +235,13 @@ def feature_matrix_1():
         else:
             raise ValueError
         
-        name = ''
-        if i == 0:
-            name = 'epi'
-        else:
-            name = 'nonepi'
+        name = types[i]
 
         features = features.loc[:, ~features.columns.duplicated()]
         features.to_csv('0_Files/Post-processing/features_motifs_' + name + '.csv', sep='\t', index=False)
+
+    # remove intermediate files
+    os.system(f'rm 0_Files/Post-processing/FilteredZscores*.csv')
 
 
 def feature_matix_2(rbp_num):
@@ -194,6 +276,9 @@ def feature_matix_2(rbp_num):
 
     all_features.to_csv(f'0_Files/Post-processing/features_motifs_all_{rbp_num}.csv', sep='\t', index=False)
 
+    # remove intermediate files
+    for type in ['epi', 'nonepi']:
+        os.system(f'rm 0_Files/Post-processing/features_motifs_{type}.csv')
 
 
 def expand_iupac(sequence):
@@ -268,14 +353,14 @@ def plot_logo():
 
         for mode in ['epi', 'nonepi']:
 
-            op_dir = f"0_Files/Post-processing/Analyses/SequenceLogo/{hm}_without_impt"
+            op_dir = f"0_Files/Post-processing/Analyses/SequenceLogo/{hm}_{mode}"
             Path(op_dir).mkdir(parents=True, exist_ok=True)
 
             # Get episplicing RBPs for current HM
-            rbps_file = open(f"0_Files/Post-processing/{mode}RBPS/{mode}RBPS_{hm}.txt", "r")
-            epi_rbps = [rbp for rbp in rbps_file.read().split('\n') if rbp]
+            rbps_file = open(f"0_Files/Post-processing/{mode}RBPs/{mode}RBPs_{hm}.txt", "r")
+            epi_RBPs = [rbp for rbp in rbps_file.read().split('\n') if rbp]
 
-            for sf in epi_rbps:
+            for sf in epi_RBPs:
                 print(f'\n\n{sf}')          
                 
                 sf_motifs =  [seq for seq in list(set(features_hm[sf].values)) if seq != '0.0']
@@ -286,7 +371,7 @@ def plot_logo():
                     expanded_sequence = expand_iupac(sequence)
                     psssm = generate_pwm(expanded_sequence) ## generate PSSM from expanded sequences
                     pssm_df = pd.DataFrame(psssm, columns=['A', 'C', 'G', 'U'])
-                    print(pssm_df, psssm, expanded_sequence, sequence)
+                    # print(pssm_df, psssm, expanded_sequence, sequence)
 
                     # generate sequence logo
                     plt.figure(figsize=(len(pssm_df), 2))  # adjust width to match sequence length
@@ -309,15 +394,15 @@ def plot_logo():
 
 if __name__ == "__main__":
     
-    # # prep feature motif matrix -132 RBPS
-    post_rbp(132)
-    feature_matrix_1()
-    feature_matix_2(132)
+    # # prep feature motif matrix -132 RBPs
+    # post_rbp(132)
+    # feature_matrix_1()
+    # feature_matix_2(132)
     
-    # prep feature motif matrix - 47 RBPS
-    post_rbp(47)
-    feature_matrix_1()
-    feature_matix_2(47)
+    # # prep feature motif matrix - 47 RBPs
+    # post_rbp(47)
+    # feature_matrix_1()
+    # feature_matix_2(47)
 
     ## sequence logos (Figures 4,18)
     plot_logo()

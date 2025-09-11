@@ -1,12 +1,14 @@
 import pandas as pd
 import os
+from pathlib import Path
 
 def exon_flanks():
 
         input_files = []
         op_dir = "0_Files/Post-processing"
+        Path("../RBPmap").mkdir(parents=True, exist_ok=True)
 
-        for name in ['epi', 'nonepi']:
+        for name in ['epi', 'nonepi', 'epi_nonspliced']:
 
                 flanks = pd.read_csv(f'{op_dir}/{name}_flanks.bed', delimiter='\t', header=None)
                 flanks.columns = ['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name', 'type']
