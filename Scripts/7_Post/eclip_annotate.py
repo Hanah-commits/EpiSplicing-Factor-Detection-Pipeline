@@ -3,12 +3,12 @@ import subprocess
 import pandas as pd
 
 
-def annotate_eclip_peaks(eclip_directory, flanks_dir):
+def annotate_eclip_peaks(eclip_directory, flanks_dir, type):
 
     # Get list of files containing 'HepG2.bed' or 'K562.bed'
     bed_files = sorted([f for f in os.listdir(eclip_directory) if f.endswith('.bed') and ('HepG2' in f or 'K562' in f)])
-    flanks_file = f'{flanks_dir}/Post-processing/epi_flanks.bed'
-    annotated_flanks_file = f'{flanks_dir}/Post-processing/epi_flanks_annotated.bed'
+    flanks_file = f'{flanks_dir}/Post-processing/{type}_flanks.bed'
+    annotated_flanks_file = f'{flanks_dir}/Post-processing/{type}_flanks_annotated.bed'
     subprocess.run(f"cp {flanks_file} {annotated_flanks_file}", shell=True, check=True)
 
     # Iterate over each file
@@ -45,10 +45,14 @@ def annotate_eclip_peaks(eclip_directory, flanks_dir):
         subprocess.run(f"mv bedtools_output.bed {annotated_flanks_file}", shell=True, check=True)
 
 
-def get_deu_dhm_info(op_dir):
+def get_deu_dhm_info(op_dir, type):
 
-    epi_flanks = pd.read_csv(f'{op_dir}/Post-processing/epi_flanks_annotated.bed', delimiter='\t', header=None, names=['chr', 'flank_start', 'flank_stop', 'feature', 'score', 'strand', 'gene', 'DHM', 'eCLIP'])
-    exon_coords = pd.read_csv(f'{op_dir}/RMATS/rmats_exons_coords.bed', delimiter='\t', names=['chr', 'exon_start', 'exon_stop', 'feature', 'score', 'strand', 'gene', 'dPSI'])
+    epi_flanks = pd.read_csv(f'{op_dir}/Post-processing/{type}_flanks_annotated.bed', delimiter='\t', header=None, names=['chr', 'flank_start', 'flank_stop', 'feature', 'score', 'strand', 'gene', 'DHM', 'eCLIP'])
+    
+    if type == 'epi':
+        exon_coords = pd.read_csv(f'{op_dir}/RMATS/rmats_exons_coords.bed', delimiter='\t', names=['chr', 'exon_start', 'exon_stop', 'feature', 'score', 'strand', 'gene', 'dPSI'])
+    else:
+        exon_coords = pd.read_csv(f'{op_dir}/all_exons.bed', delimiter='\t', names=['chr', 'exon_start', 'exon_stop', 'feature', 'score', 'strand', 'gene'])
 
     epi_flanks['exon_coord0'] = epi_flanks['flank_start'] + 200
 
@@ -105,17 +109,17 @@ def get_deu_dhm_info(op_dir):
 
         epi_flanks[f'Signal_{hm}'] = epi_flanks[f'M_value_{hm}'].apply(lambda x: x if x == '.' else ('K562' if float(x) > 0 else 'HepG2'))
 
-    epi_flanks.drop_duplicates().to_csv(f'{op_dir}/Post-processing/epi_flanks_annotated.bed', sep='\t',index=False)
+    epi_flanks.drop_duplicates().to_csv(f'{op_dir}/Post-processing/{type}_flanks_annotated.bed', sep='\t',index=False)
 
 
-def process_annotated_eclip(op_dir):
+def process_annotated_eclip(op_dir, type):
 
     ## FILTER 1: Keep internal exons
-    annotated_flanks_file = f'{op_dir}/Post-processing/epi_flanks_annotated.bed'
+    annotated_flanks_file = f'{op_dir}/Post-processing/{type}_flanks_annotated.bed'
     internal_flanks_file = f'{op_dir}/Post-processing/internal_flanks200.bed' ## flanks200.bed - flanks overlapping with terminal exons 
     subprocess.run(f'bedtools intersect -f 1 -wa -r -a {annotated_flanks_file} -b {internal_flanks_file} | sort -u | temp.bed && mv temp.bed {annotated_flanks_file}', shell=True, check=True)
     
-    df = pd.read_csv(f'{op_dir}/Post-processing/epi_flanks_annotated.bed', delimiter='\t')
+    df = pd.read_csv(f'{op_dir}/Post-processing/{type}_flanks_annotated.bed', delimiter='\t')
     
     os.makedirs(f"{op_dir}/Post-processing/Analyses/eclip/", exist_ok=True)  # Create the directory if it doesn't exist
 
@@ -181,25 +185,25 @@ def process_annotated_eclip(op_dir):
 
 
     # Write to output file
-    exact_match.to_csv(f'{op_dir}/Post-processing/eclip/exact_match.tsv', sep='\t', index=False)
-    exact_opp_match.to_csv(f'{op_dir}/Post-processing/eclip/exact_opp_match.tsv', sep='\t', index=False)
-    partial_dhm_match.to_csv(f'{op_dir}/Post-processing/eclip/partial_dhm_match.tsv', sep='\t', index=False)
-    partial_rbp_match.to_csv(f'{op_dir}/Post-processing/eclip/partial_rbp_match.tsv', sep='\t', index=False)
+    exact_match.to_csv(f'{op_dir}/Post-processing/{type}_eclip/exact_match.tsv', sep='\t', index=False)
+    exact_opp_match.to_csv(f'{op_dir}/Post-processing/{type}_eclip/exact_opp_match.tsv', sep='\t', index=False)
+    partial_dhm_match.to_csv(f'{op_dir}/Post-processing/{type}_eclip/partial_dhm_match.tsv', sep='\t', index=False)
+    partial_rbp_match.to_csv(f'{op_dir}/Post-processing/{type}_eclip/partial_rbp_match.tsv', sep='\t', index=False)
 
 
 if __name__ == "__main__":
     
     eclip_dir = sys.argv[1]
     op_dir = sys.argv[2]
-
-    # STEP 1: Annotate eclip peaks
-    # 1. Use a confg file for HepG2-K562 (SE, MXE: min 10 read support)
-    # 2. os.system(f'python 3_Episplicing/get_epi_nonepi_flanks.py {tool} epi')
-    # ==> epi_flanks.bed
-    annotate_eclip_peaks(eclip_directory = eclip_dir, flanks_dir = op_dir)
     
-    # STEP 2: Get epi exon coords, deu and dhm status
-    get_deu_dhm_info(op_dir)
+    for type in ['epi', 'epi_nonspliced']:
+        #  STEP 1: Annotate eclip peaks
+        # 1. Use a confg file for HepG2-K562 (SE, MXE: min 10 read support), copy 0_Files dir from K562-HepG2 output to Scripts/
+        # 2. os.system(f'python 3_Episplicing/get_epi_nonepi_flanks.py')
+        annotate_eclip_peaks(eclip_directory = eclip_dir, flanks_dir = op_dir, type=type)
+    
+        # STEP 2: Get epi exon coords, deu and dhm status
+        get_deu_dhm_info(op_dir, type=type)
 
-    # STEP 3: Split eclip annot by deu, dhm, eclip patterns
-    process_annotated_eclip(op_dir)
+        # STEP 3: Split eclip annot by deu, dhm, eclip patterns
+        process_annotated_eclip(op_dir, type=type)

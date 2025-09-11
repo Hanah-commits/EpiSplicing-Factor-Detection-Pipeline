@@ -15,7 +15,7 @@ def master_function(proc, output_dir):
 
     # STEP 0: Preprocessing
 
-    # Prepare flank reference : 50, 100, 200 bp
+    # Prepare flank reference : 200 bp
     try:
         print('\n\n Extracting Candidate Exons \n\n', flush=True)
         os.system(f"python PreProcessing/prepare_FlanksRef.py -p {proc} >> {log_file_name} 2>&1")

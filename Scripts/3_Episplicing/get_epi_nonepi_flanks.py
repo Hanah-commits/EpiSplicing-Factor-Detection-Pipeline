@@ -9,6 +9,8 @@ import sys
 
 def get_epigenes_study(tool):
 
+    print('\n\n STEP 1: Pooling Epispliced exon flanks (DEU !=0, DHM !=0) \n\n')
+
     prefix = tool.lower()
 
     # STEP 0: Create directories to store MAJIQ files
@@ -50,7 +52,7 @@ def get_epigenes_study(tool):
         ## STEP 3: TODO: Plot frequency of occurrence of genes across all ten conditions
         
         
-        print('Epigenes:\n', hm_epigenes)
+        print('Epigenes:\n', len(hm_epigenes))
         epigenes[hm] = hm_epigenes
 
 
@@ -92,6 +94,8 @@ def get_epigenes_study(tool):
     df.to_csv(f'{output_dir}epi_flanks.bed', sep='\t', index=False, header=False)
 
 def get_nonepigenes(tool):
+
+    print('\n\n STEP 2: Pooling Non-epispliced exon flanks (DEU !=0, DHM ==0) \n\n')
 
     prefix = tool.lower()
 
@@ -173,12 +177,73 @@ def get_nonepigenes(tool):
     df = df.groupby(['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name'])['type'].apply(','.join).reset_index()
     df.to_csv(f'{output_dir}nonepi_flanks.bed', sep='\t', index=False, header = False)
 
+def get_epi_nonspliced_genes(tool):
+
+    print('\n\n STEP 3: Pooling Constitutive exon flanks with DHM annotation (DEU ==0, DHM !=0) \n\n')
+
+    file = tool.lower()
+
+    output_dir = str(Path(os.getcwd())) + "/0_Files/Post-processing/"
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+    with open('paths.json') as f:
+            data = json.load(f)
+
+    # STEP 1: Get all non-DEU exons with DHM annotation (from constitutively-spliced genes)from pairwise analyses:
+    hms = set()
+    for process in data['list_of_processes']:
+        hms.update(data[process]['Histone modifications'])
+
+    all_nonDEU_dfs = []
+    for process in data['list_of_processes']:
+        
+        odir = data[process]['Output directory']
+        pr_hms = data[process]['Histone modifications']
+
+        tissues = os.path.basename(os.path.dirname(odir)).split('_')[1:3]
+        tissues_substr = ['endo', 'ecto', 'meso', 'neuro', 'H1']
+        tissues = [next((sub for sub in tissues_substr if sub in tissue), tissue) for tissue in tissues]
+        tissues = '-'.join(tissues).title()
+        print("\n", tissues)
+
+        flanks = pd.read_csv(f'{odir}0_Files/{tool}/DEU_DHM_{file}_flanks.tsv', delimiter='\t')
+
+        print('Exon flanks (DEU !=0 & DHM !=0) before filtering out differentially spliced genes \n')
+        for hm in pr_hms:
+            print(hm, len(flanks[(flanks.dPSI == 0) & (flanks[hm]!=0)]))
+
+        ## FILTER: keep only genes with non-DEU events
+        flanks = flanks.groupby("gene_name").filter(lambda g:  (g["dPSI"] == 0).all())
+        flanks = flanks[flanks[pr_hms].ne(0).any(axis=1)]
+
+        print('Exon flanks  (DEU !=0 & DHM !=0) after filtering out differentially spliced genes \n')
+        for hm in pr_hms:
+            print(hm, len(flanks[flanks[hm]!=0]))
+
+        all_nonDEU_dfs.append(flanks)
+
+    epi_nonDEU_flanks = pd.concat(all_nonDEU_dfs).drop_duplicates().fillna(0)
+    if len(epi_nonDEU_flanks) > 0:
+        epi_nonDEU_flanks['type'] = epi_nonDEU_flanks[list(hms)].apply(lambda row: ",".join(row.index[row.ne(0)]), axis=1)
+        epi_nonDEU_flanks['type'] = epi_nonDEU_flanks['type'].str.split(",")
+        epi_nonDEU_flanks = epi_nonDEU_flanks.explode('type', ignore_index=True)
+
+    else:
+        print('\n No Exon flanks  (DEU !=0 & DHM !=0)  combined across all 10 analyses with DHM!=0 \n')
+
+    # STEP 2: Save flanks
+    epi_nonDEU_flanks = epi_nonDEU_flanks[['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name', 'type']].drop_duplicates()
+    
+    print('\n\n Exon flanks  (DEU !=0 & DHM !=0)  combined across all 10 analyses:\n')
+    print(epi_nonDEU_flanks['type'].value_counts())
+
+    epi_nonDEU_flanks = epi_nonDEU_flanks.groupby(['chr', 'flank_start', 'flank_end', 'feature', 'score', 'strand', 'gene_name'])['type'].apply(','.join).reset_index()
+    op_dir = '0_Files/Post-processing/'
+    epi_nonDEU_flanks.to_csv(f'{output_dir}epi_nonspliced_flanks.bed', sep='\t', index=False, header=False)
 
 if __name__ == "__main__":
     tool = "RMATS"
-    type = sys.argv[1]
 
-    if type == 'epi':
-        get_epigenes_study(tool)
-    else:
-        get_nonepigenes(tool)
+    get_epigenes_study(tool) # DEU !=0 & DHM !=0
+    get_nonepigenes(tool) # DEU != 0 & DHM == 0
+    get_epi_nonspliced_genes(tool) # DEU ==0 & DHM != 0
